@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ShaxmatAI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#302e2b;
+  --panel:#272522;
+  --card:#3d3d3d;
+  --accent:#81b64c;
+  --accent2:#533483;
+  --text:#bababa;
+  --muted:#888;
+  --white-sq:#f0d9b5;
+  --black-sq:#b58863;
+  --sq-size:min(52px, 11vw);
+}
+body{
+  background:#302e2b;
+  color:var(--text);font-family:'Segoe UI',Arial,sans-serif;
+  min-height:100vh;overflow-x:hidden;
+}
+/* SCREENS */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;position:relative;z-index:1;}
+.screen.active{display:flex;}
+/* MENU */
+#menuScreen{gap:12px;}
+.logo{font-size:2.8rem;margin-bottom:8px;text-align:center;line-height:1.1;}
+.logo-sub{color:var(--muted);font-size:.9rem;margin-bottom:24px;}
+.menu-btn{
+  width:260px;padding:14px 24px;border:none;border-radius:12px;
+  font-size:1.1rem;font-weight:600;cursor:pointer;
+  background:var(--card);color:var(--text);
+  border:2px solid transparent;transition:all .2s;
+  display:flex;align-items:center;gap:10px;justify-content:center;
+}
+.menu-btn:hover,.menu-btn:active{border-color:var(--accent);transform:scale(1.03);}
+.menu-btn.primary{background:var(--accent);color:#fff;}
+.lang-row{display:flex;gap:8px;margin-top:16px;}
+.lang-btn{padding:6px 14px;border:2px solid var(--muted);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:.85rem;transition:all .2s;}
+.lang-btn.active,.lang-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* LEVEL */
+#levelScreen{gap:12px;}
+.screen-title{font-size:1.6rem;font-weight:700;margin-bottom:8px;text-align:center;}
+.level-btn{
+  width:260px;padding:12px 24px;border:none;border-radius:12px;
+  font-size:1rem;font-weight:600;cursor:pointer;
+  background:var(--card);color:var(--text);
+  border:2px solid transparent;transition:all .2s;
+}
+.level-btn:hover,.level-btn.selected{border-color:var(--accent);}
+.color-row{display:flex;gap:12px;margin-top:8px;}
+.color-btn{
+  flex:1;padding:10px;border:2px solid var(--muted);border-radius:10px;
+  background:transparent;color:var(--text);cursor:pointer;font-size:1.1rem;
+  transition:all .2s;max-width:120px;
+}
+.color-btn.selected{border-color:var(--accent);background:rgba(233,69,96,.15);}
+.back-btn{
+  display:flex;align-items:center;gap:6px;padding:8px 16px;
+  background:transparent;border:none;color:var(--muted);cursor:pointer;
+  font-size:.95rem;align-self:flex-start;margin-bottom:8px;
+}
+.back-btn:hover{color:var(--text);}
+.start-btn{
+  width:260px;padding:14px;border:none;border-radius:12px;
+  font-size:1.1rem;font-weight:700;cursor:pointer;
+  background:var(--accent);color:#fff;margin-top:8px;transition:all .2s;
+}
+.start-btn:hover{opacity:.9;transform:scale(1.02);}
+/* ONLINE SCREEN */
+#onlineScreen{gap:14px;}
+.online-section{
+  width:100%;max-width:320px;background:var(--card);border-radius:14px;
+  padding:18px;display:flex;flex-direction:column;gap:10px;
+}
+.online-section h3{font-size:1rem;color:var(--muted);margin-bottom:4px;}
+.code-display{
+  font-size:2rem;font-weight:900;letter-spacing:.3em;
+  text-align:center;color:var(--accent);background:var(--panel);
+  border-radius:8px;padding:10px;
+}
+.code-input{
+  width:100%;padding:12px;border:2px solid var(--muted);border-radius:8px;
+  background:var(--panel);color:var(--text);font-size:1.4rem;
+  text-align:center;letter-spacing:.2em;text-transform:uppercase;
+  outline:none;transition:border .2s;
+}
+.code-input:focus{border-color:var(--accent);}
+.join-btn,.create-btn{
+  padding:12px;border:none;border-radius:8px;font-size:1rem;
+  font-weight:600;cursor:pointer;transition:all .2s;
+}
+.create-btn{background:var(--accent);color:#fff;}
+.join-btn{background:var(--accent2);color:#fff;}
+.waiting-msg{text-align:center;color:var(--muted);font-size:.9rem;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+/* GAME SCREEN */
+#gameScreen{padding:0;justify-content:flex-start;min-height:100vh;background:#302e2b;}
+.game-header{
+  width:100%;background:#272522;
+  padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid #3d3d3d;
+  position:sticky;top:0;z-index:10;
+}
+.header-back{
+  background:transparent;border:none;color:#bababa;cursor:pointer;
+  font-size:1.2rem;padding:6px 10px;border-radius:6px;transition:background .2s;
+}
+.header-back:hover{background:rgba(255,255,255,.08);}
+.header-logo{display:flex;align-items:center;gap:6px;font-size:1rem;font-weight:700;color:#e0e0e0;}
+.header-settings{
+  background:transparent;border:none;color:#888;cursor:pointer;
+  font-size:1.1rem;padding:6px 10px;border-radius:6px;transition:all .2s;
+}
+.header-settings:hover{color:#bababa;}
+/* PLAYER BAR */
+.player-bar{
+  width:100%;max-width:480px;padding:8px 12px;
+  display:flex;align-items:center;gap:10px;
+  background:#272522;align-self:center;
+}
+.player-avatar{
+  width:36px;height:36px;border-radius:4px;
+  background:#4a4a4a;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+}
+.player-info{flex:1;min-width:0;}
+.player-name{font-size:.85rem;font-weight:600;color:#e0e0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.captured-pieces{font-size:.7rem;color:#888;letter-spacing:.5px;min-height:14px;margin-top:1px;}
+.player-timer{
+  font-size:20px;font-weight:bold;padding:6px 14px;
+  border-radius:4px;background:#4d4d4d;color:#fff;
+  min-width:72px;text-align:center;
+  font-family:monospace;flex-shrink:0;
+  transition:background .2s,color .2s;
+}
+.player-timer.active{background:#fff;color:#000;}
+.player-timer.low{animation:timerPulse .5s infinite;}
+@keyframes timerPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+/* AI DOTS ANIMATION */
+.ai-dots{display:inline-flex;gap:3px;align-items:center;}
+.ai-dots span{
+  display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:#81b64c;animation:dotBounce 1.2s ease-in-out infinite;
+}
+.ai-dots span:nth-child(2){animation-delay:.2s;}
+.ai-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes dotBounce{0%,80%,100%{opacity:.2;transform:scale(.8);}40%{opacity:1;transform:scale(1.2);}}
+/* ACTION BAR */
+.action-bar{
+  width:100%;max-width:480px;align-self:center;
+  display:flex;justify-content:space-around;
+  background:#272522;
+  border-top:1px solid #3d3d3d;
+  padding:10px 0;
+}
+.action-btn{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;gap:4px;padding:4px 6px;
+  background:none;border:none;
+  color:#bababa;cursor:pointer;font-size:11px;
+  transition:color .2s;
+}
+.action-btn:hover,.action-btn:active{color:#fff;}
+.action-btn.hint-btn:hover,.action-btn.hint-btn:active{color:#f6c74e;}
+.action-btn.danger:hover,.action-btn.danger:active{color:#e74c3c;}
+.action-btn .ico{font-size:22px;line-height:1;}
+/* BOARD WRAPPER */
+.board-wrapper{
+  width:100%;max-width:480px;padding:0 8px;
+  display:flex;justify-content:center;position:relative;
+}
+.board-container{position:relative;display:inline-block;}
+.coords-file,.coords-rank{display:none;}
+#chessBoard{
+  display:grid;grid-template-columns:repeat(8,var(--sq-size));
+  grid-template-rows:repeat(8,var(--sq-size));
+  border:none;border-radius:2px;overflow:hidden;
+  cursor:pointer;user-select:none;
+  box-shadow:0 4px 24px rgba(0,0,0,.5);
+}
+.sq{
+  width:var(--sq-size);height:var(--sq-size);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;line-height:1;transition:background .1s;
+}
+.sq.light{background:#f0d9b5;}
+.sq.dark{background:#b58863;}
+.sq.selected{background:#f6f669!important;opacity:.85;}
+.sq.last-move.light{background:#cdd26a!important;}
+.sq.last-move.dark{background:#aaa23a!important;}
+.sq.check{background:radial-gradient(circle,#ff5555 0%,#cc0000 100%)!important;}
+.sq.possible::after{
+  content:'';position:absolute;
+  width:34%;height:34%;border-radius:50%;
+  background:rgba(0,0,0,.35);pointer-events:none;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+}
+.sq.possible.has-piece::after{
+  width:90%;height:90%;border-radius:50%;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  background:transparent;border:4px solid rgba(0,0,0,.35);
+  box-shadow:none;
+}
+.piece{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:grab;transition:transform .1s;padding:0;
+}
+.piece:active{cursor:grabbing;transform:scale(1.1);}
+.piece img{width:90%;height:90%;display:block;pointer-events:none;filter:drop-shadow(1px 2px 3px rgba(0,0,0,.4));}
+/* COORDS inside squares */
+.coord{
+  position:absolute;font-size:11px;font-weight:bold;
+  pointer-events:none;line-height:1;
+}
+.coord.file{bottom:2px;right:3px;}
+.coord.rank{top:2px;left:3px;}
+.sq.light .coord{color:rgba(0,0,0,.4);}
+.sq.dark .coord{color:rgba(255,255,255,.55);}
+/* MOVE COUNT */
+.move-count{color:#888;font-size:.75rem;padding:1px 0;}
+/* GAME OVER MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--panel);border-radius:20px;padding:30px 24px;
+  text-align:center;max-width:320px;width:100%;
+  border:2px solid var(--card);
+  transform:scale(.8);transition:transform .3s;
+}
+.modal-overlay.show .modal{transform:scale(1);}
+.modal-icon{font-size:3rem;margin-bottom:8px;}
+.modal-title{font-size:1.5rem;font-weight:700;margin-bottom:6px;}
+.modal-sub{color:var(--muted);font-size:.9rem;margin-bottom:18px;}
+.modal-stat{font-size:.85rem;color:var(--muted);}
+.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:20px;}
+.modal-btn{
+  padding:10px 22px;border:none;border-radius:10px;
+  font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.modal-btn.primary{background:var(--accent);color:#fff;}
+.modal-btn.secondary{background:var(--card);color:var(--text);}
+/* DRAG GHOST */
+.drag-ghost{
+  position:fixed;pointer-events:none;z-index:1000;
+  width:calc(var(--sq-size)*1.2);height:calc(var(--sq-size)*1.2);
+  transform:translate(-50%,-50%);
+  display:none;filter:drop-shadow(2px 4px 10px rgba(0,0,0,.7));
+}
+.drag-ghost img{width:100%;height:100%;display:block;}
+/* ONLINE STATUS */
+.online-status{
+  text-align:center;padding:4px;font-size:.8rem;
+  color:var(--muted);
+}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;}
+.dot.green{background:#4caf50;}
+.dot.red{background:#f44336;}
+.dot.yellow{background:#ff9800;animation:pulse .8s infinite;}
+</style>
+</head>
+<body>
+
+<!-- DRAG GHOST -->
+<div class="drag-ghost" id="dragGhost"></div>
+
+<!-- MENU SCREEN -->
+<div class="screen active" id="menuScreen">
+  <div class="logo">♟ ShaxmatAI</div>
+  <div class="logo-sub" data-i18n="tagline">Shaxmat — aql o'yini</div>
+  <button class="menu-btn primary" onclick="showScreen('levelScreen')">
+    <span>🤖</span><span data-i18n="vsAI">AI ga qarshi</span>
+  </button>
+  <button class="menu-btn" onclick="showScreen('onlineScreen')">
+    <span>👥</span><span data-i18n="playOnline">Online o'ynash</span>
+  </button>
+  <div class="lang-row">
+    <button class="lang-btn" onclick="setLang('uz')">UZ</button>
+    <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<!-- LEVEL SCREEN -->
+<div class="screen" id="levelScreen">
+  <button class="back-btn" onclick="showScreen('menuScreen')">← <span data-i18n="back">Orqaga</span></button>
+  <div class="screen-title" data-i18n="chooseLevel">Daraja tanlang</div>
+  <button class="level-btn selected" id="lvlEasy" onclick="selectLevel('easy')">⭐ <span data-i18n="easy">Oddiy</span></button>
+  <button class="level-btn" id="lvlMedium" onclick="selectLevel('medium')">⭐⭐ <span data-i18n="medium">O'rta</span></button>
+  <button class="level-btn" id="lvlHard" onclick="selectLevel('hard')">⭐⭐⭐ <span data-i18n="hard">Qiyin</span></button>
+  <div style="margin-top:12px;color:var(--muted);font-size:.85rem;" data-i18n="chooseColor">Rang tanlang:</div>
+  <div class="color-row">
+    <button class="color-btn selected" id="colorWhite" onclick="selectColor('w')">♔ <span data-i18n="white">Oq</span></button>
+    <button class="color-btn" id="colorBlack" onclick="selectColor('b')">♚ <span data-i18n="black">Qora</span></button>
+  </div>
+  <button class="start-btn" onclick="startAIGame()" data-i18n="startGame">O'yinni boshlash</button>
+</div>
+
+<!-- ONLINE SCREEN -->
+<div class="screen" id="onlineScreen">
+  <button class="back-btn" onclick="showScreen('menuScreen')">← <span data-i18n="back">Orqaga</span></button>
+  <div class="screen-title" data-i18n="playOnline">Online o'ynash</div>
+
+  <div class="online-section">
+    <h3 data-i18n="newGame">Yangi o'yin yaratish</h3>
+    <button class="create-btn" onclick="createRoom()" data-i18n="createRoom">Xona yaratish</button>
+    <div id="myRoomCode" style="display:none;">
+      <div style="font-size:.8rem;color:var(--muted);" data-i18n="yourCode">Kodingiz:</div>
+      <div class="code-display" id="roomCodeDisplay">------</div>
+      <div class="waiting-msg" data-i18n="waitingOpponent">Raqib kutilmoqda...</div>
+    </div>
+  </div>
+
+  <div class="online-section">
+    <h3 data-i18n="joinGame">Xonaga kirish</h3>
+    <input class="code-input" id="joinCodeInput" maxlength="6" placeholder="ABC123" oninput="this.value=this.value.toUpperCase()">
+    <button class="join-btn" onclick="joinRoom()" data-i18n="join">Kirish</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen" id="gameScreen">
+  <!-- Header -->
+  <div class="game-header">
+    <button class="header-back" onclick="quitGame()">←</button>
+    <div class="header-logo">♟ <span id="headerInfo">ShaxmatAI</span></div>
+    <button class="header-settings" title="Settings">⚙️</button>
+  </div>
+
+  <!-- Opponent bar -->
+  <div class="player-bar">
+    <div class="player-avatar">♟</div>
+    <div class="player-info">
+      <div class="player-name" id="opponentName">Raqib</div>
+      <div class="captured-pieces" id="opponentCaptured"></div>
+    </div>
+    <div class="player-timer" id="opponentTimer">05:00</div>
+  </div>
+
+  <!-- Board -->
+  <div class="board-wrapper" style="align-self:center;">
+    <div class="board-container">
+      <div class="coords-rank" id="coordsRank"></div>
+      <div id="chessBoard"></div>
+      <div class="coords-file" id="coordsFile"></div>
+    </div>
+  </div>
+
+  <!-- Player bar -->
+  <div class="player-bar">
+    <div class="player-avatar">♙</div>
+    <div class="player-info">
+      <div class="player-name" id="playerName">Siz</div>
+      <div class="captured-pieces" id="playerCaptured"></div>
+    </div>
+    <div class="player-timer active" id="playerTimer">05:00</div>
+  </div>
+
+  <!-- Status row -->
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:2px 14px;max-width:480px;width:100%;align-self:center;">
+    <div class="move-count" id="moveCount"></div>
+    <div class="online-status" id="onlineStatus"></div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="action-btn" onclick="">
+      <span class="ico">☰</span>
+      <span data-i18n="settings">Sozlash</span>
+    </button>
+    <button class="action-btn danger" onclick="resignGame()">
+      <span class="ico">🏳</span>
+      <span data-i18n="resign2">Taslim</span>
+    </button>
+    <button class="action-btn hint-btn" onclick="showHint()">
+      <span class="ico">💡</span>
+      <span data-i18n="hint">Maslahat</span>
+    </button>
+    <button class="action-btn" onclick="undoMove()">
+      <span class="ico">↩</span>
+      <span data-i18n="undo">Bekor</span>
+    </button>
+  </div>
+</div>
+
+<!-- GAME OVER MODAL -->
+<div class="modal-overlay" id="gameOverModal">
+  <div class="modal">
+    <div class="modal-icon" id="modalIcon">♔</div>
+    <div class="modal-title" id="modalTitle">Siz yutdingiz!</div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div class="modal-stat" id="modalStat"></div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="quitGame()" data-i18n="menu">🏠 Menyu</button>
+      <button class="modal-btn primary" id="rematchBtn" onclick="rematch()" data-i18n="rematch">🔄 Qayta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+const i18n = {
+  uz: {
+    tagline:"Shaxmat — aql o'yini", vsAI:"AI ga qarshi", playOnline:"Online o'ynash",
+    back:"Orqaga", chooseLevel:"Daraja tanlang", easy:"Oddiy", medium:"O'rta", hard:"Qiyin",
+    chooseColor:"Rang tanlang:", white:"Oq", black:"Qora", startGame:"O'yinni boshlash",
+    newGame:"Yangi o'yin yaratish", createRoom:"Xona yaratish", yourCode:"Kodingiz:",
+    waitingOpponent:"Raqib kutilmoqda...", joinGame:"Xonaga kirish", join:"Kirish",
+    resign:"🏳 Taslim", youWon:"Siz yutdingiz!", opponentWon:"Raqib yutdi!", draw:"Durang!",
+    aiThinking:"AI o'ylayapti...", roomCode:"Xona kodi:", menu:"🏠 Menyu", rematch:"🔄 Qayta",
+    moves:"Harakatlar:", time:"Vaqt:", checkmate:"Mat!", stalemate:"Pat — Durang",
+    resign_done:"Taslim bo'ldingiz", timeUp:"Vaqt tugadi!", you:"Siz", opponent:"Raqib",
+    connected:"Ulandi", waiting:"Kutilmoqda", disconnected:"Uzildi",
+    settings:"Sozlash", resign2:"Taslim", hint:"Maslahat", undo:"Bekor"
+  },
+  ru: {
+    tagline:"Шахматы — игра разума", vsAI:"Против ИИ", playOnline:"Играть онлайн",
+    back:"Назад", chooseLevel:"Выберите уровень", easy:"Лёгкий", medium:"Средний", hard:"Сложный",
+    chooseColor:"Выберите цвет:", white:"Белые", black:"Чёрные", startGame:"Начать игру",
+    newGame:"Создать новую игру", createRoom:"Создать комнату", yourCode:"Ваш код:",
+    waitingOpponent:"Ожидание соперника...", joinGame:"Войти в комнату", join:"Войти",
+    resign:"🏳 Сдаться", youWon:"Вы победили!", opponentWon:"Соперник победил!", draw:"Ничья!",
+    aiThinking:"ИИ думает...", roomCode:"Код комнаты:", menu:"🏠 Меню", rematch:"🔄 Реванш",
+    moves:"Ходы:", time:"Время:", checkmate:"Мат!", stalemate:"Пат — Ничья",
+    resign_done:"Вы сдались", timeUp:"Время вышло!", you:"Вы", opponent:"Соперник",
+    connected:"Подключён", waiting:"Ожидание", disconnected:"Отключён",
+    settings:"Настройки", resign2:"Сдаться", hint:"Подсказка", undo:"Отменить"
+  },
+  en: {
+    tagline:"Chess — the game of minds", vsAI:"vs AI", playOnline:"Play Online",
+    back:"Back", chooseLevel:"Choose level", easy:"Easy", medium:"Medium", hard:"Hard",
+    chooseColor:"Choose color:", white:"White", black:"Black", startGame:"Start Game",
+    newGame:"Create new game", createRoom:"Create Room", yourCode:"Your code:",
+    waitingOpponent:"Waiting for opponent...", joinGame:"Join a room", join:"Join",
+    resign:"🏳 Resign", youWon:"You won!", opponentWon:"Opponent won!", draw:"Draw!",
+    aiThinking:"AI thinking...", roomCode:"Room code:", menu:"🏠 Menu", rematch:"🔄 Rematch",
+    moves:"Moves:", time:"Time:", checkmate:"Checkmate!", stalemate:"Stalemate — Draw",
+    resign_done:"You resigned", timeUp:"Time's up!", you:"You", opponent:"Opponent",
+    connected:"Connected", waiting:"Waiting", disconnected:"Disconnected",
+    settings:"Settings", resign2:"Resign", hint:"Hint", undo:"Undo"
+  }
+};
+
+let lang = localStorage.getItem('chess_lang') || 'uz';
+function t(k){ return (i18n[lang]||i18n.uz)[k] || k; }
+
+function setLang(l){
+  lang = l;
+  localStorage.setItem('chess_lang', l);
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n');
+    el.textContent = t(k);
+  });
+  document.querySelectorAll('.lang-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['uz','ru','en'][i]===l);
+  });
+}
+setLang(lang);
+
+// ============================================================
+// SCREEN MANAGEMENT
+// ============================================================
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ============================================================
+// GAME STATE
+// ============================================================
+// Unicode for captured display only
+const PIECE_UNICODE={wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'};
+
+// Lichess Cburnett piece images
+const pieceImages={
+  wK:'https://lichess1.org/assets/piece/cburnett/wK.svg',
+  wQ:'https://lichess1.org/assets/piece/cburnett/wQ.svg',
+  wR:'https://lichess1.org/assets/piece/cburnett/wR.svg',
+  wB:'https://lichess1.org/assets/piece/cburnett/wB.svg',
+  wN:'https://lichess1.org/assets/piece/cburnett/wN.svg',
+  wP:'https://lichess1.org/assets/piece/cburnett/wP.svg',
+  bK:'https://lichess1.org/assets/piece/cburnett/bK.svg',
+  bQ:'https://lichess1.org/assets/piece/cburnett/bQ.svg',
+  bR:'https://lichess1.org/assets/piece/cburnett/bR.svg',
+  bB:'https://lichess1.org/assets/piece/cburnett/bB.svg',
+  bN:'https://lichess1.org/assets/piece/cburnett/bN.svg',
+  bP:'https://lichess1.org/assets/piece/cburnett/bP.svg',
+};
+
+let game = null;
+let selectedSq = null;
+let possibleMoves = [];
+let playerColor = 'w';
+let gameMode = null; // 'ai' | 'online'
+let aiLevel = 'easy';
+let stockfish = null;
+let gameActive = false;
+let lastMove = null;
+let startTime = null;
+let moveCount = 0;
+
+// Timers
+let playerSeconds = 300;
+let opponentSeconds = 300;
+let timerInterval = null;
+
+// Online
+let roomCode = null;
+let myRole = null; // 'player1' | 'player2'
+let dbRef = null;
+let onlineConnected = false;
+
+// ============================================================
+// AI LEVEL SELECT
+// ============================================================
+const aiLevels = {
+  easy:   { depth: 2,  skillLevel: 1  },
+  medium: { depth: 6,  skillLevel: 10 },
+  hard:   { depth: 15, skillLevel: 20 }
+};
+
+function selectLevel(l){
+  aiLevel = l;
+  ['easy','medium','hard'].forEach(x=>{
+    document.getElementById('lvl'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('selected', x===l);
+  });
+}
+
+function selectColor(c){
+  playerColor = c;
+  document.getElementById('colorWhite').classList.toggle('selected', c==='w');
+  document.getElementById('colorBlack').classList.toggle('selected', c==='b');
+}
+
+// ============================================================
+// STOCKFISH INIT
+// ============================================================
+function initStockfish(callback){
+  if(typeof Stockfish === 'undefined'){
+    // fallback: load dynamically if not already loaded
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js';
+    script.onload = ()=>{ createStockfish(callback); };
+    document.head.appendChild(script);
+  } else {
+    createStockfish(callback);
+  }
+}
+
+function createStockfish(callback){
+  try {
+    stockfish = typeof Stockfish === 'function' ? Stockfish() : new Worker(window.URL.createObjectURL(new Blob([`importScripts('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js')`])));
+    stockfish.onmessage = handleStockfishMsg;
+    stockfish.postMessage('uci');
+    if(callback) callback();
+  } catch(e){
+    console.warn('Stockfish init failed:', e);
+    stockfish = null;
+    if(callback) callback();
+  }
+}
+
+let sfCallback = null;
+function handleStockfishMsg(event){
+  const msg = typeof event === 'string' ? event : event.data;
+  if(msg && msg.startsWith('bestmove')){
+    const parts = msg.split(' ');
+    const best = parts[1];
+    if(best && best !== '(none)' && sfCallback){
+      sfCallback(best);
+      sfCallback = null;
+    }
+  }
+}
+
+function askStockfish(fen, level, callback){
+  if(!stockfish){ setTimeout(()=>{ makeRandomMove(); },500); return; }
+  const cfg = aiLevels[level] || aiLevels.easy;
+  sfCallback = callback;
+  stockfish.postMessage('setoption name Skill Level value ' + cfg.skillLevel);
+  stockfish.postMessage('position fen ' + fen);
+  stockfish.postMessage('go depth ' + cfg.depth);
+}
+
+// ============================================================
+// START AI GAME
+// ============================================================
+function startAIGame(){
+  gameMode = 'ai';
+  game = new Chess();
+  playerSeconds = 300;
+  opponentSeconds = 300;
+  selectedSq = null;
+  possibleMoves = [];
+  lastMove = null;
+  moveCount = 0;
+  gameActive = true;
+  startTime = Date.now();
+
+  document.getElementById('playerName').textContent = t('you') + ' (' + (playerColor==='w'?'♔':'♚') + ')';
+  _opponentNameText = 'AI (' + (playerColor==='w'?'♚':'♔') + ')';
+  document.getElementById('opponentName').textContent = _opponentNameText;
+  document.getElementById('headerInfo').textContent = 'ShaxmatAI';
+  document.getElementById('onlineStatus').textContent = '';
+  document.getElementById('rematchBtn').style.display = '';
+
+  showScreen('gameScreen');
+  buildCoords();
+  renderBoard();
+  startTimers();
+
+  initStockfish(()=>{
+    if(playerColor === 'b'){
+      setTimeout(doAIMove, 600);
+    }
+  });
+}
+
+function rematch(){
+  closeModal();
+  if(gameMode === 'ai'){
+    startAIGame();
+  }
+}
+
+// ============================================================
+// BOARD RENDERING
+// ============================================================
+function buildCoords(){
+  const rank = document.getElementById('coordsRank');
+  const file = document.getElementById('coordsFile');
+  rank.innerHTML=''; file.innerHTML='';
+  const files = ['a','b','c','d','e','f','g','h'];
+  const ranks = ['8','7','6','5','4','3','2','1'];
+
+  const displayRanks = playerColor==='b' ? [...ranks].reverse() : ranks;
+  const displayFiles = playerColor==='b' ? [...files].reverse() : files;
+
+  displayRanks.forEach(r=>{ const s=document.createElement('span');s.textContent=r;rank.appendChild(s); });
+  displayFiles.forEach(f=>{ const s=document.createElement('span');s.textContent=f;file.appendChild(s); });
+}
+
+function renderBoard(){
+  const board = document.getElementById('chessBoard');
+  board.innerHTML = '';
+  const files = ['a','b','c','d','e','f','g','h'];
+  const ranks = [8,7,6,5,4,3,2,1];
+
+  const dispRanks = playerColor==='b' ? [...ranks].reverse() : ranks;
+  const dispFiles = playerColor==='b' ? [...files].reverse() : files;
+
+  dispRanks.forEach((rank)=>{
+    dispFiles.forEach((file)=>{
+      const sq = file + rank;
+      const isLight = (files.indexOf(file) + rank) % 2 === 1;
+      const div = document.createElement('div');
+      div.className = 'sq ' + (isLight?'light':'dark');
+      div.dataset.sq = sq;
+
+      // Highlight
+      if(selectedSq === sq) div.classList.add('selected');
+      if(lastMove && (lastMove.from===sq || lastMove.to===sq)) div.classList.add('last-move');
+      if(possibleMoves.includes(sq)) {
+        div.classList.add('possible');
+        const piece = game.get(sq);
+        if(piece) div.classList.add('has-piece');
+      }
+
+      // Check highlight
+      if(game.in_check()){
+        const turn = game.turn();
+        // find king square
+        const board2 = game.board();
+        outer: for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+          const p = board2[r][c];
+          if(p && p.type==='k' && p.color===turn){
+            const kingFile = files[c];
+            const kingRank = 8-r;
+            if(sq === kingFile+kingRank) div.classList.add('check');
+            break outer;
+          }
+        }
+      }
+
+      // Coords
+      const fileIdx = files.indexOf(file);
+      const isLastRank = playerColor==='b' ? rank===8 : rank===1;
+      const isLastFile = playerColor==='b' ? fileIdx===0 : fileIdx===7;
+      if(isLastRank){
+        const fc=document.createElement('span');
+        fc.className='coord file';fc.textContent=file;div.appendChild(fc);
+      }
+      if(isLastFile){
+        const rc=document.createElement('span');
+        rc.className='coord rank';rc.textContent=rank;div.appendChild(rc);
+      }
+
+      // Piece
+      const piece = game.get(sq);
+      if(piece){
+        const span = document.createElement('span');
+        span.className = 'piece';
+        const img = document.createElement('img');
+        img.src = pieceImages[piece.color+piece.type.toUpperCase()];
+        img.alt = piece.color+piece.type;
+        span.dataset.sq = sq;
+        span.appendChild(img);
+        addDragEvents(span, sq);
+        div.appendChild(span);
+      }
+
+      div.addEventListener('click', ()=>handleSquareClick(sq));
+      div.addEventListener('dragover', e=>{ e.preventDefault(); });
+      div.addEventListener('drop', e=>{ e.preventDefault(); handleDrop(sq); });
+
+      board.appendChild(div);
+    });
+  });
+
+  updateMoveCount();
+  updateCaptured();
+}
+
+// ============================================================
+// DRAG & DROP
+// ============================================================
+let draggingFrom = null;
+const ghost = document.getElementById('dragGhost');
+
+function addDragEvents(el, sq){
+  el.addEventListener('mousedown', e=>startDrag(e, sq));
+  el.addEventListener('touchstart', e=>startDragTouch(e, sq), {passive:false});
+}
+
+function startDrag(e, sq){
+  if(!canMove(sq)) return;
+  e.preventDefault();
+  draggingFrom = sq;
+  ghost.innerHTML = el_svg(sq);
+  ghost.style.display='block';
+  moveDragGhost(e.clientX, e.clientY);
+
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('mouseup', onDragEnd);
+  // auto select
+  handleSquareClick(sq);
+}
+
+function startDragTouch(e, sq){
+  if(!canMove(sq)) return;
+  e.preventDefault();
+  draggingFrom = sq;
+  ghost.innerHTML = el_svg(sq);
+  ghost.style.display='block';
+  const t = e.touches[0];
+  moveDragGhost(t.clientX, t.clientY);
+  document.addEventListener('touchmove', onDragMoveTouch, {passive:false});
+  document.addEventListener('touchend', onDragEndTouch);
+  handleSquareClick(sq);
+}
+
+function el_svg(sq){
+  const p=game.get(sq);
+  if(!p) return '';
+  return `<img src="${pieceImages[p.color+p.type.toUpperCase()]}" style="width:100%;height:100%;">`;
+}
+
+function moveDragGhost(x,y){ ghost.style.left=x+'px'; ghost.style.top=y+'px'; }
+
+function onDragMove(e){ moveDragGhost(e.clientX, e.clientY); }
+function onDragMoveTouch(e){ e.preventDefault(); const t=e.touches[0]; moveDragGhost(t.clientX,t.clientY); }
+
+function onDragEnd(e){
+  ghost.style.display='none';
+  document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('mouseup', onDragEnd);
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const sq = el && (el.dataset.sq || el.closest('[data-sq]')?.dataset.sq);
+  if(sq && draggingFrom && sq!==draggingFrom) handleDrop(sq);
+  draggingFrom = null;
+}
+
+function onDragEndTouch(e){
+  ghost.style.display='none';
+  document.removeEventListener('touchmove', onDragMoveTouch);
+  document.removeEventListener('touchend', onDragEndTouch);
+  const t = e.changedTouches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  const sq = el && (el.dataset.sq || el.closest('[data-sq]')?.dataset.sq);
+  if(sq && draggingFrom && sq!==draggingFrom) handleDrop(sq);
+  draggingFrom = null;
+}
+
+function handleDrop(toSq){
+  if(!draggingFrom) return;
+  if(possibleMoves.includes(toSq)){
+    doMove(draggingFrom, toSq);
+  }
+}
+
+// ============================================================
+// CLICK HANDLER
+// ============================================================
+function canMove(sq){
+  if(!gameActive) return false;
+  if(gameMode==='ai' && game.turn()!==playerColor) return false;
+  if(gameMode==='online'){
+    const myTurn = (myRole==='player1' && game.turn()==='w') || (myRole==='player2' && game.turn()==='b');
+    if(!myTurn) return false;
+  }
+  const piece = game.get(sq);
+  return piece && piece.color===game.turn();
+}
+
+function handleSquareClick(sq){
+  if(!gameActive) return;
+
+  if(gameMode==='ai' && game.turn()!==playerColor) return;
+  if(gameMode==='online'){
+    const myTurn = (myRole==='player1' && game.turn()==='w') || (myRole==='player2' && game.turn()==='b');
+    if(!myTurn) return;
+  }
+
+  if(selectedSq === sq){
+    selectedSq = null;
+    possibleMoves = [];
+    renderBoard();
+    return;
+  }
+
+  if(selectedSq && possibleMoves.includes(sq)){
+    doMove(selectedSq, sq);
+    return;
+  }
+
+  const piece = game.get(sq);
+  if(piece && piece.color===game.turn()){
+    selectedSq = sq;
+    const moves = game.moves({square:sq, verbose:true});
+    possibleMoves = moves.map(m=>m.to);
+    renderBoard();
+  } else {
+    selectedSq = null;
+    possibleMoves = [];
+    renderBoard();
+  }
+}
+
+// ============================================================
+// MAKE MOVE
+// ============================================================
+function doMove(from, to){
+  // Auto-promote to queen
+  const piece = game.get(from);
+  let promotion = undefined;
+  if(piece && piece.type==='p'){
+    const toRank = parseInt(to[1]);
+    if((piece.color==='w' && toRank===8)||(piece.color==='b' && toRank===1)){
+      promotion = 'q';
+    }
+  }
+
+  const move = game.move({from, to, promotion});
+  if(!move) return;
+
+  lastMove = {from, to};
+  selectedSq = null;
+  possibleMoves = [];
+  moveCount++;
+  renderBoard();
+
+  if(gameMode==='online'){
+    pushOnlineMove(game.fen(), {from,to});
+  }
+
+  if(checkGameOver()) return;
+
+  if(gameMode==='ai'){
+    switchTimerToOpponent();
+    setTimeout(doAIMove, 300 + Math.random()*700);
+  }
+}
+
+// ============================================================
+// AI MOVE
+// ============================================================
+function doAIMove(){
+  if(!gameActive) return;
+  showAIThinking(true);
+  if(!stockfish){
+    setTimeout(()=>{ makeRandomMove(); showAIThinking(false); }, 500);
+    return;
+  }
+  askStockfish(game.fen(), aiLevel, (bestMove)=>{
+    showAIThinking(false);
+    if(!gameActive) return;
+    const from = bestMove.substring(0,2);
+    const to   = bestMove.substring(2,4);
+    const promo= bestMove[4] || undefined;
+    const move = game.move({from, to, promotion: promo||'q'});
+    if(move){
+      lastMove = {from, to};
+      moveCount++;
+      renderBoard();
+      switchTimerToPlayer();
+      checkGameOver();
+    }
+  });
+}
+
+function makeRandomMove(){
+  const moves = game.moves({verbose:true});
+  if(!moves.length) return;
+  const m = moves[Math.floor(Math.random()*moves.length)];
+  const mv = game.move(m);
+  if(mv){
+    lastMove = {from:m.from, to:m.to};
+    moveCount++;
+    renderBoard();
+    switchTimerToPlayer();
+    checkGameOver();
+  }
+}
+
+let _opponentNameText = '';
+function showAIThinking(show){
+  const el = document.getElementById('opponentName');
+  if(show){
+    el.innerHTML = '<span class="ai-dots"><span></span><span></span><span></span></span>';
+  } else {
+    el.textContent = _opponentNameText;
+  }
+}
+
+function undoMove(){
+  if(!gameActive || gameMode!=='ai') return;
+  if(game.history().length < 2) return;
+  game.undo(); game.undo();
+  selectedSq=null; possibleMoves=[]; lastMove=null;
+  moveCount = Math.max(0, moveCount-2);
+  renderBoard();
+}
+
+function showHint(){
+  if(!gameActive || game.turn()!==playerColor) return;
+  if(!stockfish){ return; }
+  askStockfish(game.fen(), aiLevel, (bestMove)=>{
+    const from=bestMove.substring(0,2), to=bestMove.substring(2,4);
+    const fEl=document.querySelector(`[data-sq="${from}"]`);
+    const tEl=document.querySelector(`[data-sq="${to}"]`);
+    if(fEl) fEl.style.outline='3px solid #4fc3f7';
+    if(tEl) tEl.style.outline='3px solid #4fc3f7';
+    setTimeout(()=>{
+      if(fEl) fEl.style.outline='';
+      if(tEl) tEl.style.outline='';
+    },2000);
+  });
+}
+
+// ============================================================
+// GAME OVER
+// ============================================================
+function checkGameOver(){
+  if(game.game_over()){
+    gameActive = false;
+    stopTimers();
+    setTimeout(()=>{
+      let icon, title, sub;
+      if(game.in_checkmate()){
+        const winner = game.turn()==='w' ? 'b' : 'w';
+        const playerWon = (gameMode==='ai' && winner===playerColor) ||
+                          (gameMode==='online' && ((myRole==='player1'&&winner==='w')||(myRole==='player2'&&winner==='b')));
+        icon = playerWon?'♔':'♚';
+        title = playerWon ? t('youWon') : t('opponentWon');
+        sub = t('checkmate');
+      } else if(game.in_stalemate()||game.in_draw()||game.in_threefold_repetition()||game.insufficient_material()){
+        icon='½'; title=t('draw'); sub=t('stalemate');
+      }
+      showGameOver(icon, title, sub);
+    }, 400);
+    return true;
+  }
+  return false;
+}
+
+function showGameOver(icon, title, sub){
+  const elapsed = startTime ? Math.floor((Date.now()-startTime)/1000) : 0;
+  const mm = Math.floor(elapsed/60).toString().padStart(2,'0');
+  const ss = (elapsed%60).toString().padStart(2,'0');
+  document.getElementById('modalIcon').textContent = icon;
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalSub').textContent = sub;
+  document.getElementById('modalStat').innerHTML = `${t('moves')} ${moveCount} &nbsp;|&nbsp; ${t('time')} ${mm}:${ss}`;
+  document.getElementById('gameOverModal').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('gameOverModal').classList.remove('show');
+}
+
+function resignGame(){
+  if(!gameActive) return;
+  gameActive = false;
+  stopTimers();
+  const playerWon = false;
+  showGameOver('🏳', t('opponentWon'), t('resign_done'));
+}
+
+function quitGame(){
+  gameActive = false;
+  stopTimers();
+  closeModal();
+  cleanupOnline();
+  showScreen('menuScreen');
+}
+
+// ============================================================
+// TIMERS
+// ============================================================
+let activeTimer = 'player'; // 'player' | 'opponent'
+
+function startTimers(){
+  stopTimers();
+  activeTimer = playerColor==='w' ? 'player' : 'opponent';
+  updateTimerDisplay();
+  timerInterval = setInterval(tickTimer, 1000);
+}
+
+function tickTimer(){
+  if(!gameActive) return;
+  if(activeTimer==='player'){
+    playerSeconds--;
+    if(playerSeconds<=0){ playerSeconds=0; updateTimerDisplay(); timeUp('player'); return; }
+  } else {
+    opponentSeconds--;
+    if(opponentSeconds<=0){ opponentSeconds=0; updateTimerDisplay(); timeUp('opponent'); return; }
+  }
+  updateTimerDisplay();
+}
+
+function switchTimerToOpponent(){ activeTimer='opponent'; updateTimerDisplay(); }
+function switchTimerToPlayer(){ activeTimer='player'; updateTimerDisplay(); }
+
+function stopTimers(){ if(timerInterval){ clearInterval(timerInterval); timerInterval=null; } }
+
+function timeUp(who){
+  gameActive=false;
+  stopTimers();
+  if(who==='player'){
+    showGameOver('⏱', t('opponentWon'), t('timeUp'));
+  } else {
+    showGameOver('⏱', t('youWon'), t('timeUp'));
+  }
+}
+
+function formatTime(secs){
+  const m=Math.floor(secs/60).toString().padStart(2,'0');
+  const s=(secs%60).toString().padStart(2,'0');
+  return m+':'+s;
+}
+
+function updateTimerDisplay(){
+  const pt = document.getElementById('playerTimer');
+  const ot = document.getElementById('opponentTimer');
+  pt.textContent = formatTime(playerSeconds);
+  ot.textContent = formatTime(opponentSeconds);
+  pt.classList.toggle('active', activeTimer==='player');
+  ot.classList.toggle('active', activeTimer==='opponent');
+  pt.classList.toggle('low', playerSeconds<=30);
+  ot.classList.toggle('low', opponentSeconds<=30);
+}
+
+// ============================================================
+// CAPTURED PIECES
+// ============================================================
+function updateCaptured(){
+  const history = game.history({verbose:true});
+  const whiteCap=[], blackCap=[];
+  history.forEach(m=>{
+    if(m.captured){
+      const key = (m.color==='w'?'b':'w') + m.captured.toUpperCase();
+      if(m.color==='w') whiteCap.push(PIECE_UNICODE[key]);
+      else blackCap.push(PIECE_UNICODE[key]);
+    }
+  });
+  if(playerColor==='w'){
+    document.getElementById('playerCaptured').textContent = whiteCap.join('');
+    document.getElementById('opponentCaptured').textContent = blackCap.join('');
+  } else {
+    document.getElementById('playerCaptured').textContent = blackCap.join('');
+    document.getElementById('opponentCaptured').textContent = whiteCap.join('');
+  }
+}
+
+function updateMoveCount(){
+  const full = game.history().length;
+  document.getElementById('moveCount').textContent = full > 0 ? t('moves')+' '+full : '';
+}
+
+// ============================================================
+// FIREBASE ONLINE
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBIrGRKHuQWlEbZPyqxsvl1dOZfmlbAd-A",
+  authDomain: "chess-game-aba31.firebaseapp.com",
+  databaseURL: "https://chess-game-aba31-default-rtdb.firebaseio.com",
+  projectId: "chess-game-aba31",
+  storageBucket: "chess-game-aba31.firebasestorage.app",
+  messagingSenderId: "635585858149",
+  appId: "1:635585858149:web:e536d0689c39c7eb2fd48c",
+  measurementId: "G-F27NDY55MD"
+};
+
+let firebaseApp = null;
+let db = null;
+
+function initFirebase(){
+  if(firebaseApp) return true;
+  try {
+    firebaseApp = firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    return true;
+  } catch(e){ console.warn('Firebase init failed:', e); return false; }
+}
+
+function generateRoomCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code='';
+  for(let i=0;i<6;i++) code+=chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+
+function createRoom(){
+  if(!initFirebase()){
+    alert('Firebase ulanmadi. Console\'da xatoni tekshiring.');
+    return;
+  }
+  roomCode = generateRoomCode();
+  myRole = 'player1';
+  playerColor = 'w';
+
+  document.getElementById('roomCodeDisplay').textContent = roomCode;
+  document.getElementById('myRoomCode').style.display='block';
+
+  const gameData = {
+    fen: new Chess().fen(),
+    turn: 'w',
+    player1: 'connected',
+    player2: null,
+    status: 'waiting',
+    lastMove: null,
+    p1Time: 300,
+    p2Time: 300
+  };
+
+  db.ref('games/'+roomCode).set(gameData);
+  db.ref('games/'+roomCode).on('value', snap=>{
+    const data = snap.val();
+    if(!data) return;
+    if(data.player2 && data.status==='playing' && !gameActive){
+      startOnlineGame();
+    }
+    if(gameActive) syncOnlineState(data);
+  });
+}
+
+function joinRoom(){
+  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if(code.length!==6){ alert(t('roomCode')+' 6 ta harf'); return; }
+  if(!initFirebase()){
+    alert('Firebase ulanmadi. Console\'da xatoni tekshiring.');
+    return;
+  }
+  roomCode = code;
+  myRole = 'player2';
+  playerColor = 'b';
+
+  db.ref('games/'+roomCode).once('value', snap=>{
+    const data = snap.val();
+    if(!data){ alert('Xona topilmadi: '+code); return; }
+    if(data.status!=='waiting' && data.status!=='playing'){ alert('Xona band!'); return; }
+    db.ref('games/'+roomCode+'/player2').set('connected');
+    db.ref('games/'+roomCode+'/status').set('playing');
+    db.ref('games/'+roomCode).on('value', snap2=>{
+      const d = snap2.val();
+      if(!d) return;
+      if(d.status==='playing' && !gameActive) startOnlineGame();
+      if(gameActive) syncOnlineState(d);
+    });
+  });
+}
+
+function startOnlineGame(){
+  game = new Chess();
+  playerSeconds = 300;
+  opponentSeconds = 300;
+  selectedSq = null;
+  possibleMoves = [];
+  lastMove = null;
+  moveCount = 0;
+  gameActive = true;
+  startTime = Date.now();
+  onlineConnected = true;
+
+  document.getElementById('playerName').textContent = t('you') + ' (' + (playerColor==='w'?'♔':'♚') + ')';
+  _opponentNameText = t('opponent') + ' (' + (playerColor==='w'?'♚':'♔') + ')';
+  document.getElementById('opponentName').textContent = _opponentNameText;
+  document.getElementById('headerInfo').textContent = t('roomCode') + ' ' + roomCode;
+  document.getElementById('rematchBtn').style.display='none';
+  updateOnlineStatus('green', t('connected'));
+
+  showScreen('gameScreen');
+  buildCoords();
+  renderBoard();
+  startTimers();
+}
+
+function syncOnlineState(data){
+  if(!data || !gameActive) return;
+  const newFen = data.fen;
+  if(newFen && newFen !== game.fen()){
+    game.load(newFen);
+    if(data.lastMove) lastMove = data.lastMove;
+    moveCount = game.history().length;
+    selectedSq = null;
+    possibleMoves = [];
+    renderBoard();
+    // Switch timer
+    if(data.turn === (playerColor==='w'?'w':'b')){
+      switchTimerToPlayer();
+    } else {
+      switchTimerToOpponent();
+    }
+    checkGameOver();
+  }
+  if(data.status==='resigned'){
+    const resignedBy = data.resignedBy;
+    const iWon = resignedBy !== myRole;
+    gameActive = false;
+    stopTimers();
+    showGameOver(iWon?'♔':'♚', iWon?t('youWon'):t('opponentWon'), t('resign_done'));
+  }
+}
+
+function pushOnlineMove(fen, mv){
+  if(!db || !roomCode) return;
+  db.ref('games/'+roomCode).update({
+    fen: fen,
+    turn: game.turn(),
+    lastMove: mv,
+    status: 'playing'
+  });
+}
+
+function updateOnlineStatus(color, text){
+  const el = document.getElementById('onlineStatus');
+  el.innerHTML = `<span class="dot ${color}"></span>${text}`;
+}
+
+function cleanupOnline(){
+  if(db && roomCode){
+    db.ref('games/'+roomCode).off();
+  }
+  roomCode = null;
+  myRole = null;
+  onlineConnected = false;
+  document.getElementById('myRoomCode').style.display='none';
+  document.getElementById('joinCodeInput').value='';
+}
+
+// Override resign for online
+const _resignGame = resignGame;
+function resignGame(){
+  if(!gameActive) return;
+  if(gameMode==='online' && db && roomCode){
+    db.ref('games/'+roomCode).update({status:'resigned', resignedBy: myRole});
+  }
+  gameActive = false;
+  stopTimers();
+  showGameOver('🏳', t('opponentWon'), t('resign_done'));
+}
+
+// ============================================================
+// INIT PAGE
+// ============================================================
+document.addEventListener('DOMContentLoaded', ()=>{
+  setLang(lang);
+  buildCoords();
+  // Try to preload Stockfish quietly
+  try {
+    const sf = document.createElement('script');
+    sf.src = 'https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js';
+    sf.onload = ()=>{ createStockfish(null); };
+    document.head.appendChild(sf);
+  } catch(e){}
+});
+
+// Prevent default touch scroll on board
+document.getElementById('chessBoard').addEventListener('touchstart', e=>{
+  // allow scroll outside board
+}, {passive:false});
+</script>
+</body>
+</html>
