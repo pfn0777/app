@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Piano Tiles</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  #game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(180deg, #5cb85c 0%, #a8e6a3 100%);
+    overflow: hidden;
+  }
+
+  .col-sep {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.85);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  #score {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: red;
+    z-index: 20;
+    pointer-events: none;
+    font-family: Arial, sans-serif;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  .tile {
+    position: absolute;
+    width: 25%;
+    height: 25vh;
+    background: #000000;
+    z-index: 2;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  #start-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 25%;
+    height: 13vh;
+    background: linear-gradient(135deg, #6a0dad, #1e90ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    border-top: 2px solid rgba(255,255,255,0.5);
+    border-right: 1px solid rgba(255,255,255,0.4);
+  }
+
+  #start-btn span {
+    color: #fff;
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    font-family: Arial, sans-serif;
+    pointer-events: none;
+  }
+
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    font-family: Arial, sans-serif;
+  }
+
+  #overlay.show { display: flex; }
+
+  #overlay-box {
+    background: #fff;
+    border-radius: 18px;
+    padding: 44px 56px;
+    text-align: center;
+    min-width: 300px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+  }
+
+  #overlay-box h2 {
+    font-size: 38px;
+    color: #c0392b;
+    margin-bottom: 24px;
+  }
+
+  #ov-score {
+    font-size: 30px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 10px;
+  }
+
+  #ov-tps {
+    font-size: 22px;
+    color: #555;
+    margin-bottom: 8px;
+  }
+
+  #ov-best {
+    font-size: 19px;
+    color: #27ae60;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  #ov-level {
+    font-size: 19px;
+    color: #e67e22;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+
+  /* ── Intro overlay ── */
+  #intro {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  #intro-card {
+    background: #fff; border-radius: 16px; padding: 28px 24px;
+    max-width: 360px; width: 100%; text-align: center;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.35);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  #intro-card h2 { font-size: 22px; font-weight: 900; color: #2c3e50; }
+  #intro-desc { font-size: 14px; color: #555; line-height: 1.6; }
+  .intro-langs { display: flex; justify-content: center; gap: 8px; }
+  .intro-lang-btn {
+    padding: 5px 14px; border-radius: 20px;
+    border: 2px solid #ddd; background: #f5f5f5;
+    color: #666; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .intro-lang-btn.active { background: #6a0dad; border-color: #6a0dad; color: #fff; }
+  .intro-play-btn {
+    padding: 13px; border-radius: 50px; border: none;
+    background: linear-gradient(135deg, #6a0dad, #1e90ff);
+    color: #fff; font-size: 18px; font-weight: 800;
+    cursor: pointer; font-family: inherit;
+    box-shadow: 0 6px 20px rgba(106,13,173,0.4);
+    transition: transform 0.15s;
+  }
+  .intro-play-btn:hover { transform: translateY(-2px); }
+
+</style>
+</head>
+<body>
+
+<!-- Intro overlay -->
+<div id="intro">
+  <div id="intro-card">
+    <div style="font-size:64px;line-height:1;">🎹</div>
+    <h2>Piano Tiles</h2>
+    <p id="intro-desc"></p>
+    <div class="intro-langs">
+      <button class="intro-lang-btn" data-lang="uz">🇺🇿 UZ</button>
+      <button class="intro-lang-btn" data-lang="ru">🇷🇺 RU</button>
+      <button class="intro-lang-btn" data-lang="en">🇬🇧 EN</button>
+    </div>
+    <button class="intro-play-btn" id="intro-play-btn"></button>
+  </div>
+</div>
+
+<div id="score">0</div>
+
+<div id="game">
+  <div class="col-sep" style="left:25%"></div>
+  <div class="col-sep" style="left:50%"></div>
+  <div class="col-sep" style="left:75%"></div>
+  <div id="start-btn"><span>START</span></div>
+</div>
+
+<div id="overlay">
+  <div id="overlay-box">
+    <h2>Game Over</h2>
+    <div id="ov-score">Ball: 0</div>
+    <div id="ov-tps">0.00 tiles/s</div>
+    <div id="ov-best">Best: 0.00 tiles/s</div>
+    <div id="ov-level"></div>
+    <div id="end-btns" style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
+      <button id="btn-home" title="Bosh sahifa" onclick="window.location.href='index.html'"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:#f0f0f0;font-size:24px;cursor:pointer;">🏠</button>
+      <button id="btn-replay" title="Qayta o'ynash"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#667eea,#764ba2);font-size:24px;cursor:pointer;">🔄</button>
+      <button id="btn-next" title="Keyingi o'yin" onclick="window.location.href=nextGame"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:#4CAF50;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20" fill="white"/><rect x="19" y="4" width="3" height="16" rx="1" fill="white"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const nextGame = 'schulte_table.html';
+
+  /* ── Intro language ── */
+  const INTRO_TR = {
+    uz: { desc: "4 ta ustundan qora katak tushib keladi. Yashil katak bosma — faqat qora katakni bos! Qora katak pastdan chiqib ketsa yoki yashil katak bosib qo'ysang o'yin tugaydi.", play: "O'ynash" },
+    ru: { desc: "Чёрные плитки падают в 4 колонках. Не нажимай на зелёное — только на чёрное! Если чёрная плитка упадёт вниз или нажмёшь зелёное — игра закончится.", play: "Играть" },
+    en: { desc: "Black tiles fall in 4 columns. Don't tap the green — only tap the black tiles! If a black tile falls off or you tap green, the game ends.", play: "Play" },
+  };
+  let introLang = localStorage.getItem('piano_lang') || 'uz';
+
+  function applyIntroLang(l) {
+    introLang = l;
+    localStorage.setItem('piano_lang', l);
+    document.querySelectorAll('.intro-lang-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.lang === l)
+    );
+    document.getElementById('intro-desc').textContent = INTRO_TR[l].desc;
+    document.getElementById('intro-play-btn').textContent = INTRO_TR[l].play;
+  }
+
+  document.querySelectorAll('.intro-lang-btn').forEach(b =>
+    b.addEventListener('click', () => applyIntroLang(b.dataset.lang))
+  );
+  document.getElementById('intro-play-btn').addEventListener('click', () => {
+    document.getElementById('intro').style.display = 'none';
+  });
+  applyIntroLang(introLang);
+
+  const gameEl   = document.getElementById('game');
+  const scoreEl  = document.getElementById('score');
+  const startBtn = document.getElementById('start-btn');
+  const overlay  = document.getElementById('overlay');
+  const ovScore  = document.getElementById('ov-score');
+  const ovTps    = document.getElementById('ov-tps');
+  const ovBest   = document.getElementById('ov-best');
+  const ovLevel  = document.getElementById('ov-level');
+
+  let gameStarted = false;
+  let score       = 0;
+  let speed       = 0;       // px per frame
+  let tiles       = [];      // active tile objects
+  let latestTile  = null;    // most recently spawned tile
+  let animId      = null;
+  let startTime   = 0;
+  let best        = parseFloat(localStorage.getItem('pt_best') || '0');
+  let maxLabel    = '⭐';
+
+  function screenH()  { return window.innerHeight; }
+  function tileH()    { return screenH() * 0.25; }
+
+  function getDifficulty(s) {
+    if (s < 5)  return { speedMs: 2800, label: '⭐' };
+    if (s < 10) return { speedMs: 2400, label: '⭐⭐' };
+    if (s < 15) return { speedMs: 2000, label: '⭐⭐⭐' };
+    if (s < 20) return { speedMs: 1600, label: '⭐⭐⭐⭐' };
+    if (s < 30) return { speedMs: 1200, label: '⭐⭐⭐⭐⭐' };
+    if (s < 40) return { speedMs: 900,  label: '🔥' };
+    return             { speedMs: 700,  label: '💀' };
+  }
+
+  // Convert ms travel time → px per frame at 60fps
+  function speedFromMs(ms) {
+    return (screenH() * 1.25) / (ms / 1000 * 60);
+  }
+
+  // ── Spawn one new tile at a random column ──────────────────────────────────
+  function spawnTile() {
+    const col = Math.floor(Math.random() * 4);
+    const el  = document.createElement('div');
+    el.className    = 'tile';
+    el.style.left   = (col * 25) + '%';
+    const initTop   = -tileH();
+    el.style.top    = initTop + 'px';
+    gameEl.appendChild(el);
+
+    const tile = { el, top: initTop, active: true, spawned: false };
+    tiles.push(tile);
+    latestTile = tile;
+    return tile;
+  }
+
+  // ── Hit a tile (correct click) ─────────────────────────────────────────────
+  function hitTile(tile) {
+    if (!tile.active) return;
+    tile.active = false;
+    tile.el.remove();
+    tiles = tiles.filter(t => t !== tile);
+
+    score++;
+    const diff = getDifficulty(score);
+    speed = speedFromMs(diff.speedMs);
+    if (diff.label.length > maxLabel.length || diff.label === '🔥' || diff.label === '💀') {
+      maxLabel = diff.label;
+    }
+    scoreEl.textContent = score + ' ' + diff.label;
+
+    if (tile === latestTile && !tile.spawned) {
+      tile.spawned = true;
+      spawnTile();
+    }
+  }
+
+  // ── Main animation loop ────────────────────────────────────────────────────
+  function loop() {
+    const h = screenH();
+
+    for (let i = tiles.length - 1; i >= 0; i--) {
+      const t = tiles[i];
+      t.top += speed;
+      t.el.style.top = t.top + 'px';
+
+      if (t.top > h) {
+        gameOver();
+        return;
+      }
+    }
+
+    if (latestTile && !latestTile.spawned && latestTile.top > h * 0.45) {
+      latestTile.spawned = true;
+      spawnTile();
+    }
+
+    animId = requestAnimationFrame(loop);
+  }
+
+  // ── Single unified input handler ───────────────────────────────────────────
+  function handleInput(e) {
+    if (e.type === 'touchstart') e.preventDefault();
+
+    const target = e.target;
+
+    if (!gameStarted) {
+      // Check if START button (or its child span) was tapped
+      if (target === startBtn || target.parentElement === startBtn) {
+        startGame();
+      }
+      return;
+    }
+
+    // Game is running — check what was tapped
+    const tileEl = target.classList.contains('tile') ? target : null;
+    if (tileEl) {
+      const tile = tiles.find(t => t.el === tileEl);
+      if (tile) hitTile(tile);
+    } else {
+      // Tapped on green background → game over
+      gameOver();
+    }
+  }
+
+  gameEl.addEventListener('mousedown', handleInput);
+  gameEl.addEventListener('touchstart', handleInput, { passive: false });
+
+  // ── Restart ────────────────────────────────────────────────────────────────
+  document.getElementById('btn-replay').addEventListener('click', () => location.reload());
+
+  // ── startGame ─────────────────────────────────────────────────────────────
+  function startGame() {
+    if (gameStarted) return;
+    gameStarted = true;
+    score       = 0;
+    tiles       = [];
+    latestTile  = null;
+    startTime   = performance.now();
+
+    scoreEl.textContent = '0 ⭐';
+    maxLabel = '⭐';
+    speed = speedFromMs(getDifficulty(0).speedMs);
+    startBtn.style.display = 'none';
+
+    // Remove preview tile if present
+    const prev = document.getElementById('preview-tile');
+    if (prev) prev.remove();
+
+    spawnTile();
+    animId = requestAnimationFrame(loop);
+  }
+
+  // ── gameOver ───────────────────────────────────────────────────────────────
+  function gameOver() {
+    if (!gameStarted) return;
+    gameStarted = false;
+    cancelAnimationFrame(animId);
+
+    const elapsed = (performance.now() - startTime) / 1000;
+    const tps     = elapsed > 0 ? score / elapsed : 0;
+
+    if (tps > best) {
+      best = tps;
+      localStorage.setItem('pt_best', best.toFixed(3));
+    }
+
+    ovScore.textContent = 'Ball: ' + score;
+    ovTps.textContent   = tps.toFixed(2) + ' tiles/s';
+    ovBest.textContent  = 'Best: ' + best.toFixed(3) + ' tiles/s';
+    ovLevel.textContent = 'Eng yuqori daraja: ' + maxLabel;
+    overlay.classList.add('show');
+  }
+
+  // ── Preview tile shown before game starts ──────────────────────────────────
+  (function showPreview() {
+    const col  = Math.floor(Math.random() * 4);
+    const prev = document.createElement('div');
+    prev.className = 'tile';
+    prev.id        = 'preview-tile';
+    prev.style.left = (col * 25) + '%';
+    prev.style.top  = (screenH() - tileH() * 1.4) + 'px';
+    gameEl.appendChild(prev);
+  })();
+</script>
+</body>
+</html>

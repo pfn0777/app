@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Brain Games</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #0f0f1a, #1a1a2e);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(135deg, rgba(15,15,26,0.95), rgba(26,26,46,0.95));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+
+  .lang-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .lang-btn {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: inherit;
+    letter-spacing: 0.3px;
+  }
+  .lang-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: transparent;
+    color: #fff;
+  }
+  .lang-btn:hover:not(.active) {
+    border-color: rgba(255,255,255,0.4);
+    color: rgba(255,255,255,0.9);
+  }
+
+  /* ── Subheader ── */
+  .subheader {
+    text-align: center;
+    padding: 8px 20px 20px;
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 0 16px 24px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ── Card ── */
+  .card {
+    border-radius: 20px;
+    padding: 20px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    opacity: 0;
+    transform: translateY(30px);
+    will-change: transform, opacity;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.08);
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .card:hover::before { opacity: 1; }
+  .card:hover { transform: scale(1.05); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+  .card:active { transform: scale(0.95) !important; }
+
+  .card-icon {
+    font-size: 48px;
+    line-height: 1;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-6px); }
+  }
+
+  /* stagger float so cards don't all move together */
+  .card:nth-child(1) .card-icon { animation-delay: 0s; }
+  .card:nth-child(2) .card-icon { animation-delay: 0.4s; }
+  .card:nth-child(3) .card-icon { animation-delay: 0.8s; }
+  .card:nth-child(4) .card-icon { animation-delay: 1.2s; }
+  .card:nth-child(5) .card-icon { animation-delay: 1.6s; }
+  .card:nth-child(6) .card-icon { animation-delay: 2.0s; }
+  .card:nth-child(7) .card-icon { animation-delay: 2.4s; }
+
+  .card-name {
+    font-size: 16px;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.2;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .card-record {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+    background: rgba(0,0,0,0.25);
+    padding: 3px 10px;
+    border-radius: 20px;
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ── Card gradients ── */
+  .card-1 { background: linear-gradient(135deg, #1a1a2e, #16213e); }
+  .card-2 { background: linear-gradient(135deg, #0f3460, #533483); }
+  .card-3 { background: linear-gradient(135deg, #e94560, #f5a623); }
+  .card-4 { background: linear-gradient(135deg, #11998e, #38ef7d); }
+  .card-5 { background: linear-gradient(135deg, #4776e6, #8e54e9); }
+  .card-6 { background: linear-gradient(135deg, #f7971e, #ffd200); }
+  .card-7 { background: linear-gradient(135deg, #56ccf2, #2f80ed); }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 8px 20px 32px;
+    color: rgba(255,255,255,0.25);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  /* ── Entrance animation ── */
+  @keyframes cardIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🧠 Brain Games</div>
+  <div class="lang-row">
+    <button class="lang-btn" data-lang="uz">UZ</button>
+    <button class="lang-btn" data-lang="ru">RU</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+  </div>
+</header>
+
+<p class="subheader" id="subheader"></p>
+
+<div class="grid" id="grid">
+
+  <a class="card card-1" href="piano_tiles.html" data-game="piano_tiles.html">
+    <span class="card-icon">🎹</span>
+    <span class="card-name" data-key="piano"></span>
+    <span class="card-record" data-record="piano_tiles.html"></span>
+  </a>
+
+  <a class="card card-2" href="schulte_table.html" data-game="schulte_table.html">
+    <span class="card-icon">🔢</span>
+    <span class="card-name" data-key="schulte"></span>
+    <span class="card-record" data-record="schulte_table.html"></span>
+  </a>
+
+  <a class="card card-3" href="colors_game.html" data-game="colors_game.html">
+    <span class="card-icon">🎨</span>
+    <span class="card-name" data-key="colors"></span>
+    <span class="card-record" data-record="colors_game.html"></span>
+  </a>
+
+  <a class="card card-4" href="math_game.html" data-game="math_game.html">
+    <span class="card-icon">🧮</span>
+    <span class="card-name" data-key="math"></span>
+    <span class="card-record" data-record="math_game.html"></span>
+  </a>
+
+  <a class="card card-5" href="iq_game.html" data-game="iq_game.html">
+    <span class="card-icon">🧠</span>
+    <span class="card-name" data-key="iq"></span>
+    <span class="card-record" data-record="iq_game.html"></span>
+  </a>
+
+  <a class="card card-6" href="pattern_game.html" data-game="pattern_game.html">
+    <span class="card-icon">🔲</span>
+    <span class="card-name" data-key="pattern"></span>
+    <span class="card-record" data-record="pattern_game.html"></span>
+  </a>
+
+  <a class="card card-7" href="fly_game.html" data-game="fly_game.html">
+    <span class="card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="52" height="52" style="display:block"><ellipse cx="50" cy="55" rx="12" ry="18" fill="white"/><circle cx="50" cy="33" r="10" fill="white"/><circle cx="45" cy="30" r="4" fill="rgba(0,0,0,0.4)"/><circle cx="55" cy="30" r="4" fill="rgba(0,0,0,0.4)"/><circle cx="45" cy="30" r="2" fill="white"/><circle cx="55" cy="30" r="2" fill="white"/><ellipse cx="28" cy="38" rx="18" ry="9" fill="rgba(255,255,255,0.25)" stroke="white" stroke-width="1.5" transform="rotate(-20,28,38)"/><ellipse cx="72" cy="38" rx="18" ry="9" fill="rgba(255,255,255,0.25)" stroke="white" stroke-width="1.5" transform="rotate(20,72,38)"/><ellipse cx="30" cy="52" rx="14" ry="7" fill="rgba(255,255,255,0.15)" stroke="white" stroke-width="1.5" transform="rotate(-10,30,52)"/><ellipse cx="70" cy="52" rx="14" ry="7" fill="rgba(255,255,255,0.15)" stroke="white" stroke-width="1.5" transform="rotate(10,70,52)"/><line x1="44" y1="60" x2="25" y2="72" stroke="white" stroke-width="1.5"/><line x1="50" y1="63" x2="50" y2="78" stroke="white" stroke-width="1.5"/><line x1="56" y1="60" x2="75" y2="72" stroke="white" stroke-width="1.5"/><line x1="42" y1="55" x2="22" y2="60" stroke="white" stroke-width="1.5"/><line x1="58" y1="55" x2="78" y2="60" stroke="white" stroke-width="1.5"/><line x1="45" y1="24" x2="35" y2="14" stroke="white" stroke-width="1.5"/><line x1="55" y1="24" x2="65" y2="14" stroke="white" stroke-width="1.5"/></svg></span>
+    <span class="card-name" data-key="fly"></span>
+    <span class="card-record" data-record="fly_game.html"></span>
+  </a>
+
+</div>
+
+<footer>
+  🧠 Brain Games &bull; v1.0<br>
+  <span id="footer-sub"></span>
+</footer>
+
+<script>
+  /* ── Telegram ── */
+  if (window.Telegram?.WebApp) {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+  }
+
+  /* ── Translations ── */
+  const TR = {
+    uz: {
+      sub:        'Miyangizni mashq qiling!',
+      footerSub:  'Miyani rivojlantiruvchi o\'yinlar',
+      piano:      'Piano Tiles',
+      schulte:    'Schulte',
+      colors:     'Ranglar',
+      math:       'Matematika',
+      iq:         'IQ O\'yin',
+      pattern:    'Pattern',
+      fly:        'Chivin',
+      best:       'Rekord',
+      noRecord:   '--',
+    },
+    ru: {
+      sub:        'Тренируйте свой мозг!',
+      footerSub:  'Игры для развития мозга',
+      piano:      'Piano Tiles',
+      schulte:    'Schulte',
+      colors:     'Цвета',
+      math:       'Математика',
+      iq:         'IQ Игра',
+      pattern:    'Pattern',
+      fly:        'Муха',
+      best:       'Рекорд',
+      noRecord:   '--',
+    },
+    en: {
+      sub:        'Train your brain!',
+      footerSub:  'Brain-training games',
+      piano:      'Piano Tiles',
+      schulte:    'Schulte',
+      colors:     'Colors',
+      math:       'Math',
+      iq:         'IQ Game',
+      pattern:    'Pattern',
+      fly:        'Fly',
+      best:       'Best',
+      noRecord:   '--',
+    },
+  };
+
+  /* ── Records ── */
+  const RECORDS = {
+    'piano_tiles.html':   { key: 'pt_best',        fmt: v => parseFloat(v).toFixed(2) + ' t/s' },
+    'schulte_table.html': { key: 'schulte_best_0',  fmt: v => fmtTime(parseInt(v)) },
+    'colors_game.html':   { key: 'colors_best',     fmt: v => v },
+    'math_game.html':     { key: 'math_best_score', fmt: v => v },
+    'iq_game.html':       { key: 'iq_best',         fmt: v => v },
+    'pattern_game.html':  { key: 'pattern_best',    fmt: v => v },
+    'fly_game.html':      { key: 'fly_best',        fmt: v => v },
+  };
+
+  function fmtTime(s) {
+    if (!s || isNaN(s)) return '--';
+    const m = Math.floor(s / 60), sec = s % 60;
+    return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  }
+
+  /* ── Lang ── */
+  let lang = localStorage.getItem('brain_lang') || localStorage.getItem('schulte_lang') || 'uz';
+  if (!TR[lang]) lang = 'uz';
+
+  function applyLang(l) {
+    lang = l;
+    localStorage.setItem('brain_lang', l);
+    const t = TR[l];
+
+    document.querySelectorAll('.lang-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.lang === l)
+    );
+
+    document.getElementById('subheader').textContent = t.sub;
+    document.getElementById('footer-sub').textContent = t.footerSub;
+
+    document.querySelectorAll('[data-key]').forEach(el => {
+      el.textContent = t[el.dataset.key] || '';
+    });
+
+    document.querySelectorAll('[data-record]').forEach(el => {
+      const game = el.dataset.record;
+      const rec  = RECORDS[game];
+      if (!rec) { el.textContent = t.noRecord; return; }
+      const val = localStorage.getItem(rec.key);
+      if (!val || val === '0') {
+        el.textContent = t.noRecord;
+      } else {
+        el.textContent = '🏆 ' + t.best + ': ' + rec.fmt(val);
+      }
+    });
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.addEventListener('click', () => applyLang(b.dataset.lang))
+  );
+
+  applyLang(lang);
+
+  /* ── Entrance animation ── */
+  document.querySelectorAll('.card').forEach((card, i) => {
+    card.style.animationDelay = (i * 0.08) + 's';
+    card.style.animationDuration = '0.45s';
+    card.style.animationFillMode = 'forwards';
+    card.style.animationTimingFunction = 'cubic-bezier(0.22, 1, 0.36, 1)';
+    card.style.animationName = 'cardIn';
+  });
+</script>
+</body>
+</html>

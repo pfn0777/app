@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fly Game</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+    flex-shrink: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+    z-index: 10;
+  }
+
+  .h-logo { font-size: 20px; font-weight: 900; color: #2c3e50; white-space: nowrap; }
+
+  .h-langs { display: flex; gap: 6px; }
+  .lang-btn {
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: 2px solid #ddd;
+    background: #f5f5f5;
+    color: #666;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .lang-btn.active { background: #4a90d9; border-color: #4a90d9; color: #fff; font-weight: 800; }
+  .lang-btn:hover:not(.active) { border-color: #aaa; color: #333; }
+
+  .h-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .h-stat {
+    display: flex; align-items: baseline; gap: 5px;
+    font-size: 13px; font-weight: 600; color: #666; white-space: nowrap;
+  }
+  .h-stat span { font-size: 20px; font-weight: 900; color: #4a90d9; }
+
+  #finish-btn {
+    padding: 8px 16px;
+    background: #e74c3c; color: #fff;
+    border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit; white-space: nowrap; transition: background 0.15s;
+  }
+  #finish-btn:hover { background: #c0392b; }
+
+  /* ── Progress ── */
+  .progress-track { height: 7px; background: #dde3ea; flex-shrink: 0; }
+  #progress-bar {
+    height: 100%;
+    background: #F59E0B;
+    width: 0%;
+    transition: width linear;
+  }
+
+  /* ── Game area ── */
+  #game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 16px 12px 24px;
+  }
+
+  #phase-text {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2c3e50;
+    text-align: center;
+    min-height: 28px;
+  }
+
+  #arrow-display { display: none; }
+
+  #step-counter {
+    font-size: 15px;
+    font-weight: 700;
+    color: #555;
+    min-height: 22px;
+  }
+
+  /* ── Grid ── */
+  #grid {
+    display: grid;
+    border: 2px solid #4a90d9;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #4a90d9;
+    font-size: 40px;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.15s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cell.clickable {
+    cursor: pointer;
+  }
+  .cell.clickable:hover { background: #eaf4ff; }
+  .cell.clickable:active { transform: scale(0.93); }
+
+  .cell.correct {
+    background: #27ae60 !important;
+    animation: popIn 0.3s ease;
+  }
+  .cell.wrong {
+    background: #e74c3c !important;
+    animation: shake 0.35s ease;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.85); }
+    to   { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+
+  /* ── Overlays ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .overlay.hidden { display: none; }
+
+  .ov-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 44px 52px;
+    max-width: 420px; width: 100%;
+    text-align: center;
+    box-shadow: 0 16px 56px rgba(0,0,0,0.26);
+    display: flex; flex-direction: column; gap: 16px;
+    animation: slideUp 0.28s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .ov-icon { font-size: 52px; line-height: 1; }
+  .ov-card h2 { font-size: 26px; font-weight: 900; color: #2c3e50; }
+
+  .ov-lang-row { display: flex; justify-content: center; gap: 8px; }
+  .ov-lang-btn {
+    padding: 6px 16px; border-radius: 20px;
+    border: 2px solid #ddd; background: #f5f5f5;
+    color: #666; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .ov-lang-btn.active { background: #4a90d9; border-color: #4a90d9; color: #fff; font-weight: 800; }
+  .ov-lang-btn:hover:not(.active) { border-color: #aaa; color: #333; }
+
+  .ov-desc { font-size: 15px; color: #555; line-height: 1.65; }
+
+  .ov-rows { display: flex; flex-direction: column; }
+  .ov-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 0; border-bottom: 1px solid #f0f0f0;
+    font-size: 15px; color: #555; gap: 12px;
+  }
+  .ov-row:last-child { border-bottom: none; }
+  .ov-row strong { font-size: 21px; color: #2c3e50; font-weight: 900; }
+
+  .ov-record-msg { font-size: 16px; font-weight: 800; color: #27ae60; min-height: 22px; }
+
+  .ov-play-btn {
+    padding: 16px 48px;
+    background: linear-gradient(135deg, #4a90d9, #2980b9);
+    color: #fff; border: none; border-radius: 50px;
+    font-size: 20px; font-weight: 800; cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(74,144,217,0.38);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .ov-play-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(74,144,217,0.45); }
+  .ov-play-btn:active { transform: scale(0.97); }
+
+  #start-round-btn {
+    padding: 13px 40px;
+    background: linear-gradient(135deg, #4a90d9, #2980b9);
+    color: #fff; border: none; border-radius: 50px;
+    font-size: 18px; font-weight: 800; cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 16px rgba(74,144,217,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  #start-round-btn:hover { transform: translateY(-2px); }
+  #start-round-btn:active { transform: scale(0.97); }
+  #start-round-btn.hidden { display: none; }
+
+  @media (max-width: 500px) {
+    .ov-card { padding: 30px 20px; }
+    header { padding: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-logo">🪰 Fly Game</div>
+  <div class="h-langs">
+    <button class="lang-btn" data-lang="uz">🇺🇿 UZ</button>
+    <button class="lang-btn" data-lang="ru">🇷🇺 RU</button>
+    <button class="lang-btn" data-lang="en">🇬🇧 EN</button>
+  </div>
+  <div class="h-right">
+    <div class="h-stat"><label id="lbl-score"></label><span id="h-score">0</span></div>
+    <div class="h-stat"><label id="lbl-best"></label><span id="h-best">0</span></div>
+    <button id="finish-btn">🏁 <span id="lbl-finish"></span></button>
+  </div>
+</header>
+
+<div class="progress-track"><div id="progress-bar"></div></div>
+
+<div id="game-area">
+  <div id="phase-text"></div>
+  <div id="arrow-display"></div>
+  <div id="step-counter"></div>
+  <div id="grid"></div>
+  <button id="start-round-btn" class="hidden"></button>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay" id="start-ov">
+  <div class="ov-card">
+    <div class="ov-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="72" height="72"><ellipse cx="50" cy="55" rx="12" ry="18" fill="black"/><circle cx="50" cy="33" r="10" fill="black"/><circle cx="45" cy="30" r="4" fill="white"/><circle cx="55" cy="30" r="4" fill="white"/><circle cx="45" cy="30" r="2" fill="black"/><circle cx="55" cy="30" r="2" fill="black"/><ellipse cx="28" cy="38" rx="18" ry="9" fill="rgba(0,0,0,0.15)" stroke="black" stroke-width="1.5" transform="rotate(-20,28,38)"/><ellipse cx="72" cy="38" rx="18" ry="9" fill="rgba(0,0,0,0.15)" stroke="black" stroke-width="1.5" transform="rotate(20,72,38)"/><ellipse cx="30" cy="52" rx="14" ry="7" fill="rgba(0,0,0,0.1)" stroke="black" stroke-width="1.5" transform="rotate(-10,30,52)"/><ellipse cx="70" cy="52" rx="14" ry="7" fill="rgba(0,0,0,0.1)" stroke="black" stroke-width="1.5" transform="rotate(10,70,52)"/><line x1="44" y1="60" x2="25" y2="72" stroke="black" stroke-width="1.5"/><line x1="50" y1="63" x2="50" y2="78" stroke="black" stroke-width="1.5"/><line x1="56" y1="60" x2="75" y2="72" stroke="black" stroke-width="1.5"/><line x1="42" y1="55" x2="22" y2="60" stroke="black" stroke-width="1.5"/><line x1="58" y1="55" x2="78" y2="60" stroke="black" stroke-width="1.5"/><line x1="45" y1="24" x2="35" y2="14" stroke="black" stroke-width="1.5"/><line x1="55" y1="24" x2="65" y2="14" stroke="black" stroke-width="1.5"/></svg></div>
+    <h2>Fly Game</h2>
+    <p class="ov-desc" id="start-rule"></p>
+    <div class="ov-lang-row">
+      <button class="ov-lang-btn" data-lang="uz">🇺🇿 UZ</button>
+      <button class="ov-lang-btn" data-lang="ru">🇷🇺 RU</button>
+      <button class="ov-lang-btn" data-lang="en">🇬🇧 EN</button>
+    </div>
+    <button class="ov-play-btn" id="play-btn"></button>
+  </div>
+</div>
+
+<!-- End overlay -->
+<div class="overlay hidden" id="end-ov">
+  <div class="ov-card">
+    <div class="ov-icon" id="end-icon"></div>
+    <h2 id="end-reason"></h2>
+    <div class="ov-rows">
+      <div class="ov-row"><span id="lbl-correct"></span><strong id="end-correct"></strong></div>
+      <div class="ov-row"><span id="lbl-end-best"></span><strong id="end-best-val"></strong></div>
+    </div>
+    <div class="ov-record-msg" id="end-record-msg"></div>
+    <div id="end-btns" style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
+      <button id="btn-home" title="" onclick="window.location.href='index.html'"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:#f0f0f0;font-size:24px;cursor:pointer;">🏠</button>
+      <button id="btn-replay" title=""
+        style="width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#667eea,#764ba2);font-size:24px;cursor:pointer;">🔄</button>
+      <button id="btn-next" title="" onclick="window.location.href=nextGame"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:#4CAF50;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20" fill="white"/><rect x="19" y="4" width="3" height="16" rx="1" fill="white"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const nextGame = 'piano_tiles.html';
+
+/* ── Directions ── */
+const DIRS = [
+  { dx: 0,  dy: -1, rot: 0   },
+  { dx: 0,  dy:  1, rot: 180 },
+  { dx: -1, dy:  0, rot: 270 },
+  { dx:  1, dy:  0, rot: 90  },
+  { dx: -1, dy: -1, rot: 315 },
+  { dx:  1, dy: -1, rot: 45  },
+  { dx: -1, dy:  1, rot: 225 },
+  { dx:  1, dy:  1, rot: 135 },
+];
+
+const FLY_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="80%" height="80%">
+  <ellipse cx="50" cy="55" rx="12" ry="18" fill="black"/>
+  <circle cx="50" cy="33" r="10" fill="black"/>
+  <circle cx="45" cy="30" r="4" fill="white"/>
+  <circle cx="55" cy="30" r="4" fill="white"/>
+  <circle cx="45" cy="30" r="2" fill="black"/>
+  <circle cx="55" cy="30" r="2" fill="black"/>
+  <ellipse cx="28" cy="38" rx="18" ry="9" fill="rgba(0,0,0,0.15)" stroke="black" stroke-width="1.5" transform="rotate(-20,28,38)"/>
+  <ellipse cx="72" cy="38" rx="18" ry="9" fill="rgba(0,0,0,0.15)" stroke="black" stroke-width="1.5" transform="rotate(20,72,38)"/>
+  <ellipse cx="30" cy="52" rx="14" ry="7" fill="rgba(0,0,0,0.1)" stroke="black" stroke-width="1.5" transform="rotate(-10,30,52)"/>
+  <ellipse cx="70" cy="52" rx="14" ry="7" fill="rgba(0,0,0,0.1)" stroke="black" stroke-width="1.5" transform="rotate(10,70,52)"/>
+  <line x1="44" y1="60" x2="25" y2="72" stroke="black" stroke-width="1.5"/>
+  <line x1="50" y1="63" x2="50" y2="78" stroke="black" stroke-width="1.5"/>
+  <line x1="56" y1="60" x2="75" y2="72" stroke="black" stroke-width="1.5"/>
+  <line x1="42" y1="55" x2="22" y2="60" stroke="black" stroke-width="1.5"/>
+  <line x1="58" y1="55" x2="78" y2="60" stroke="black" stroke-width="1.5"/>
+  <line x1="45" y1="24" x2="35" y2="14" stroke="black" stroke-width="1.5"/>
+  <line x1="55" y1="24" x2="65" y2="14" stroke="black" stroke-width="1.5"/>
+</svg>`;
+
+function makeSVGArrow(rot) {
+  return `<svg viewBox="0 0 100 100" width="100%" height="100%" style="display:block;transform:rotate(${rot}deg)">` +
+    `<line x1="50" y1="80" x2="50" y2="25" stroke="#000" stroke-width="8" stroke-linecap="round"/>` +
+    `<line x1="50" y1="25" x2="30" y2="50" stroke="#000" stroke-width="8" stroke-linecap="round"/>` +
+    `<line x1="50" y1="25" x2="70" y2="50" stroke="#000" stroke-width="8" stroke-linecap="round"/>` +
+    `</svg>`;
+}
+
+/* ── Translations ── */
+const TR = {
+  uz: {
+    startRule:  'Chivin 5x5 gridning markazida turadi. Strelkalar chivinning yo\'nalishini ko\'rsatadi — diqqat bilan kuz! Barcha strelkalar ko\'rsatilgach, chivin qayerda ekanini bos. Osondan boshlanib qiyinlashib boradi.',
+    playBtn:    'O\'ynash',
+    startRound: 'Boshlash',
+    phaseShow:  id => `Qadam: ${id}`,
+    phaseClick: 'Chivin qayerda? Bosing!',
+    finish:     'Tugatish',
+    scoreLabel: 'To\'g\'ri:',
+    bestLabel:  'Rekord:',
+    endWrong:   'Noto\'g\'ri!',
+    endTimeout: 'Vaqt tugadi!',
+    lblCorrect: '✅ To\'g\'ri javoblar:',
+    lblBest:    '🏆 Rekord:',
+    playAgain:  'Qayta o\'ynash',
+    newRecord:  '🎉 Yangi rekord!',
+    homeBtn: 'Bosh sahifa', replayBtn: "Qayta o'ynash", nextBtn: "Keyingi o'yin",
+  },
+  ru: {
+    startRule:  'Муха находится в центре сетки 5×5. Стрелки показывают направление движения мухи — следи внимательно! После всех стрелок нажми на клетку, где оказалась муха. Начинается легко, становится сложнее.',
+    playBtn:    'Играть',
+    startRound: 'Начать',
+    phaseShow:  id => `Шаг: ${id}`,
+    phaseClick: 'Где муха? Нажмите!',
+    finish:     'Завершить',
+    scoreLabel: 'Правильных:',
+    bestLabel:  'Рекорд:',
+    endWrong:   'Неверно!',
+    endTimeout: 'Время вышло!',
+    lblCorrect: '✅ Правильных ответов:',
+    lblBest:    '🏆 Рекорд:',
+    playAgain:  'Играть снова',
+    newRecord:  '🎉 Новый рекорд!',
+    homeBtn: 'Главная', replayBtn: 'Играть снова', nextBtn: 'Следующая игра',
+  },
+  en: {
+    startRule:  'The fly is in the center of a 5×5 grid. Arrows show the fly\'s direction — watch carefully! After all arrows are shown, tap where the fly ended up. Starts easy and gets harder.',
+    playBtn:    'Play',
+    startRound: 'Start',
+    phaseShow:  id => `Step: ${id}`,
+    phaseClick: 'Where is the fly? Click!',
+    finish:     'Finish Game',
+    scoreLabel: 'Correct:',
+    bestLabel:  'Best:',
+    endWrong:   'Wrong!',
+    endTimeout: 'Time\'s up!',
+    lblCorrect: '✅ Correct answers:',
+    lblBest:    '🏆 Best:',
+    playAgain:  'Play Again',
+    newRecord:  '🎉 New record!',
+    homeBtn: 'Home', replayBtn: 'Play Again', nextBtn: 'Next game',
+  },
+};
+
+/* ── State ── */
+let lang          = localStorage.getItem('fly_lang') || 'uz';
+let best          = parseInt(localStorage.getItem('fly_best') || '0', 10);
+let correctCount  = 0;
+let running       = false;
+let locked        = false;
+let timerTO       = null;
+let stepTOs       = [];
+let flyR          = 0;
+let flyC          = 0;
+let gridCols      = 5;
+let totalSteps    = 5;
+let stepSpeed     = 1000;
+let roundAnswerMs = 10000;
+let steps         = [];
+
+/* ── DOM ── */
+const gridEl         = document.getElementById('grid');
+const phaseTextEl    = document.getElementById('phase-text');
+const arrowDisplay   = document.getElementById('arrow-display');
+const stepCounterEl  = document.getElementById('step-counter');
+const progressBar    = document.getElementById('progress-bar');
+const hScoreEl       = document.getElementById('h-score');
+const hBestEl        = document.getElementById('h-best');
+const lblScore       = document.getElementById('lbl-score');
+const lblBest        = document.getElementById('lbl-best');
+const lblFinish      = document.getElementById('lbl-finish');
+const finishBtn      = document.getElementById('finish-btn');
+const startOv        = document.getElementById('start-ov');
+const endOv          = document.getElementById('end-ov');
+const startRule      = document.getElementById('start-rule');
+const playBtn        = document.getElementById('play-btn');
+const playAgainBtn   = document.getElementById('btn-replay');
+const startRoundBtn  = document.getElementById('start-round-btn');
+const endIcon        = document.getElementById('end-icon');
+const endReason      = document.getElementById('end-reason');
+const endCorrect     = document.getElementById('end-correct');
+const endBestVal     = document.getElementById('end-best-val');
+const endRecordMsg   = document.getElementById('end-record-msg');
+const lblCorrect     = document.getElementById('lbl-correct');
+const lblEndBest     = document.getElementById('lbl-end-best');
+
+/* ── Helpers ── */
+function T() { return TR[lang]; }
+
+function getDifficulty() {
+  if (correctCount === 0) return { steps: 5,  speed: 1000, answerTime: 10 };
+  if (correctCount === 1) return { steps: 10, speed: 800,  answerTime: 12 };
+  if (correctCount === 2) return { steps: 15, speed: 700,  answerTime: 15 };
+  if (correctCount === 3) return { steps: 20, speed: 600,  answerTime: 18 };
+  if (correctCount === 4) return { steps: 25, speed: 500,  answerTime: 20 };
+  return                         { steps: 30, speed: 400,  answerTime: 22 };
+}
+
+function cellSize(cols) {
+  const maxW = Math.min(window.innerWidth  - 32, 520);
+  const maxH = Math.min(window.innerHeight - 220, 460);
+  const byW  = Math.floor((maxW - (cols - 1)) / cols);
+  const byH  = Math.floor((maxH - (cols - 1)) / cols);
+  return Math.max(44, Math.min(byW, byH, 80));
+}
+
+function clearStepTOs() {
+  stepTOs.forEach(t => clearTimeout(t));
+  stepTOs = [];
+}
+
+/* ── Language ── */
+function applyLang(l) {
+  lang = l;
+  localStorage.setItem('fly_lang', lang);
+  document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang)
+  );
+  const t = T();
+  lblFinish.textContent    = t.finish;
+  lblScore.textContent     = t.scoreLabel;
+  lblBest.textContent      = t.bestLabel;
+  startRule.textContent    = t.startRule;
+  playBtn.textContent      = t.playBtn;
+  startRoundBtn.textContent = t.startRound;
+  hBestEl.textContent      = best;
+  document.getElementById('btn-home').title   = t.homeBtn;
+  document.getElementById('btn-replay').title = t.replayBtn;
+  document.getElementById('btn-next').title   = t.nextBtn;
+}
+
+/* ── Build grid ── */
+function buildGrid(cols, size, showFly) {
+  gridEl.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+  gridEl.innerHTML = '';
+  const center = Math.floor(cols / 2);
+
+  for (let r = 0; r < cols; r++) {
+    for (let c = 0; c < cols; c++) {
+      const el = document.createElement('div');
+      el.className = 'cell';
+      el.style.width  = size + 'px';
+      el.style.height = size + 'px';
+      el.dataset.r = r;
+      el.dataset.c = c;
+      if (showFly && r === center && c === center) el.innerHTML = FLY_SVG;
+      gridEl.appendChild(el);
+    }
+  }
+}
+
+function getCell(r, c) {
+  return gridEl.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+/* ── Generate steps ── */
+function generateSteps(cols, count) {
+  const center = Math.floor(cols / 2);
+  let r = center, c = center;
+  const result = [];
+
+  for (let i = 0; i < count; i++) {
+    const shuffled = [...DIRS].sort(() => Math.random() - 0.5);
+    let moved = false;
+    for (const d of shuffled) {
+      const nr = r + d.dy;
+      const nc = c + d.dx;
+      if (nr >= 0 && nr < cols && nc >= 0 && nc < cols) {
+        result.push({ rot: d.rot });
+        r = nr; c = nc;
+        moved = true;
+        break;
+      }
+    }
+    if (!moved) {
+      result.push({ rot: DIRS[0].rot });
+    }
+  }
+  return { steps: result, finalR: r, finalC: c };
+}
+
+/* ── Show round (fly at center + start btn) ── */
+function prepareRound() {
+  locked = true;
+  const diff    = getDifficulty();
+  totalSteps    = diff.steps;
+  stepSpeed     = diff.speed;
+  roundAnswerMs = diff.answerTime * 1000;
+  gridCols      = 5;  // always 5x5
+
+  const size = cellSize(gridCols);
+  buildGrid(gridCols, size, true);  // fly shown at center (36px emoji)
+
+  const { steps: s, finalR, finalC } = generateSteps(gridCols, totalSteps);
+  steps = s;
+  flyR  = finalR;
+  flyC  = finalC;
+
+  stepCounterEl.textContent = '';
+  phaseTextEl.textContent   = '';
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '0%';
+
+  startRoundBtn.textContent = T().startRound;
+  startRoundBtn.classList.remove('hidden');
+}
+
+
+/* ── Run arrows — fly disappears, SVG arrow flashes in center cell ── */
+function runArrows() {
+  startRoundBtn.classList.add('hidden');
+  stepCounterEl.textContent = '';
+
+  const SHOW_MS  = stepSpeed;
+  const BLANK_MS = Math.min(150, Math.floor(stepSpeed * 0.18));
+  const STEP_MS  = SHOW_MS + BLANK_MS;
+
+  const center   = Math.floor(gridCols / 2);
+  const centerEl = getCell(center, center);
+
+  // Hide fly — center becomes empty
+  if (centerEl) centerEl.innerHTML = '';
+
+  steps.forEach((step, i) => {
+    // Show SVG arrow
+    const t1 = setTimeout(() => {
+      if (centerEl) centerEl.innerHTML = makeSVGArrow(step.rot);
+      stepCounterEl.textContent = T().phaseShow(i + 1) + ' / ' + totalSteps;
+    }, i * STEP_MS);
+    stepTOs.push(t1);
+
+    // Clear arrow (brief blank)
+    const t2 = setTimeout(() => {
+      if (centerEl) centerEl.innerHTML = '';
+    }, i * STEP_MS + SHOW_MS);
+    stepTOs.push(t2);
+  });
+
+  // All steps done — start click phase
+  const doneT = setTimeout(() => {
+    stepCounterEl.textContent = '';
+    startClickPhase();
+  }, steps.length * STEP_MS + 100);
+  stepTOs.push(doneT);
+}
+
+/* ── Click phase ── */
+function startClickPhase() {
+  locked = false;
+  phaseTextEl.textContent = T().phaseClick;
+
+  const size = cellSize(gridCols);
+  buildGrid(gridCols, size, false); // no fly shown
+
+  // Make all cells clickable
+  gridEl.querySelectorAll('.cell').forEach(el => {
+    el.classList.add('clickable');
+    el.addEventListener('pointerdown', onCellClick, { once: true });
+  });
+
+  // Progress bar
+  const answerTime = roundAnswerMs;
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '100%';
+  progressBar.getBoundingClientRect();
+  progressBar.style.transition = `width ${answerTime}ms linear`;
+  progressBar.style.width = '0%';
+
+  timerTO = setTimeout(() => {
+    if (!locked) endGame('timeout');
+  }, answerTime);
+}
+
+/* ── Cell click ── */
+function onCellClick(e) {
+  e.preventDefault();
+  if (locked || !running) return;
+
+  locked = true;
+  clearTimeout(timerTO);
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '0%';
+
+  gridEl.querySelectorAll('.cell').forEach(el =>
+    el.removeEventListener('pointerdown', onCellClick)
+  );
+
+  const el   = e.currentTarget;
+  const r    = parseInt(el.dataset.r);
+  const c    = parseInt(el.dataset.c);
+  const correct = (r === flyR && c === flyC);
+
+  if (correct) {
+    el.classList.add('correct');
+    el.innerHTML = FLY_SVG;
+    correctCount++;
+    hScoreEl.textContent = correctCount;
+
+    setTimeout(() => {
+      prepareRound();
+    }, 700);
+  } else {
+    el.classList.add('wrong');
+    // Show correct cell
+    const correctEl = getCell(flyR, flyC);
+    if (correctEl) {
+      correctEl.classList.add('correct');
+      correctEl.innerHTML = FLY_SVG;
+    }
+    setTimeout(() => endGame('wrong'), 600);
+  }
+}
+
+/* ── End game ── */
+function endGame(reason) {
+  running = false;
+  locked  = true;
+  clearTimeout(timerTO);
+  clearStepTOs();
+  gridEl.querySelectorAll('.cell').forEach(el =>
+    el.removeEventListener('pointerdown', onCellClick)
+  );
+  startRoundBtn.classList.add('hidden');
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '0%';
+
+  const t = T();
+  endIcon.textContent      = reason === 'timeout' ? '⏱️' : '❌';
+  endReason.textContent    = reason === 'timeout' ? t.endTimeout : t.endWrong;
+  endCorrect.textContent   = correctCount;
+  lblCorrect.textContent   = t.lblCorrect;
+  lblEndBest.textContent   = t.lblBest;
+
+  if (correctCount > best) {
+    best = correctCount;
+    localStorage.setItem('fly_best', best);
+    endRecordMsg.textContent = t.newRecord;
+  } else {
+    endRecordMsg.textContent = '';
+  }
+  endBestVal.textContent = best;
+  hBestEl.textContent    = best;
+  endOv.classList.remove('hidden');
+}
+
+/* ── Start game ── */
+function startGame() {
+  clearTimeout(timerTO);
+  clearStepTOs();
+  gridEl.querySelectorAll('.cell').forEach(el =>
+    el.removeEventListener('pointerdown', onCellClick)
+  );
+  correctCount = 0;
+  locked       = false;
+  running      = true;
+  steps        = [];
+  hScoreEl.textContent = '0';
+  startOv.classList.add('hidden');
+  endOv.classList.add('hidden');
+  arrowDisplay.textContent  = '';
+  stepCounterEl.textContent = '';
+  prepareRound();
+}
+
+/* ── Start round btn ── */
+startRoundBtn.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (!running) return;
+  runArrows();
+});
+
+/* ── Events ── */
+document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
+  b.addEventListener('click', () => applyLang(b.dataset.lang))
+);
+playBtn.addEventListener('click', startGame);
+playAgainBtn.addEventListener('click', startGame);
+finishBtn.addEventListener('click', () => {
+  if (running) {
+    clearTimeout(timerTO);
+    clearStepTOs();
+    endGame('timeout');
+  }
+});
+
+/* ── Init ── */
+applyLang(lang);
+</script>
+</body>
+</html>

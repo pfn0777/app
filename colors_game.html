@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Colors Game</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+    flex-shrink: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .h-logo { font-size: 20px; font-weight: 900; color: #2c3e50; white-space: nowrap; }
+
+  .h-langs { display: flex; gap: 6px; }
+
+  .lang-btn {
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: 2px solid #ddd;
+    background: #f5f5f5;
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .lang-btn.active { background: #764ba2; border-color: #764ba2; color: #fff; font-weight: 800; }
+  .lang-btn:hover:not(.active) { border-color: #aaa; color: #333; }
+
+  .h-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+  .h-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+  }
+  .h-stat span { font-size: 22px; font-weight: 900; color: #764ba2; }
+
+  #finish-btn {
+    padding: 8px 16px;
+    background: #e53935;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  #finish-btn:hover { background: #c62828; }
+
+  /* ── Progress ── */
+  .progress-track { height: 7px; background: #e0e0e0; flex-shrink: 0; }
+  #progress-bar {
+    height: 100%;
+    background: #F59E0B;
+    width: 100%;
+    transition: width linear;
+  }
+
+  /* ── Game area ── */
+  #game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px 16px 32px;
+  }
+
+  #word {
+    font-size: clamp(44px, 12vw, 80px);
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1;
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,0.13));
+    transition: opacity 0.1s;
+    user-select: none;
+  }
+  #word.fade { opacity: 0; }
+
+  #hint-text { font-size: 15px; color: #888; text-align: center; max-width: 340px; }
+
+  /* ── Answers ── */
+  #answers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    width: 100%;
+    max-width: 580px;
+  }
+
+  .ans-btn {
+    padding: 20px 8px;
+    border: 3px solid #e8e8e8;
+    border-radius: 16px;
+    background: #fff;
+    font-size: clamp(19px, 4.5vw, 28px);
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    transition: transform 0.12s, box-shadow 0.12s;
+    font-family: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .ans-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.13); }
+  .ans-btn:active { transform: scale(0.95); }
+
+  .ans-btn.flash-correct { animation: fCorrect 0.38s ease forwards; }
+  .ans-btn.flash-wrong   { animation: fWrong   0.38s ease forwards; }
+
+  @keyframes fCorrect {
+    0%   { background:#fff; border-color:#e8e8e8; transform:scale(1); }
+    45%  { background:#43a047; border-color:#43a047; color:#fff !important; transform:scale(1.09); }
+    100% { background:#fff; border-color:#e8e8e8; transform:scale(1); }
+  }
+  @keyframes fWrong {
+    0%   { background:#fff; border-color:#e8e8e8; transform:scale(1); }
+    45%  { background:#e53935; border-color:#e53935; color:#fff !important; transform:scale(1.09); }
+    100% { background:#fff; border-color:#e8e8e8; transform:scale(1); }
+  }
+
+  #help-wrap { font-size: 13px; color: #1e88e5; cursor: pointer; text-decoration: underline; }
+
+  /* ── Overlays ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+    backdrop-filter: blur(3px);
+  }
+  .overlay.hidden { display: none; }
+
+  .ov-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 44px 52px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 16px 56px rgba(0,0,0,0.28);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: slideUp 0.28s ease;
+  }
+  @keyframes slideUp {
+    from { transform:translateY(28px); opacity:0; }
+    to   { transform:translateY(0);    opacity:1; }
+  }
+
+  .ov-icon { font-size: 52px; line-height: 1; }
+  .ov-card h2 { font-size: 26px; color: #2c3e50; font-weight: 900; }
+
+  .ov-lang-row { display: flex; justify-content: center; gap: 8px; }
+  .ov-lang-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 2px solid #ddd;
+    background: #f5f5f5;
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .ov-lang-btn.active { background: #764ba2; border-color: #764ba2; color: #fff; font-weight: 800; }
+  .ov-lang-btn:hover:not(.active) { border-color: #aaa; color: #333; }
+
+  .ov-rows { display: flex; flex-direction: column; }
+  .ov-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 16px;
+    color: #555;
+    gap: 16px;
+  }
+  .ov-row:last-child { border-bottom: none; }
+  .ov-row strong { font-size: 22px; color: #2c3e50; font-weight: 900; }
+
+  .ov-record { font-size: 16px; font-weight: 800; color: #43a047; min-height: 22px; }
+
+  .ov-play-btn {
+    padding: 16px 48px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(118,75,162,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .ov-play-btn:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(118,75,162,0.4); }
+  .ov-play-btn:active { transform:scale(0.97); }
+
+  @media (max-width:500px) {
+    .ov-card { padding: 30px 20px; }
+    header { padding: 8px 12px; }
+    #answers { gap: 10px; }
+    .ans-btn { padding:15px 6px; border-radius:12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-logo">🎨 Colors</div>
+  <div class="h-langs">
+    <button class="lang-btn" data-lang="uz">🇺🇿 UZ</button>
+    <button class="lang-btn" data-lang="ru">🇷🇺 RU</button>
+    <button class="lang-btn" data-lang="en">🇬🇧 EN</button>
+  </div>
+  <div class="h-right">
+    <div class="h-stat"><label id="lbl-score"></label><span id="h-score">0</span></div>
+    <div class="h-stat"><label id="lbl-best"></label><span id="h-best">0</span></div>
+    <button id="finish-btn">🏁 <span id="lbl-finish"></span></button>
+  </div>
+</header>
+
+<div class="progress-track"><div id="progress-bar"></div></div>
+
+<div id="game-area">
+  <div id="word"></div>
+  <p id="hint-text"></p>
+  <div id="answers"></div>
+  <div id="help-wrap" id="help-link"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay" id="start-ov">
+  <div class="ov-card">
+    <div class="ov-icon">🎨</div>
+    <h2>Colors</h2>
+    <p id="start-rule" style="font-size:16px;color:#555;line-height:1.65"></p>
+    <div class="ov-lang-row">
+      <button class="ov-lang-btn" data-lang="uz">🇺🇿 UZ</button>
+      <button class="ov-lang-btn" data-lang="ru">🇷🇺 RU</button>
+      <button class="ov-lang-btn" data-lang="en">🇬🇧 EN</button>
+    </div>
+    <button class="ov-play-btn" id="play-btn"></button>
+  </div>
+</div>
+
+<!-- End overlay -->
+<div class="overlay hidden" id="end-ov">
+  <div class="ov-card">
+    <div class="ov-icon" id="end-icon"></div>
+    <h2 id="end-reason"></h2>
+    <div class="ov-rows">
+      <div class="ov-row"><span id="lbl-your-score"></span><strong id="end-score"></strong></div>
+      <div class="ov-row"><span id="lbl-correct"></span><strong id="end-correct"></strong></div>
+      <div class="ov-row"><span id="lbl-end-best"></span><strong id="end-best"></strong></div>
+    </div>
+    <div class="ov-record" id="end-record"></div>
+    <div id="end-btns" style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
+      <button id="btn-home" title="" onclick="window.location.href='index.html'"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:#f0f0f0;font-size:24px;cursor:pointer;">🏠</button>
+      <button id="btn-replay" title=""
+        style="width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#667eea,#764ba2);font-size:24px;cursor:pointer;">🔄</button>
+      <button id="btn-next" title="" onclick="window.location.href=nextGame"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:#4CAF50;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20" fill="white"/><rect x="19" y="4" width="3" height="16" rx="1" fill="white"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const nextGame = 'math_game.html';
+
+const COLORS = [
+  { key:'red',    hex:'#e53935' },
+  { key:'blue',   hex:'#1e88e5' },
+  { key:'green',  hex:'#43a047' },
+  { key:'yellow', hex:'#fdd835' },
+  { key:'orange', hex:'#fb8c00' },
+  { key:'purple', hex:'#8e24aa' },
+  { key:'brown',  hex:'#6d4c41' },
+  { key:'black',  hex:'#212121' },
+  { key:'pink',   hex:'#e91e8c' },
+  { key:'gray',   hex:'#757575' },
+];
+
+const TR = {
+  uz: {
+    names: {red:'Qizil',blue:"Ko'k",green:'Yashil',yellow:'Sariq',orange:"To'q sariq",purple:'Binafsha',brown:'Jigarrang',black:'Qora',pink:'Pushti',gray:'Kulrang'},
+    startRule: "Ekranda rang nomi ko'rsatiladi, lekin yozuv rangi boshqa bo'ladi. So'zning MA'NOSINI emas, YOZUV RANGINI tanla! Pastdagi tugmalar ham chalkash rangda — diqqat qil. Noto'g'ri javob yoki vaqt tugasa o'yin tugaydi.",
+    playBtn:'O\'ynash', hint:"So'zning yozuv rangini tanlang.",
+    helpLink:"Yordam kerakmi? Bu yerni bosing.", finish:'Tugatish',
+    scoreLabel:'Score:', bestLabel:'Rekord:',
+    endTimeout:"⏱️ Vaqt tugadi!", endWrong:"❌ Noto'g'ri javob!",
+    yourScore:'Ballingiz:', correctLabel:"To'g'ri:", endBestLabel:'Rekord:',
+    playAgain:"Qayta o'ynash", newRecord:'🏆 Yangi rekord!',
+    homeBtn: 'Bosh sahifa', replayBtn: "Qayta o'ynash", nextBtn: "Keyingi o'yin",
+  },
+  ru: {
+    names: {red:'Красный',blue:'Синий',green:'Зелёный',yellow:'Жёлтый',orange:'Оранжевый',purple:'Фиолетовый',brown:'Коричневый',black:'Чёрный',pink:'Розовый',gray:'Серый'},
+    startRule: 'На экране показывается название цвета, но написано другим цветом. Выбирай ЦВЕТ ТЕКСТА, а не значение слова! Кнопки внизу тоже запутанных цветов — будь внимателен. Ошибка или время — игра окончена.',
+    playBtn:'Играть', hint:'Выберите цвет текста слова.',
+    helpLink:'Нужна помощь? Нажмите здесь.', finish:'Завершить',
+    scoreLabel:'Счёт:', bestLabel:'Рекорд:',
+    endTimeout:'⏱️ Время вышло!', endWrong:'❌ Неверный ответ!',
+    yourScore:'Ваш счёт:', correctLabel:'Правильных:', endBestLabel:'Рекорд:',
+    playAgain:'Играть снова', newRecord:'🏆 Новый рекорд!',
+    homeBtn: 'Главная', replayBtn: 'Играть снова', nextBtn: 'Следующая игра',
+  },
+  en: {
+    names: {red:'Red',blue:'Blue',green:'Green',yellow:'Yellow',orange:'Orange',purple:'Purple',brown:'Brown',black:'Black',pink:'Pink',gray:'Gray'},
+    startRule: 'A color name is shown on screen, but written in a different color. Choose the COLOR OF THE TEXT, not the meaning of the word! The buttons below are also confusing colors — be careful. Wrong answer or timeout ends the game.',
+    playBtn:'Play', hint:'Choose a color which is used for the word.',
+    helpLink:'Need help? Click here.', finish:'Finish Game',
+    scoreLabel:'Score:', bestLabel:'Best:',
+    endTimeout:"⏱️ Time's up!", endWrong:'❌ Wrong answer!',
+    yourScore:'Your score:', correctLabel:'Correct:', endBestLabel:'Best:',
+    playAgain:'Play Again', newRecord:'🏆 New record!',
+    homeBtn: 'Home', replayBtn: 'Play Again', nextBtn: 'Next game',
+  },
+};
+
+// State
+let lang    = localStorage.getItem('colors_lang') || 'uz';
+let best    = parseInt(localStorage.getItem('colors_best') || '0', 10);
+let score   = 0;
+let correct = 0;
+let locked  = false;
+let timerTO = null;
+let running = false;
+
+const Q_MS = 5000;
+
+// DOM
+const wordEl       = document.getElementById('word');
+const hintEl       = document.getElementById('hint-text');
+const answersEl    = document.getElementById('answers');
+const helpWrap     = document.getElementById('help-wrap');
+const progressBar  = document.getElementById('progress-bar');
+const hScoreEl     = document.getElementById('h-score');
+const hBestEl      = document.getElementById('h-best');
+const lblScore     = document.getElementById('lbl-score');
+const lblBest      = document.getElementById('lbl-best');
+const lblFinish    = document.getElementById('lbl-finish');
+const finishBtn    = document.getElementById('finish-btn');
+const startOv      = document.getElementById('start-ov');
+const endOv        = document.getElementById('end-ov');
+const startRule    = document.getElementById('start-rule');
+const playBtn      = document.getElementById('play-btn');
+const playAgainBtn = document.getElementById('btn-replay');
+const endIcon      = document.getElementById('end-icon');
+const endReason    = document.getElementById('end-reason');
+const endScore     = document.getElementById('end-score');
+const endCorrect   = document.getElementById('end-correct');
+const endBest      = document.getElementById('end-best');
+const endRecord    = document.getElementById('end-record');
+const lblYourScore = document.getElementById('lbl-your-score');
+const lblCorrect   = document.getElementById('lbl-correct');
+const lblEndBest   = document.getElementById('lbl-end-best');
+
+function T() { return TR[lang]; }
+function rand(a) { return a[Math.floor(Math.random() * a.length)]; }
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; }
+  return b;
+}
+
+function applyLang(l) {
+  lang = l;
+  localStorage.setItem('colors_lang', lang);
+  document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  const T2 = T();
+  hintEl.textContent    = T2.hint;
+  helpWrap.textContent  = T2.helpLink;
+  lblFinish.textContent = T2.finish;
+  startRule.innerHTML   = T2.startRule;
+  playBtn.textContent   = T2.playBtn;
+  lblScore.textContent  = T2.scoreLabel;
+  lblBest.textContent   = T2.bestLabel;
+  hBestEl.textContent   = best;
+  document.getElementById('btn-home').title   = T2.homeBtn;
+  document.getElementById('btn-replay').title = T2.replayBtn;
+  document.getElementById('btn-next').title   = T2.nextBtn;
+}
+
+function nextQuestion() {
+  locked = false;
+  clearTimeout(timerTO);
+
+  const T2 = T();
+
+  // word text color (what's written)
+  const wordObj = rand(COLORS);
+  // ink color (actual text color, differs from wordObj)
+  let inkObj;
+  do { inkObj = rand(COLORS); } while (inkObj.key === wordObj.key);
+
+  // 2 wrong options (differ from inkObj and wordObj)
+  const pool = COLORS.filter(c => c.key !== inkObj.key && c.key !== wordObj.key);
+  const opts = shuffle([inkObj, ...shuffle(pool).slice(0, 2)]);
+
+  // Each button label ink = random, different from that button's own color
+  wordEl.style.color  = inkObj.hex;
+  wordEl.textContent  = T2.names[wordObj.key].toUpperCase();
+
+  answersEl.innerHTML = '';
+  opts.forEach(opt => {
+    const btnInkPool = COLORS.filter(c => c.key !== opt.key);
+    const btnInk     = rand(btnInkPool).hex;
+
+    const btn = document.createElement('button');
+    btn.className   = 'ans-btn';
+    btn.textContent = T2.names[opt.key];
+    btn.style.color = btnInk;
+    const correct_  = opt.key === inkObj.key;
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); onAnswer(btn, correct_, false); });
+    answersEl.appendChild(btn);
+  });
+
+  // Progress bar
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '100%';
+  progressBar.getBoundingClientRect();
+  progressBar.style.transition = `width ${Q_MS}ms linear`;
+  progressBar.style.width = '0%';
+
+  timerTO = setTimeout(() => { if (!locked) onAnswer(null, false, true); }, Q_MS);
+}
+
+function onAnswer(btn, isCorrect, isTimeout) {
+  if (locked || !running) return;
+  locked = true;
+  clearTimeout(timerTO);
+
+  const w = getComputedStyle(progressBar).width;
+  progressBar.style.transition = 'none';
+  progressBar.style.width = w;
+
+  if (isCorrect) {
+    score   += 10;
+    correct += 1;
+    hScoreEl.textContent = score;
+    if (btn) btn.classList.add('flash-correct');
+    setTimeout(() => {
+      if (btn) btn.classList.remove('flash-correct');
+      wordEl.classList.add('fade');
+      setTimeout(() => { wordEl.classList.remove('fade'); nextQuestion(); }, 110);
+    }, 380);
+  } else {
+    if (btn) btn.classList.add('flash-wrong');
+    setTimeout(() => {
+      if (btn) btn.classList.remove('flash-wrong');
+      endGame(isTimeout ? 'timeout' : 'wrong');
+    }, 420);
+  }
+}
+
+function endGame(reason) {
+  running = false;
+  clearTimeout(timerTO);
+  const T2 = T();
+
+  endIcon.textContent  = reason === 'timeout' ? '⏱️' : '❌';
+  endReason.textContent = reason === 'timeout' ? T2.endTimeout : T2.endWrong;
+  endScore.textContent   = score;
+  endCorrect.textContent = correct;
+  lblYourScore.textContent = T2.yourScore;
+  lblCorrect.textContent   = T2.correctLabel;
+  lblEndBest.textContent   = T2.endBestLabel;
+
+  if (score > best) {
+    best = score;
+    localStorage.setItem('colors_best', best);
+    endRecord.textContent = T2.newRecord;
+  } else {
+    endRecord.textContent = '';
+  }
+  endBest.textContent   = best;
+  hBestEl.textContent   = best;
+  endOv.classList.remove('hidden');
+}
+
+function startGame() {
+  score = correct = 0;
+  running = true;
+  hScoreEl.textContent = '0';
+  startOv.classList.add('hidden');
+  endOv.classList.add('hidden');
+  nextQuestion();
+}
+
+// Lang buttons
+document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b => {
+  b.addEventListener('click', () => applyLang(b.dataset.lang));
+});
+
+playBtn.addEventListener('click', startGame);
+playAgainBtn.addEventListener('click', startGame);
+finishBtn.addEventListener('click', () => { if (running) { clearTimeout(timerTO); endGame('timeout'); } });
+
+// Init
+applyLang(lang);
+</script>
+</body>
+</html>

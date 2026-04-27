@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Schulte Table</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f8;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header row 1 ── */
+  .h-row1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  #h-label { font-size: 22px; line-height: 1; }
+
+  .h-mid {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex: 1;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  #h-timer {
+    font-size: 22px;
+    font-weight: 900;
+    color: #2c3e50;
+    font-variant-numeric: tabular-nums;
+    min-width: 54px;
+  }
+
+  .h-best-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    white-space: nowrap;
+  }
+  .h-best-wrap span { font-size: 16px; font-weight: 900; color: #4a90d9; }
+
+  #finish-btn {
+    padding: 6px 13px;
+    background: #e74c3c; color: #fff;
+    border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit; white-space: nowrap;
+    transition: background 0.15s;
+  }
+  #finish-btn:hover { background: #c0392b; }
+
+  /* ── Header row 2: language buttons ── */
+  .h-row2 {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: #fff;
+    border-top: 1px solid #f0f0f0;
+    flex-shrink: 0;
+  }
+
+  .lang-btn {
+    padding: 4px 14px; border-radius: 20px;
+    border: 2px solid #ddd; background: #f5f5f5;
+    color: #666; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .lang-btn.active { background: #4a90d9; border-color: #4a90d9; color: #fff; font-weight: 800; }
+  .lang-btn:hover:not(.active) { border-color: #aaa; color: #333; }
+
+  /* ── Progress bar ── */
+  .progress-track { height: 6px; background: #dde3ea; flex-shrink: 0; }
+  #progress-bar { height: 100%; background: #F59E0B; width: 100%; transition: width 0.25s ease; }
+
+  /* ── Grid area ── */
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    overflow: hidden;
+  }
+
+  #grid {
+    display: grid;
+    border: 2px solid #4a90d9;
+    border-radius: 6px;
+    overflow: hidden;
+    width: min(95vw, 500px);
+  }
+
+  .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #4a90d9;
+    font-weight: 700;
+    font-size: 24px;
+    color: #1a1a2e;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    aspect-ratio: 1;
+    transition: background 0.12s;
+  }
+
+  .cell:hover { background: #eaf4ff; }
+  .cell:active { background: #d0eaff; }
+
+  .cell.correct {
+    background: #27ae60 !important;
+    color: #fff !important;
+    animation: popOut 0.3s ease forwards;
+  }
+
+  .cell.wrong {
+    background: #e74c3c !important;
+    color: #fff !important;
+    animation: shake 0.3s ease;
+  }
+
+  .cell.done {
+    background: #ecf0f1 !important;
+    color: #bdc3c7 !important;
+    pointer-events: none;
+    cursor: default;
+  }
+
+  @keyframes popOut {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  /* ── Overlays ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .overlay.hidden { display: none; }
+
+  .ov-card {
+    background: #fff;
+    border-radius: 22px;
+    padding: 36px 44px;
+    max-width: 380px; width: 100%;
+    text-align: center;
+    box-shadow: 0 16px 56px rgba(0,0,0,0.28);
+    display: flex; flex-direction: column; gap: 14px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .ov-icon { font-size: 44px; line-height: 1; }
+  .ov-card h2 { font-size: 22px; font-weight: 900; color: #2c3e50; }
+
+  .ov-rows { display: flex; flex-direction: column; }
+  .ov-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid #f0f0f0;
+    font-size: 14px; color: #555; gap: 12px;
+  }
+  .ov-row:last-child { border-bottom: none; }
+  .ov-row strong { font-size: 18px; color: #2c3e50; font-weight: 900; }
+
+  .ov-record-msg { font-size: 15px; font-weight: 800; color: #27ae60; min-height: 20px; }
+
+  /* start overlay play button */
+  .ov-play-btn {
+    padding: 13px 44px;
+    background: linear-gradient(135deg, #4a90d9, #2980b9);
+    color: #fff; border: none; border-radius: 50px;
+    font-size: 18px; font-weight: 800; cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(74,144,217,0.38);
+    transition: transform 0.15s;
+  }
+  .ov-play-btn:hover { transform: translateY(-2px); }
+  .ov-play-btn:active { transform: scale(0.97); }
+
+  /* start overlay lang row */
+  .ov-lang-row { display: flex; justify-content: center; gap: 8px; }
+  .ov-lang-btn {
+    padding: 5px 14px; border-radius: 20px;
+    border: 2px solid #ddd; background: #f5f5f5;
+    color: #666; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .ov-lang-btn.active { background: #4a90d9; border-color: #4a90d9; color: #fff; font-weight: 800; }
+  .ov-lang-btn:hover:not(.active) { border-color: #aaa; color: #333; }
+
+  .ov-desc { font-size: 14px; color: #555; line-height: 1.6; }
+
+  /* end buttons */
+  .end-btns {
+    display: flex; gap: 12px; justify-content: center; margin-top: 4px;
+  }
+  .end-btns button {
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    font-size: 24px; cursor: pointer; transition: transform 0.12s;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .end-btns button:hover { transform: scale(1.1); }
+  #btn-home   { background: #f0f0f0; }
+  #btn-replay { background: linear-gradient(135deg, #667eea, #764ba2); }
+  #btn-next   { background: #4CAF50; color: white; }
+
+  @media (max-width: 480px) {
+    .ov-card { padding: 26px 16px; }
+    .cell { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="h-row1">
+  <div id="h-label">⭐</div>
+  <div class="h-mid">
+    <div id="h-timer">00:00</div>
+    <div class="h-best-wrap"><label id="lbl-best"></label><span id="h-best">--:--</span></div>
+  </div>
+  <button id="finish-btn">🏁 <span id="lbl-finish"></span></button>
+</div>
+
+<div class="h-row2">
+  <button class="lang-btn" data-lang="uz">🇺🇿 UZ</button>
+  <button class="lang-btn" data-lang="ru">🇷🇺 RU</button>
+  <button class="lang-btn" data-lang="en">🇬🇧 EN</button>
+</div>
+
+<div class="progress-track"><div id="progress-bar"></div></div>
+
+<main>
+  <div id="grid"></div>
+</main>
+
+<!-- Start overlay -->
+<div class="overlay" id="start-ov">
+  <div class="ov-card">
+    <div class="ov-icon">🔢</div>
+    <h2>Schulte Table</h2>
+    <p class="ov-desc" id="start-rule"></p>
+    <div class="ov-lang-row">
+      <button class="ov-lang-btn" data-lang="uz">🇺🇿 UZ</button>
+      <button class="ov-lang-btn" data-lang="ru">🇷🇺 RU</button>
+      <button class="ov-lang-btn" data-lang="en">🇬🇧 EN</button>
+    </div>
+    <button class="ov-play-btn" id="play-btn"></button>
+  </div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay hidden" id="end-ov">
+  <div class="ov-card">
+    <div class="ov-icon">❌</div>
+    <h2 id="end-reason"></h2>
+    <div class="ov-rows">
+      <div class="ov-row"><span id="lbl-reached"></span><strong id="end-reached"></strong></div>
+      <div class="ov-row"><span id="lbl-end-time"></span><strong id="end-time-val"></strong></div>
+      <div class="ov-row"><span id="lbl-end-best"></span><strong id="end-best-val"></strong></div>
+    </div>
+    <div class="ov-record-msg" id="end-record-msg"></div>
+    <div class="end-btns">
+      <button id="btn-home" title="" onclick="window.location.href='index.html'">🏠</button>
+      <button id="btn-replay" title="">🔄</button>
+      <button id="btn-next" title="" onclick="window.location.href=nextGame"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20" fill="white"/><rect x="19" y="4" width="3" height="16" rx="1" fill="white"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const nextGame = 'colors_game.html';
+
+/* ── Translations ── */
+const TR = {
+  uz: {
+    startRule:   'Jadvalda sonlar tartibsiz joylashgan. 1 dan boshlab tartibda har bir sonni top va bos. Noto\'g\'ri son bossang yoki vaqt tugasa o\'yin tugaydi. Har daraja o\'tganda jadval kattaroq bo\'ladi!',
+    playBtn:     'O\'ynash',
+    finish:      'Tugatish',
+    bestLabel:   'Rekord:',
+    endWrong:    'Noto\'g\'ri son!',
+    endTimeout:  'Vaqt tugadi!',
+    endFinish:   'O\'yin tugadi!',
+    lblReached:  'Erishilgan daraja:',
+    lblTime:     'Vaqt:',
+    lblBest:     'Rekord:',
+    newRecord:   '🎉 Yangi rekord!',
+    homeBtn:     'Bosh sahifa',
+    replayBtn:   'Qayta o\'ynash',
+    nextBtn:     'Keyingi o\'yin',
+  },
+  ru: {
+    startRule:   'Числа расставлены в таблице в случайном порядке. Находи и нажимай каждое число по порядку, начиная с 1. Ошибка или время — игра окончена. С каждым уровнем таблица становится больше!',
+    playBtn:     'Играть',
+    finish:      'Завершить',
+    bestLabel:   'Рекорд:',
+    endWrong:    'Неверное число!',
+    endTimeout:  'Время вышло!',
+    endFinish:   'Игра завершена!',
+    lblReached:  'Достигнутый уровень:',
+    lblTime:     'Время:',
+    lblBest:     'Рекорд:',
+    newRecord:   '🎉 Новый рекорд!',
+    homeBtn:     'Главная',
+    replayBtn:   'Играть снова',
+    nextBtn:     'Следующая игра',
+  },
+  en: {
+    startRule:   'Numbers are placed randomly in the table. Find and tap each number in order starting from 1. A wrong tap or timeout ends the game. Each level the table gets bigger!',
+    playBtn:     'Play',
+    finish:      'Finish Game',
+    bestLabel:   'Best:',
+    endWrong:    'Wrong number!',
+    endTimeout:  'Time\'s up!',
+    endFinish:   'Game over!',
+    lblReached:  'Level reached:',
+    lblTime:     'Time:',
+    lblBest:     'Best:',
+    newRecord:   '🎉 New record!',
+    homeBtn:     'Home',
+    replayBtn:   'Play Again',
+    nextBtn:     'Next game',
+  },
+};
+
+/* ── Difficulty ── */
+const LABELS = ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '🔥'];
+
+function getDifficulty(lvl) {
+  const sizes = [3, 4, 5, 6, 7];
+  return { size: sizes[Math.min(lvl, 4)] };
+}
+
+function getTimeLimit(size) {
+  return size * size * 5; // 3x3=45s, 4x4=80s, 5x5=125s, 6x6=180s, 7x7=245s
+}
+
+/* ── State ── */
+let lang      = localStorage.getItem('schulte_lang') || 'uz';
+let level     = 0;
+let next      = 1;
+let elapsed   = 0;
+let timeLimit = 45;
+let gridSize  = 3;
+let timerInt  = null;
+let startTime = 0;
+let clicked   = 0;
+let running   = false;
+let started   = false;
+
+/* ── DOM ── */
+const gridEl      = document.getElementById('grid');
+const hTimerEl    = document.getElementById('h-timer');
+const hBestEl     = document.getElementById('h-best');
+const hLabel      = document.getElementById('h-label');
+const progressBar = document.getElementById('progress-bar');
+const startOv     = document.getElementById('start-ov');
+const endOv       = document.getElementById('end-ov');
+
+function T() { return TR[lang]; }
+
+function fmtTime(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+function getBestRaw(lvl) { return localStorage.getItem('schulte_best_' + lvl); }
+
+/* ── Language ── */
+function applyLang(l) {
+  lang = l;
+  localStorage.setItem('schulte_lang', lang);
+  document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang)
+  );
+  const t = T();
+  document.getElementById('lbl-finish').textContent  = t.finish;
+  document.getElementById('lbl-best').textContent    = t.bestLabel;
+  document.getElementById('start-rule').textContent  = t.startRule;
+  document.getElementById('play-btn').textContent    = t.playBtn;
+  document.getElementById('btn-home').title   = t.homeBtn;
+  document.getElementById('btn-replay').title = t.replayBtn;
+  document.getElementById('btn-next').title   = t.nextBtn;
+  updateBestDisplay();
+}
+
+function updateBestDisplay() {
+  const b = getBestRaw(level);
+  hBestEl.textContent = b ? fmtTime(parseInt(b)) : '--:--';
+}
+
+/* ── Shuffle ── */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ── Build grid ── */
+function buildGrid() {
+  const diff   = getDifficulty(level);
+  gridSize     = diff.size;
+  timeLimit    = getTimeLimit(gridSize);
+  const total  = gridSize * gridSize;
+
+  // Compute cell size based on available space
+  const gridW = Math.min(window.innerWidth * 0.95, 500);
+  const cellW = Math.floor(gridW / gridSize);
+  const fs    = Math.max(13, Math.min(Math.floor(cellW * 0.4), 32));
+
+  gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+  gridEl.innerHTML = '';
+
+  shuffle([...Array(total)].map((_,i) => i + 1)).forEach(num => {
+    const el = document.createElement('div');
+    el.className = 'cell';
+    el.style.fontSize = fs + 'px';
+    el.textContent = num;
+    el.dataset.num = num;
+    el.addEventListener('pointerdown', e => { e.preventDefault(); onCellClick(num, el); });
+    gridEl.appendChild(el);
+  });
+
+  hLabel.textContent = LABELS[Math.min(level, 4)];
+  updateBestDisplay();
+}
+
+/* ── Timer ── */
+function startTimer() {
+  if (timerInt) return;
+  startTime = Date.now();
+  timerInt = setInterval(() => {
+    elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const remaining = Math.max(0, timeLimit - elapsed);
+    hTimerEl.textContent = fmtTime(remaining);
+    progressBar.style.width = (remaining / timeLimit * 100) + '%';
+    if (remaining <= 0) endGame('timeout');
+  }, 200);
+  running = true;
+}
+
+function stopTimer() {
+  clearInterval(timerInt);
+  timerInt = null;
+  running  = false;
+}
+
+/* ── Cell click ── */
+function onCellClick(num, el) {
+  if (!running) return;
+  if (!started) { started = true; startTimer(); }
+
+  if (num === next) {
+    el.classList.add('correct');
+    setTimeout(() => { el.classList.remove('correct'); el.classList.add('done'); el.textContent = ''; }, 300);
+    clicked++;
+    next++;
+    if (next > gridSize * gridSize) {
+      // Level complete — next level immediately after brief pause
+      stopTimer();
+      setTimeout(() => {
+        level++;
+        if (level > 4) { endGame('finish'); return; }
+        startLevel();
+      }, 350);
+    }
+  } else {
+    el.classList.add('wrong');
+    stopTimer();
+    running = false;
+    setTimeout(() => endGame('wrong'), 320);
+  }
+}
+
+/* ── Start level ── */
+function startLevel() {
+  stopTimer();
+  next    = 1;
+  elapsed = 0;
+  clicked = 0;
+  started = false;
+  running = false;
+  buildGrid(); // sets timeLimit and gridSize
+  hTimerEl.textContent = fmtTime(timeLimit);
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '100%';
+  running = true; // allow clicks; timer starts on first click
+}
+
+/* ── End game ── */
+function endGame(reason) {
+  stopTimer();
+  running = false;
+  started = false;
+
+  const t     = T();
+  const lvl   = Math.min(level, 4);
+  const label = LABELS[lvl];
+  const spent = Math.min(elapsed, timeLimit);
+  const key   = 'schulte_best_' + lvl;
+  const prev  = localStorage.getItem(key);
+  const isNew = spent > 0 && reason !== 'timeout' && (!prev || spent < parseInt(prev));
+  if (isNew) localStorage.setItem(key, spent);
+
+  document.getElementById('end-reason').textContent    = reason === 'wrong' ? t.endWrong : reason === 'timeout' ? t.endTimeout : t.endFinish;
+  document.getElementById('lbl-reached').textContent   = t.lblReached;
+  document.getElementById('end-reached').textContent   = label;
+  document.getElementById('lbl-end-time').textContent  = t.lblTime;
+  document.getElementById('end-time-val').textContent  = fmtTime(spent);
+  document.getElementById('lbl-end-best').textContent  = t.lblBest;
+  const bestNow = localStorage.getItem(key);
+  document.getElementById('end-best-val').textContent  = bestNow ? fmtTime(parseInt(bestNow)) : '--:--';
+  document.getElementById('end-record-msg').textContent = isNew ? t.newRecord : '';
+  endOv.classList.remove('hidden');
+}
+
+/* ── Start game ── */
+function startGame() {
+  startOv.classList.add('hidden');
+  endOv.classList.add('hidden');
+  level = 0;
+  startLevel();
+}
+
+/* ── Events ── */
+document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
+  b.addEventListener('click', () => applyLang(b.dataset.lang))
+);
+document.getElementById('play-btn').addEventListener('click', startGame);
+document.getElementById('btn-replay').addEventListener('click', startGame);
+document.getElementById('finish-btn').addEventListener('click', () => {
+  if (running || started) { stopTimer(); endGame('finish'); }
+});
+
+/* ── Init ── */
+applyLang(lang);
+buildGrid();
+</script>
+</body>
+</html>

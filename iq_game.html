@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>IQ Game</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #eef2f7;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+    flex-shrink: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+    z-index: 10;
+  }
+
+  .h-logo { font-size: 20px; font-weight: 900; color: #2c3e50; white-space: nowrap; }
+
+  .h-langs { display: flex; gap: 6px; }
+  .lang-btn {
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: 2px solid #ddd;
+    background: #f5f5f5;
+    color: #666;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .lang-btn.active { background: #8e44ad; border-color: #8e44ad; color: #fff; font-weight: 800; }
+  .lang-btn:hover:not(.active) { border-color: #aaa; color: #333; }
+
+  .h-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .h-stat {
+    display: flex; align-items: baseline; gap: 5px;
+    font-size: 13px; font-weight: 600; color: #666; white-space: nowrap;
+  }
+  .h-stat span { font-size: 20px; font-weight: 900; color: #8e44ad; }
+
+  #finish-btn {
+    padding: 8px 16px;
+    background: #e74c3c; color: #fff;
+    border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit; white-space: nowrap; transition: background 0.15s;
+  }
+  #finish-btn:hover { background: #c0392b; }
+
+  /* ── Progress ── */
+  .progress-track { height: 7px; background: #dde3ea; flex-shrink: 0; }
+  #progress-bar {
+    height: 100%;
+    background: #F59E0B;
+    width: 100%;
+    transition: width linear;
+  }
+
+  /* ── Game area ── */
+  #game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 16px 12px 24px;
+  }
+
+  #phase-text {
+    font-size: 17px;
+    font-weight: 700;
+    color: #555;
+    text-align: center;
+    min-height: 26px;
+  }
+
+  #phase-text em { color: #8e44ad; font-style: normal; font-size: 22px; }
+
+  /* ── Grid ── */
+  #grid {
+    display: grid;
+    gap: 6px;
+  }
+
+  .cell {
+    border-radius: 10px;
+    background: #dde3ea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(18px, 3.5vw, 26px);
+    font-weight: 900;
+    color: #fff;
+    cursor: default;
+    transition: background 0.2s, transform 0.12s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .cell.has-num {
+    background: linear-gradient(135deg, #8e44ad, #6c3483);
+    cursor: default;
+  }
+
+  .cell.hidden-num {
+    background: #dde3ea;
+    color: transparent;
+    cursor: pointer;
+  }
+
+  .cell.hidden-num:hover { background: #ccd3dc; transform: scale(0.96); }
+  .cell.hidden-num:active { transform: scale(0.91); }
+
+  .cell.correct {
+    background: linear-gradient(135deg, #27ae60, #1e8449) !important;
+    color: #fff !important;
+    cursor: default !important;
+  }
+
+  .cell.flash-err { animation: fErr 0.4s ease; }
+
+  @keyframes fErr {
+    0%   { background: #dde3ea; }
+    40%  { background: #e74c3c; transform: scale(1.08); }
+    100% { background: #dde3ea; transform: scale(1); }
+  }
+
+  .cell.fade-out { transition: opacity 0.5s ease; opacity: 0; }
+  .cell.fade-in  { transition: opacity 0.35s ease; }
+
+  /* ── Overlays ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.52);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .overlay.hidden { display: none; }
+
+  .ov-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 44px 52px;
+    max-width: 420px; width: 100%;
+    text-align: center;
+    box-shadow: 0 16px 56px rgba(0,0,0,0.26);
+    display: flex; flex-direction: column; gap: 16px;
+    animation: slideUp 0.28s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .ov-icon { font-size: 52px; line-height: 1; }
+  .ov-card h2 { font-size: 26px; font-weight: 900; color: #2c3e50; }
+
+  .ov-lang-row { display: flex; justify-content: center; gap: 8px; }
+  .ov-lang-btn {
+    padding: 6px 16px; border-radius: 20px;
+    border: 2px solid #ddd; background: #f5f5f5;
+    color: #666; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .ov-lang-btn.active { background: #8e44ad; border-color: #8e44ad; color: #fff; font-weight: 800; }
+  .ov-lang-btn:hover:not(.active) { border-color: #aaa; color: #333; }
+
+  .ov-rows { display: flex; flex-direction: column; }
+  .ov-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 0; border-bottom: 1px solid #f0f0f0;
+    font-size: 15px; color: #555; gap: 12px;
+  }
+  .ov-row:last-child { border-bottom: none; }
+  .ov-row strong { font-size: 21px; color: #2c3e50; font-weight: 900; }
+
+  .ov-record-msg { font-size: 16px; font-weight: 800; color: #27ae60; min-height: 22px; }
+
+  .ov-play-btn {
+    padding: 16px 48px;
+    background: linear-gradient(135deg, #8e44ad, #6c3483);
+    color: #fff; border: none; border-radius: 50px;
+    font-size: 20px; font-weight: 800; cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(142,68,173,0.38);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .ov-play-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(142,68,173,0.45); }
+  .ov-play-btn:active { transform: scale(0.97); }
+
+  @media (max-width: 500px) {
+    .ov-card { padding: 30px 20px; }
+    header { padding: 8px 12px; }
+    #grid { gap: 5px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-logo">🧠 IQ Game</div>
+  <div class="h-langs">
+    <button class="lang-btn" data-lang="uz">🇺🇿 UZ</button>
+    <button class="lang-btn" data-lang="ru">🇷🇺 RU</button>
+    <button class="lang-btn" data-lang="en">🇬🇧 EN</button>
+  </div>
+  <div class="h-right">
+    <div class="h-stat"><label id="lbl-score"></label><span id="h-score">0</span></div>
+    <div class="h-stat"><label id="lbl-best"></label><span id="h-best">0</span></div>
+    <button id="finish-btn">🏁 <span id="lbl-finish"></span></button>
+  </div>
+</header>
+
+<div class="progress-track"><div id="progress-bar"></div></div>
+
+<div id="game-area">
+  <div id="phase-text"></div>
+  <div id="grid"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay" id="start-ov">
+  <div class="ov-card">
+    <div class="ov-icon">🧠</div>
+    <h2>IQ Game</h2>
+    <p id="start-rule" style="font-size:16px;color:#555;line-height:1.65"></p>
+    <div class="ov-lang-row">
+      <button class="ov-lang-btn" data-lang="uz">🇺🇿 UZ</button>
+      <button class="ov-lang-btn" data-lang="ru">🇷🇺 RU</button>
+      <button class="ov-lang-btn" data-lang="en">🇬🇧 EN</button>
+    </div>
+    <button class="ov-play-btn" id="play-btn"></button>
+  </div>
+</div>
+
+<!-- End overlay -->
+<div class="overlay hidden" id="end-ov">
+  <div class="ov-card">
+    <div class="ov-icon" id="end-icon"></div>
+    <h2 id="end-reason"></h2>
+    <div class="ov-rows">
+      <div class="ov-row"><span id="lbl-correct"></span><strong id="end-correct"></strong></div>
+      <div class="ov-row"><span id="lbl-max-nums"></span><strong id="end-max-nums"></strong></div>
+      <div class="ov-row"><span id="lbl-end-best"></span><strong id="end-best-val"></strong></div>
+    </div>
+    <div class="ov-record-msg" id="end-record-msg"></div>
+    <div id="end-btns" style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
+      <button id="btn-home" title="" onclick="window.location.href='index.html'"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:#f0f0f0;font-size:24px;cursor:pointer;">🏠</button>
+      <button id="btn-replay" title=""
+        style="width:56px;height:56px;border-radius:50%;border:none;background:linear-gradient(135deg,#667eea,#764ba2);font-size:24px;cursor:pointer;">🔄</button>
+      <button id="btn-next" title="" onclick="window.location.href=nextGame"
+        style="width:56px;height:56px;border-radius:50%;border:none;background:#4CAF50;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20" fill="white"/><rect x="19" y="4" width="3" height="16" rx="1" fill="white"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const nextGame = 'pattern_game.html';
+
+/* ── Translations ─────────────────────────────────────────────────────────── */
+const TR = {
+  uz: {
+    startRule: "Gridda sonlar ko'rsatiladi — eslab qol! Sonlar yo'qolgach, ularni 1 dan boshlab tartibda qayerda turganini bos. O'yin 2 ta sondan boshlanadi, har to'g'ri javobda 1 ta qo'shiladi. Noto'g'ri katak yoki vaqt tugasa o'yin tugaydi.",
+    playBtn:   "O'ynash",
+    phaseShow: "Sonlarni eslab qoling!",
+    phaseClick: n => `<em>${n}</em> ni bosing`,
+    finish:    "Tugatish",
+    scoreLabel:"To'g'ri:",
+    bestLabel: "Rekord:",
+    endTimeout:"⏱️ Vaqt tugadi!",
+    endWrong:  "❌ Noto'g'ri katak!",
+    lblCorrect:"✅ To'g'ri javoblar:",
+    lblMaxNums:"🔢 Eng ko'p son:",
+    lblBest:   "🏆 Rekord:",
+    playAgain: "Qayta o'ynash",
+    newRecord: "🎉 Yangi rekord!",
+    homeBtn: 'Bosh sahifa', replayBtn: "Qayta o'ynash", nextBtn: "Keyingi o'yin",
+  },
+  ru: {
+    startRule: 'В сетке показываются числа — запомни их! После того как они исчезнут, нажимай на их места по порядку с 1. Игра начинается с 2 чисел, с каждым правильным ответом добавляется одно. Ошибка или время — игра окончена.',
+    playBtn:   'Играть',
+    phaseShow: 'Запомните числа!',
+    phaseClick: n => `Нажмите на <em>${n}</em>`,
+    finish:    'Завершить',
+    scoreLabel:'Правильных:',
+    bestLabel: 'Рекорд:',
+    endTimeout:'⏱️ Время вышло!',
+    endWrong:  '❌ Неверная ячейка!',
+    lblCorrect:'✅ Правильных ответов:',
+    lblMaxNums:'🔢 Макс. чисел:',
+    lblBest:   '🏆 Рекорд:',
+    playAgain: 'Играть снова',
+    newRecord: '🎉 Новый рекорд!',
+    homeBtn: 'Главная', replayBtn: 'Играть снова', nextBtn: 'Следующая игра',
+  },
+  en: {
+    startRule: 'Numbers are shown in a grid — memorize them! After they disappear, tap where they were in order starting from 1. The game starts with 2 numbers, each correct answer adds one more. Wrong cell or timeout ends the game.',
+    playBtn:   'Play',
+    phaseShow: 'Remember the numbers!',
+    phaseClick: n => `Click on <em>${n}</em>`,
+    finish:    'Finish Game',
+    scoreLabel:'Correct:',
+    bestLabel: 'Best:',
+    endTimeout:"⏱️ Time's up!",
+    endWrong:  '❌ Wrong cell!',
+    lblCorrect:'✅ Correct answers:',
+    lblMaxNums:'🔢 Max numbers:',
+    lblBest:   '🏆 Best:',
+    playAgain: 'Play Again',
+    newRecord: '🎉 New record!',
+    homeBtn: 'Home', replayBtn: 'Play Again', nextBtn: 'Next game',
+  },
+};
+
+/* ── State ───────────────────────────────────────────────────────────────── */
+let lang         = localStorage.getItem('iq_lang') || 'uz';
+let best         = parseInt(localStorage.getItem('iq_best') || '0', 10);
+let numCount     = 2;
+let correctCount = 0;
+let nextClick    = 1;       // which number to click next
+let cellMap      = [];      // cellMap[i] = { el, num }  for each cell
+let numCells     = [];      // numCells[n] = cell index (1-indexed)
+let locked       = false;
+let running      = false;
+let timerTO      = null;
+let showTO       = null;
+
+const SHOW_MS    = 2000;   // how long numbers are visible
+
+/* ── DOM ─────────────────────────────────────────────────────────────────── */
+const gridEl       = document.getElementById('grid');
+const phaseText    = document.getElementById('phase-text');
+const progressBar  = document.getElementById('progress-bar');
+const hScoreEl     = document.getElementById('h-score');
+const hBestEl      = document.getElementById('h-best');
+const lblScore     = document.getElementById('lbl-score');
+const lblBest      = document.getElementById('lbl-best');
+const lblFinish    = document.getElementById('lbl-finish');
+const finishBtn    = document.getElementById('finish-btn');
+const startOv      = document.getElementById('start-ov');
+const endOv        = document.getElementById('end-ov');
+const startRule    = document.getElementById('start-rule');
+const playBtn      = document.getElementById('play-btn');
+const playAgainBtn = document.getElementById('btn-replay');
+const endIcon      = document.getElementById('end-icon');
+const endReason    = document.getElementById('end-reason');
+const endCorrect   = document.getElementById('end-correct');
+const endMaxNums   = document.getElementById('end-max-nums');
+const endBestVal   = document.getElementById('end-best-val');
+const endRecordMsg = document.getElementById('end-record-msg');
+const lblCorrect   = document.getElementById('lbl-correct');
+const lblMaxNums   = document.getElementById('lbl-max-nums');
+const lblEndBest   = document.getElementById('lbl-end-best');
+
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
+function T() { return TR[lang]; }
+
+function gridSize() {
+  if (numCount <= 4)  return 3;
+  if (numCount <= 9)  return 4;
+  if (numCount <= 16) return 5;
+  return 6;
+}
+
+function cellSize(cols) {
+  const maxW = Math.min(window.innerWidth  - 32, 560);
+  const maxH = Math.min(window.innerHeight - 200, 500);
+  const byW  = Math.floor((maxW - (cols - 1) * 6) / cols);
+  const byH  = Math.floor((maxH - (cols - 1) * 6) / cols);
+  return Math.max(44, Math.min(byW, byH, 100));
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ── Apply language ──────────────────────────────────────────────────────── */
+function applyLang(l) {
+  lang = l;
+  localStorage.setItem('iq_lang', lang);
+  document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang)
+  );
+  const t = T();
+  lblFinish.textContent    = t.finish;
+  lblScore.textContent     = t.scoreLabel;
+  lblBest.textContent      = t.bestLabel;
+  startRule.innerHTML      = t.startRule;
+  playBtn.textContent      = t.playBtn;
+  hBestEl.textContent      = best;
+  document.getElementById('btn-home').title   = t.homeBtn;
+  document.getElementById('btn-replay').title = t.replayBtn;
+  document.getElementById('btn-next').title   = t.nextBtn;
+}
+
+/* ── Build grid ──────────────────────────────────────────────────────────── */
+function buildGrid() {
+  const cols   = gridSize();
+  const total  = cols * cols;
+  const size   = cellSize(cols);
+
+  gridEl.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+  gridEl.innerHTML = '';
+  cellMap = [];
+
+  for (let i = 0; i < total; i++) {
+    const el = document.createElement('div');
+    el.className = 'cell';
+    el.style.width  = size + 'px';
+    el.style.height = size + 'px';
+    gridEl.appendChild(el);
+    cellMap.push({ el, num: 0 });
+  }
+
+  // Place numbers in random cells
+  const indices = shuffle([...Array(total).keys()]).slice(0, numCount);
+  numCells = new Array(numCount + 1);  // 1-indexed
+
+  indices.forEach((idx, i) => {
+    const num = i + 1;
+    cellMap[idx].num = num;
+    numCells[num] = idx;
+    const el = cellMap[idx].el;
+    el.classList.add('has-num');
+    el.textContent = num;
+  });
+}
+
+/* ── Show phase ──────────────────────────────────────────────────────────── */
+function showPhase() {
+  locked = true;
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '100%';
+
+  phaseText.textContent = T().phaseShow;
+  buildGrid();
+
+  showTO = setTimeout(() => {
+    // Fade out numbers
+    cellMap.forEach(c => {
+      if (c.num > 0) c.el.classList.add('fade-out');
+    });
+
+    setTimeout(() => {
+      cellMap.forEach(c => {
+        if (c.num > 0) {
+          c.el.classList.remove('has-num', 'fade-out');
+          c.el.textContent = '';
+          c.el.classList.add('hidden-num');
+          c.el.style.opacity = '';
+        }
+      });
+      startClickPhase();
+    }, 520);
+  }, SHOW_MS);
+}
+
+/* ── Click phase ─────────────────────────────────────────────────────────── */
+function startClickPhase() {
+  locked    = false;
+  nextClick = 1;
+  updatePhaseText();
+
+  const answerTime = (5 + numCount) * 1000;
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '100%';
+  progressBar.getBoundingClientRect();
+  progressBar.style.transition = `width ${answerTime}ms linear`;
+  progressBar.style.width = '0%';
+
+  // Attach click handlers to hidden cells
+  cellMap.forEach((c, idx) => {
+    if (c.num > 0) {
+      c.el.addEventListener('pointerdown', onCellClick, { once: true });
+    }
+  });
+
+  timerTO = setTimeout(() => {
+    if (!locked) endGame('timeout');
+  }, answerTime);
+}
+
+function updatePhaseText() {
+  phaseText.innerHTML = T().phaseClick(nextClick);
+}
+
+/* ── Cell click ──────────────────────────────────────────────────────────── */
+function onCellClick(e) {
+  e.preventDefault();
+  if (locked || !running) return;
+
+  const el  = e.currentTarget;
+  const idx = cellMap.findIndex(c => c.el === el);
+  const c   = cellMap[idx];
+
+  if (c.num === nextClick) {
+    // Correct
+    el.classList.remove('hidden-num');
+    el.classList.add('correct');
+    el.textContent = c.num;
+    el.removeEventListener('pointerdown', onCellClick);
+    nextClick++;
+
+    if (nextClick > numCount) {
+      // All correct
+      locked = true;
+      clearTimeout(timerTO);
+      correctCount++;
+      numCount++;
+      hScoreEl.textContent = correctCount;
+
+      setTimeout(() => {
+        // Remove remaining hidden-num listeners
+        cellMap.forEach(cc => cc.el.removeEventListener('pointerdown', onCellClick));
+        showPhase();
+      }, 600);
+    } else {
+      updatePhaseText();
+    }
+  } else {
+    // Wrong
+    locked = true;
+    clearTimeout(timerTO);
+    el.classList.add('flash-err');
+    // Re-add listener briefly disabled
+    setTimeout(() => endGame('wrong'), 450);
+  }
+}
+
+/* ── End game ────────────────────────────────────────────────────────────── */
+function endGame(reason) {
+  running = false;
+  locked  = true;
+  clearTimeout(timerTO);
+  clearTimeout(showTO);
+  cellMap.forEach(c => c.el.removeEventListener('pointerdown', onCellClick));
+
+  const t = T();
+  endIcon.textContent    = reason === 'timeout' ? '⏱️' : '❌';
+  endReason.textContent  = reason === 'timeout' ? t.endTimeout : t.endWrong;
+  endCorrect.textContent = correctCount;
+  endMaxNums.textContent = numCount;
+  lblCorrect.textContent = t.lblCorrect;
+  lblMaxNums.textContent = t.lblMaxNums;
+  lblEndBest.textContent = t.lblBest;
+
+  if (correctCount > best) {
+    best = correctCount;
+    localStorage.setItem('iq_best', best);
+    endRecordMsg.textContent = t.newRecord;
+  } else {
+    endRecordMsg.textContent = '';
+  }
+  endBestVal.textContent = best;
+  hBestEl.textContent    = best;
+  endOv.classList.remove('hidden');
+}
+
+/* ── Start game ──────────────────────────────────────────────────────────── */
+function startGame() {
+  clearTimeout(timerTO);
+  clearTimeout(showTO);
+  cellMap.forEach(c => c.el.removeEventListener('pointerdown', onCellClick));
+  numCount     = 2;
+  correctCount = 0;
+  running      = true;
+  nextClick    = 1;
+  locked       = false;
+  hScoreEl.textContent = '0';
+  startOv.classList.add('hidden');
+  endOv.classList.add('hidden');
+  showPhase();
+}
+
+/* ── Events ──────────────────────────────────────────────────────────────── */
+document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
+  b.addEventListener('click', () => applyLang(b.dataset.lang))
+);
+playBtn.addEventListener('click', startGame);
+playAgainBtn.addEventListener('click', startGame);
+finishBtn.addEventListener('click', () => {
+  if (running) { clearTimeout(timerTO); clearTimeout(showTO); endGame('timeout'); }
+});
+
+/* ── Init ────────────────────────────────────────────────────────────────── */
+applyLang(lang);
+</script>
+</body>
+</html>
