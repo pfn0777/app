@@ -270,7 +270,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-se
     <div class="modal-actions">
       <button class="modal-circle-btn" title="Bosh sahifa" onclick="goHome()">🏠</button>
       <button class="modal-circle-btn" title="Qayta o'ynash" onclick="rematch()">🔄</button>
-      <button class="modal-circle-btn" title="Chess" onclick="goChess()">♟</button>
+      <button class="modal-circle-btn" title="Shaxmat" onclick="goChess()">▶</button>
     </div>
   </div>
 </div>
@@ -572,17 +572,22 @@ function getMoves(b, color, fromR, fromC){
   const piece = b[fromR][fromC];
   if(!piece||piece.color!==color) return [];
   const moves = [];
-  const dirs = [];
-  if(piece.king){
-    dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
-  } else {
-    const fwd = color==='white'?-1:1;
-    dirs.push([fwd,-1],[fwd,1]);
-  }
-  for(const [dr,dc] of dirs){
-    const nr=fromR+dr, nc=fromC+dc;
-    if(nr>=0&&nr<8&&nc>=0&&nc<8&&!b[nr][nc]){
-      moves.push({row:nr,col:nc,captures:[]});
+  const dirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
+  const fwd = color==='white'?-1:1;
+  const allowedDirs = piece.king ? dirs : [[fwd,-1],[fwd,1]];
+  for(const [dr,dc] of allowedDirs){
+    if(piece.king){
+      // Flying king: can move any number of squares
+      let nr=fromR+dr, nc=fromC+dc;
+      while(nr>=0&&nr<8&&nc>=0&&nc<8&&!b[nr][nc]){
+        moves.push({row:nr,col:nc,captures:[]});
+        nr+=dr; nc+=dc;
+      }
+    } else {
+      const nr=fromR+dr, nc=fromC+dc;
+      if(nr>=0&&nr<8&&nc>=0&&nc<8&&!b[nr][nc]){
+        moves.push({row:nr,col:nc,captures:[]});
+      }
     }
   }
   return moves;
@@ -593,21 +598,38 @@ function getCaptures(b, color, fromR, fromC, visited=[]){
   if(!piece||piece.color!==color) return [];
   const enemy = color==='white'?'black':'white';
   const captures = [];
-  const dirs = [];
+  const dirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
   if(piece.king){
-    dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
+    // Flying king capture: approach from any distance, land anywhere past
+    for(const [dr,dc] of dirs){
+      let nr=fromR+dr, nc=fromC+dc;
+      // Slide until we hit something
+      while(nr>=0&&nr<8&&nc>=0&&nc<8&&!b[nr][nc]){ nr+=dr; nc+=dc; }
+      // Check if what we hit is an enemy
+      if(nr>=0&&nr<8&&nc>=0&&nc<8&&b[nr][nc]&&b[nr][nc].color===enemy){
+        const capKey=nr*8+nc;
+        if(!visited.includes(capKey)){
+          // Can land anywhere past the captured piece
+          let lr=nr+dr, lc=nc+dc;
+          while(lr>=0&&lr<8&&lc>=0&&lc<8&&!b[lr][lc]){
+            captures.push({row:lr,col:lc,captures:[{row:nr,col:nc}]});
+            lr+=dr; lc+=dc;
+          }
+        }
+      }
+    }
   } else {
     const fwd = color==='white'?-1:1;
-    dirs.push([fwd,-1],[fwd,1],[-(fwd),-1],[-(fwd),1]); // regular can jump backward too in capture
-  }
-  for(const [dr,dc] of dirs){
-    const mr=fromR+dr, mc=fromC+dc;
-    const lr=fromR+2*dr, lc=fromC+2*dc;
-    if(mr>=0&&mr<8&&mc>=0&&mc<8&&lr>=0&&lr<8&&lc>=0&&lc<8){
-      if(b[mr][mc]&&b[mr][mc].color===enemy&&!b[lr][lc]){
-        const capKey = mr*8+mc;
-        if(!visited.includes(capKey)){
-          captures.push({row:lr,col:lc,captures:[{row:mr,col:mc}]});
+    const capDirs = [[fwd,-1],[fwd,1],[-(fwd),-1],[-(fwd),1]];
+    for(const [dr,dc] of capDirs){
+      const mr=fromR+dr, mc=fromC+dc;
+      const lr=fromR+2*dr, lc=fromC+2*dc;
+      if(mr>=0&&mr<8&&mc>=0&&mc<8&&lr>=0&&lr<8&&lc>=0&&lc<8){
+        if(b[mr][mc]&&b[mr][mc].color===enemy&&!b[lr][lc]){
+          const capKey=mr*8+mc;
+          if(!visited.includes(capKey)){
+            captures.push({row:lr,col:lc,captures:[{row:mr,col:mc}]});
+          }
         }
       }
     }
@@ -647,20 +669,32 @@ function getContinuationCaptures(b, color, r, c, visitedCaps){
   const piece = b[r][c];
   if(!piece||piece.color!==color) return [];
   const enemy = color==='white'?'black':'white';
-  const dirs = [];
-  if(piece.king){
-    dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
-  } else {
-    dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
-  }
+  const dirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
   const result = [];
-  for(const [dr,dc] of dirs){
-    const mr=r+dr,mc=c+dc,lr=r+2*dr,lc=c+2*dc;
-    if(mr>=0&&mr<8&&mc>=0&&mc<8&&lr>=0&&lr<8&&lc>=0&&lc<8){
-      if(b[mr][mc]&&b[mr][mc].color===enemy&&!b[lr][lc]){
-        const capKey=mr*8+mc;
+  if(piece.king){
+    for(const [dr,dc] of dirs){
+      let nr=r+dr, nc=c+dc;
+      while(nr>=0&&nr<8&&nc>=0&&nc<8&&!b[nr][nc]){ nr+=dr; nc+=dc; }
+      if(nr>=0&&nr<8&&nc>=0&&nc<8&&b[nr][nc]&&b[nr][nc].color===enemy){
+        const capKey=nr*8+nc;
         if(!visitedCaps.includes(capKey)){
-          result.push({row:lr,col:lc,captures:[{row:mr,col:mc}]});
+          let lr=nr+dr, lc=nc+dc;
+          while(lr>=0&&lr<8&&lc>=0&&lc<8&&!b[lr][lc]){
+            result.push({row:lr,col:lc,captures:[{row:nr,col:nc}]});
+            lr+=dr; lc+=dc;
+          }
+        }
+      }
+    }
+  } else {
+    for(const [dr,dc] of dirs){
+      const mr=r+dr,mc=c+dc,lr=r+2*dr,lc=c+2*dc;
+      if(mr>=0&&mr<8&&mc>=0&&mc<8&&lr>=0&&lr<8&&lc>=0&&lc<8){
+        if(b[mr][mc]&&b[mr][mc].color===enemy&&!b[lr][lc]){
+          const capKey=mr*8+mc;
+          if(!visitedCaps.includes(capKey)){
+            result.push({row:lr,col:lc,captures:[{row:mr,col:mc}]});
+          }
         }
       }
     }
@@ -741,11 +775,11 @@ function executeMove(move){
   // Check multi-jump
   if(move.captures&&move.captures.length>0){
     const visitedCaps = move.captures.map(c=>c.row*8+c.col);
-    const cont = getContinuationCaptures(board,currentTurn,move.toRow,move.toCol,visitedCaps);
+    const cont = getContinuationCaptures(board,currentTurn,move.row,move.col,visitedCaps);
     if(cont.length>0){
       // Must continue jumping
-      mustJumpFrom={row:move.toRow,col:move.toCol};
-      selectedPiece={row:move.toRow,col:move.toCol};
+      mustJumpFrom={row:move.row,col:move.col};
+      selectedPiece={row:move.row,col:move.col};
       possibleMoves=cont;
       renderBoard();
       updateUI();
@@ -1081,10 +1115,9 @@ function confirmQuit(){
 
 // ===================== GAME OVER MODAL ACTIONS =====================
 function goHome(){
-  document.getElementById('gameOverModal').classList.remove('show');
   gameActive=false;
   if(timerInterval) clearInterval(timerInterval);
-  showScreen('menuScreen');
+  window.location.href='index.html';
 }
 function rematch(){
   document.getElementById('gameOverModal').classList.remove('show');
