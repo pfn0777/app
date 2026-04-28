@@ -22,7 +22,7 @@
   --sq-size:min(52px, 11vw);
 }
 body{
-  background:#302e2b;
+  background:#1e2429;
   color:var(--text);font-family:'Segoe UI',Arial,sans-serif;
   min-height:100vh;overflow-x:hidden;
 }
@@ -74,6 +74,22 @@ body{
   background:var(--accent);color:#fff;margin-top:8px;transition:all .2s;
 }
 .start-btn:hover{opacity:.9;transform:scale(1.02);}
+/* TIME SCREEN */
+#timeScreen{gap:12px;}
+.time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:260px;}
+.time-btn{
+  padding:12px 8px;border:2px solid #444;border-radius:50px;
+  background:transparent;color:var(--text);font-size:1rem;font-weight:600;
+  cursor:pointer;transition:all .2s;text-align:center;
+}
+.time-btn:hover,.time-btn.selected{border-color:var(--accent);background:rgba(129,182,76,.15);color:#fff;}
+.time-btn.unlimited{grid-column:1/-1;border-radius:50px;}
+.play-btn{
+  width:260px;padding:14px;border:none;border-radius:12px;
+  font-size:1.1rem;font-weight:700;cursor:pointer;
+  background:var(--accent);color:#fff;margin-top:4px;transition:all .2s;
+}
+.play-btn:hover{opacity:.9;transform:scale(1.02);}
 /* ONLINE SCREEN */
 #onlineScreen{gap:14px;}
 .online-section{
@@ -102,7 +118,7 @@ body{
 .waiting-msg{text-align:center;color:var(--muted);font-size:.9rem;animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 /* GAME SCREEN */
-#gameScreen{padding:0;justify-content:flex-start;min-height:100vh;background:#302e2b;}
+#gameScreen{padding:0;justify-content:flex-start;min-height:100vh;background:#1e2429;}
 .game-header{
   width:100%;background:#272522;
   padding:10px 16px;
@@ -179,7 +195,7 @@ body{
   width:100%;max-width:480px;padding:0 8px;
   display:flex;justify-content:center;position:relative;
 }
-.board-container{position:relative;display:inline-block;}
+.board-container{position:relative;display:inline-block;box-shadow:0 8px 32px rgba(0,0,0,.5);}
 .coords-file,.coords-rank{display:none;}
 #chessBoard{
   display:grid;grid-template-columns:repeat(8,var(--sq-size));
@@ -193,11 +209,11 @@ body{
   display:flex;align-items:center;justify-content:center;
   position:relative;line-height:1;transition:background .1s;
 }
-.sq.light{background:#f0d9b5;}
-.sq.dark{background:#b58863;}
+.sq.light{background:#8fa3b1;}
+.sq.dark{background:#4a6274;}
 .sq.selected{background:#f6f669!important;opacity:.85;}
-.sq.last-move.light{background:#cdd26a!important;}
-.sq.last-move.dark{background:#aaa23a!important;}
+.sq.last-move.light{background:#7a9aaa!important;}
+.sq.last-move.dark{background:#3a5566!important;}
 .sq.check{background:radial-gradient(circle,#ff5555 0%,#cc0000 100%)!important;}
 .sq.possible::after{
   content:'';position:absolute;
@@ -225,8 +241,8 @@ body{
 }
 .coord.file{bottom:2px;right:3px;}
 .coord.rank{top:2px;left:3px;}
-.sq.light .coord{color:rgba(0,0,0,.4);}
-.sq.dark .coord{color:rgba(255,255,255,.55);}
+.sq.light .coord{color:rgba(0,0,0,.45);}
+.sq.dark .coord{color:rgba(255,255,255,.6);}
 /* MOVE COUNT */
 .move-count{color:#888;font-size:.75rem;padding:1px 0;}
 /* GAME OVER MODAL */
@@ -248,13 +264,14 @@ body{
 .modal-title{font-size:1.5rem;font-weight:700;margin-bottom:6px;}
 .modal-sub{color:var(--muted);font-size:.9rem;margin-bottom:18px;}
 .modal-stat{font-size:.85rem;color:var(--muted);}
-.modal-btns{display:flex;gap:10px;justify-content:center;margin-top:20px;}
+.modal-btns{display:flex;gap:16px;justify-content:center;margin-top:20px;}
 .modal-btn{
-  padding:10px 22px;border:none;border-radius:10px;
-  font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;
+  width:52px;height:52px;border-radius:50%;border:1px solid #555;
+  background:#272522;color:#fff;font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,border-color .2s;
 }
-.modal-btn.primary{background:var(--accent);color:#fff;}
-.modal-btn.secondary{background:var(--card);color:var(--text);}
+.modal-btn:hover{background:#3a3a3a;border-color:#888;}
 /* DRAG GHOST */
 .drag-ghost{
   position:fixed;pointer-events:none;z-index:1000;
@@ -308,7 +325,23 @@ body{
     <button class="color-btn selected" id="colorWhite" onclick="selectColor('w')">♔ <span data-i18n="white">Oq</span></button>
     <button class="color-btn" id="colorBlack" onclick="selectColor('b')">♚ <span data-i18n="black">Qora</span></button>
   </div>
-  <button class="start-btn" onclick="startAIGame()" data-i18n="startGame">O'yinni boshlash</button>
+  <button class="start-btn" onclick="showScreen('timeScreen')" data-i18n="nextStep">Davom etish →</button>
+</div>
+
+<!-- TIME SCREEN -->
+<div class="screen" id="timeScreen">
+  <button class="back-btn" onclick="showScreen('levelScreen')">← <span data-i18n="back">Orqaga</span></button>
+  <div class="screen-title" data-i18n="chooseTime">⏱ Vaqt tanlang</div>
+  <div class="time-grid" id="timeGrid">
+    <button class="time-btn selected" data-seconds="60"  onclick="selectTime(this,60)">1 daq</button>
+    <button class="time-btn"          data-seconds="180" onclick="selectTime(this,180)">3 daq</button>
+    <button class="time-btn"          data-seconds="300" onclick="selectTime(this,300)">5 daq</button>
+    <button class="time-btn"          data-seconds="600" onclick="selectTime(this,600)">10 daq</button>
+    <button class="time-btn"          data-seconds="900" onclick="selectTime(this,900)">15 daq</button>
+    <button class="time-btn"          data-seconds="1800" onclick="selectTime(this,1800)">30 daq</button>
+    <button class="time-btn unlimited" data-seconds="0" onclick="selectTime(this,0)" data-i18n="unlimited">∞ Cheksiz</button>
+  </div>
+  <button class="play-btn" onclick="startAIGame()" data-i18n="play">O'ynash</button>
 </div>
 
 <!-- ONLINE SCREEN -->
@@ -406,8 +439,14 @@ body{
     <div class="modal-sub" id="modalSub"></div>
     <div class="modal-stat" id="modalStat"></div>
     <div class="modal-btns">
-      <button class="modal-btn secondary" onclick="quitGame()" data-i18n="menu">🏠 Menyu</button>
-      <button class="modal-btn primary" id="rematchBtn" onclick="rematch()" data-i18n="rematch">🔄 Qayta</button>
+      <button class="modal-btn" onclick="window.location.href='index.html'" title="Bosh sahifa">🏠</button>
+      <button class="modal-btn" id="rematchBtn" onclick="rematch()" title="Qayta o'ynash">🔄</button>
+      <button class="modal-btn" onclick="window.location.href='index.html'" title="Keyingi o'yin" style="font-size:16px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+          <polygon points="6,4 20,12 6,20" fill="white"/>
+          <rect x="19" y="4" width="3" height="16" rx="1" fill="white"/>
+        </svg>
+      </button>
     </div>
   </div>
 </div>
@@ -428,7 +467,8 @@ const i18n = {
     moves:"Harakatlar:", time:"Vaqt:", checkmate:"Mat!", stalemate:"Pat — Durang",
     resign_done:"Taslim bo'ldingiz", timeUp:"Vaqt tugadi!", you:"Siz", opponent:"Raqib",
     connected:"Ulandi", waiting:"Kutilmoqda", disconnected:"Uzildi",
-    settings:"Sozlash", resign2:"Taslim", hint:"Maslahat", undo:"Bekor"
+    settings:"Sozlash", resign2:"Taslim", hint:"Maslahat", undo:"Bekor",
+    chooseTime:"⏱ Vaqt tanlang", unlimited:"∞ Cheksiz", play:"O'ynash", nextStep:"Davom etish →"
   },
   ru: {
     tagline:"Шахматы — игра разума", vsAI:"Против ИИ", playOnline:"Играть онлайн",
@@ -441,7 +481,8 @@ const i18n = {
     moves:"Ходы:", time:"Время:", checkmate:"Мат!", stalemate:"Пат — Ничья",
     resign_done:"Вы сдались", timeUp:"Время вышло!", you:"Вы", opponent:"Соперник",
     connected:"Подключён", waiting:"Ожидание", disconnected:"Отключён",
-    settings:"Настройки", resign2:"Сдаться", hint:"Подсказка", undo:"Отменить"
+    settings:"Настройки", resign2:"Сдаться", hint:"Подсказка", undo:"Отменить",
+    chooseTime:"⏱ Выберите время", unlimited:"∞ Без лимита", play:"Играть", nextStep:"Далее →"
   },
   en: {
     tagline:"Chess — the game of minds", vsAI:"vs AI", playOnline:"Play Online",
@@ -454,7 +495,8 @@ const i18n = {
     moves:"Moves:", time:"Time:", checkmate:"Checkmate!", stalemate:"Stalemate — Draw",
     resign_done:"You resigned", timeUp:"Time's up!", you:"You", opponent:"Opponent",
     connected:"Connected", waiting:"Waiting", disconnected:"Disconnected",
-    settings:"Settings", resign2:"Resign", hint:"Hint", undo:"Undo"
+    settings:"Settings", resign2:"Resign", hint:"Hint", undo:"Undo",
+    chooseTime:"⏱ Choose time", unlimited:"∞ Unlimited", play:"Play", nextStep:"Next →"
   }
 };
 
@@ -517,8 +559,9 @@ let startTime = null;
 let moveCount = 0;
 
 // Timers
-let playerSeconds = 300;
-let opponentSeconds = 300;
+let selectedTimeSeconds = 60; // default 1 daqiqa
+let playerSeconds = 60;
+let opponentSeconds = 60;
 let timerInterval = null;
 
 // Online
@@ -547,6 +590,12 @@ function selectColor(c){
   playerColor = c;
   document.getElementById('colorWhite').classList.toggle('selected', c==='w');
   document.getElementById('colorBlack').classList.toggle('selected', c==='b');
+}
+
+function selectTime(btn, secs){
+  selectedTimeSeconds = secs;
+  document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
 }
 
 // ============================================================
@@ -605,8 +654,8 @@ function askStockfish(fen, level, callback){
 function startAIGame(){
   gameMode = 'ai';
   game = new Chess();
-  playerSeconds = 300;
-  opponentSeconds = 300;
+  playerSeconds = selectedTimeSeconds || 0;
+  opponentSeconds = selectedTimeSeconds || 0;
   selectedSq = null;
   possibleMoves = [];
   lastMove = null;
@@ -1040,7 +1089,9 @@ function startTimers(){
   stopTimers();
   activeTimer = playerColor==='w' ? 'player' : 'opponent';
   updateTimerDisplay();
-  timerInterval = setInterval(tickTimer, 1000);
+  if(selectedTimeSeconds > 0){
+    timerInterval = setInterval(tickTimer, 1000);
+  }
 }
 
 function tickTimer(){
@@ -1071,6 +1122,7 @@ function timeUp(who){
 }
 
 function formatTime(secs){
+  if(selectedTimeSeconds===0) return '∞';
   const m=Math.floor(secs/60).toString().padStart(2,'0');
   const s=(secs%60).toString().padStart(2,'0');
   return m+':'+s;
