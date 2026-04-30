@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaction Time</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f0f1a;
+    color: #e0e0ff;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    background: #2d2d4e;
+    border: none;
+    color: #a0a0cc;
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: #3d3d6e; }
+  .header-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #c0c0ff;
+    letter-spacing: 0.5px;
+  }
+  .lang-btns { display: flex; gap: 6px; }
+  .lang-btn {
+    background: #2d2d4e;
+    border: 1px solid #3d3d6e;
+    color: #a0a0cc;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    background: #4a90e2;
+    border-color: #4a90e2;
+    color: #fff;
+  }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 520px;
+    padding: 0 20px 40px;
+    flex: 1;
+  }
+  .screen.active { display: flex; }
+
+  /* ── GAME ZONE ── */
+  .game-zone {
+    width: 100%;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.05s;
+    min-height: 340px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .game-zone.waiting {
+    background: #7b1a18;
+    box-shadow: 0 8px 40px rgba(123,26,24,0.5);
+  }
+  .game-zone.ready {
+    background: #1e5e21;
+    box-shadow: 0 8px 40px rgba(30,94,33,0.5);
+  }
+  .game-zone.result-bg {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    box-shadow: none;
+    cursor: default;
+  }
+  .game-zone.early {
+    background: #5c1010;
+    animation: shake 0.4s ease;
+    box-shadow: 0 8px 40px rgba(183,28,28,0.7);
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-12px); }
+    40% { transform: translateX(12px); }
+    60% { transform: translateX(-8px); }
+    80% { transform: translateX(8px); }
+  }
+
+  .zone-text {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    letter-spacing: 1px;
+    padding: 20px;
+    line-height: 1.4;
+  }
+  .zone-subtext {
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.75);
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* RESULT display inside zone */
+  .result-ms {
+    font-size: 72px;
+    font-weight: 900;
+    color: #e0e0ff;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+  .result-ms .unit {
+    font-size: 30px;
+    font-weight: 600;
+    color: #8888cc;
+    margin-left: 4px;
+  }
+  .result-label {
+    font-size: 15px;
+    color: #8888aa;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* PROGRESS DOTS */
+  .attempts-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .attempt-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #2d2d4e;
+    border: 2px solid #3d3d6e;
+    transition: all 0.3s;
+  }
+  .attempt-dot.done { background: #43a047; border-color: #43a047; }
+  .attempt-dot.current { background: #4a90e2; border-color: #4a90e2; box-shadow: 0 0 8px rgba(74,144,226,0.6); }
+  .attempt-dot.early { background: #e74c3c; border-color: #e74c3c; }
+
+  /* HISTORY LIST */
+  .history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  .history-item {
+    background: #2d2d4e;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #c0c0ff;
+  }
+  .history-item .hi-num { color: #8888aa; font-size: 12px; }
+  .history-item .hi-ms { font-weight: 700; font-size: 15px; }
+
+  /* CONTINUE BUTTON */
+  .continue-btn {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    border: none;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 16px 48px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(74,144,226,0.4);
+    letter-spacing: 0.5px;
+  }
+  .continue-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(74,144,226,0.5); }
+  .continue-btn:active { transform: scale(0.97); }
+
+  /* ── FINAL SCREEN ── */
+  .final-card {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    padding: 28px 24px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .final-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #c0c0ff;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .final-avg {
+    font-size: 52px;
+    font-weight: 900;
+    color: #e0e0ff;
+    text-align: center;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+  .final-avg .unit { font-size: 24px; color: #8888cc; font-weight: 600; }
+  .final-avg-label {
+    text-align: center;
+    color: #8888aa;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .final-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .final-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+  }
+  .final-stat-row .label { color: #8888aa; }
+  .final-stat-row .value { font-weight: 700; color: #e0e0ff; }
+
+  .rating-box {
+    background: #0f0f1a;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .rating-icon { font-size: 36px; margin-bottom: 6px; }
+  .rating-text { font-size: 20px; font-weight: 700; color: #e0e0ff; }
+
+  .record-badge {
+    background: rgba(74,144,226,0.12);
+    border: 1px solid rgba(74,144,226,0.3);
+    border-radius: 10px;
+    padding: 10px 16px;
+    text-align: center;
+    font-size: 14px;
+    color: #8888aa;
+    margin-bottom: 6px;
+  }
+  .record-badge span { color: #4a90e2; font-weight: 700; font-size: 16px; }
+  .record-badge .new-record { color: #f1c40f; font-weight: 800; font-size: 15px; }
+
+  .attempts-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .attempt-chip {
+    background: #2d2d4e;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #c0c0ff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 60px;
+  }
+  .attempt-chip .chip-num { font-size: 11px; color: #6666aa; }
+  .attempt-chip .chip-ms { font-weight: 700; }
+  .attempt-chip.best-chip { background: rgba(67,160,71,0.2); border: 1px solid rgba(67,160,71,0.4); }
+  .attempt-chip.best-chip .chip-ms { color: #43a047; }
+
+  /* END BUTTONS */
+  .end-btns {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    justify-content: center;
+  }
+  .end-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    color: #c0c0ff;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-decoration: none;
+    flex: 1;
+  }
+  .end-btn .icon { font-size: 26px; }
+  .end-btn:hover { background: #2d2d4e; border-color: #4a90e2; transform: translateY(-2px); }
+
+  /* EARLY MESSAGE */
+  .early-msg {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+  }
+  .early-sub {
+    font-size: 15px;
+    color: rgba(255,255,255,0.8);
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  @media (max-width: 440px) {
+    .game-zone { min-height: 280px; }
+    .result-ms { font-size: 56px; }
+    .final-avg { font-size: 42px; }
+    .end-btns { gap: 10px; }
+    .end-btn { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="back-btn">← <span data-t="back">Orqaga</span></a>
+  <div class="header-title">⚡ Reaction Time</div>
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('uz')">UZ</button>
+    <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="screen-game" class="screen active">
+  <div class="attempts-row" id="dots-row"></div>
+
+  <div class="game-zone waiting" id="game-zone" onclick="handleClick()">
+    <div class="zone-text" id="zone-text" data-t="wait">Yashil bo'lishini kuting...</div>
+    <div class="zone-subtext" id="zone-subtext" data-t="tap_hint">Ekranning istalgan joyini bosing</div>
+  </div>
+
+  <div class="history-list" id="history-list"></div>
+</div>
+
+<!-- FINAL SCREEN -->
+<div id="screen-final" class="screen">
+  <div class="final-card">
+    <div class="final-title" data-t="your_results">📊 Natijalaringiz</div>
+
+    <div class="final-avg" id="final-avg">—<span class="unit">ms</span></div>
+    <div class="final-avg-label" data-t="average">O'rtacha</div>
+
+    <div class="rating-box">
+      <div class="rating-icon" id="rating-icon">⚡</div>
+      <div class="rating-text" id="rating-text">—</div>
+    </div>
+
+    <div class="final-stats">
+      <div class="final-stat-row">
+        <span class="label">🏆 <span data-t="best">Eng tez</span></span>
+        <span class="value" id="final-best">—</span>
+      </div>
+      <div class="final-stat-row">
+        <span class="label">🐢 <span data-t="worst">Eng sekin</span></span>
+        <span class="value" id="final-worst">—</span>
+      </div>
+    </div>
+
+    <div class="attempts-grid" id="final-chips"></div>
+
+    <div class="record-badge" id="record-badge">
+      <span data-t="record">Rekord</span>: <span id="record-val">—</span>
+    </div>
+  </div>
+
+  <div class="end-btns">
+    <a href="index.html" class="end-btn">
+      <span class="icon">🏠</span>
+      <span data-t="menu">Menyu</span>
+    </a>
+    <button class="end-btn" onclick="restartGame()">
+      <span class="icon">🔄</span>
+      <span data-t="retry">Qayta</span>
+    </button>
+    <a href="sequence_memory.html" class="end-btn">
+      <span class="icon">⏭️</span>
+      <span data-t="next">Keyingi</span>
+    </a>
+  </div>
+</div>
+
+<script>
+// ── TRANSLATIONS ──────────────────────────────────────────────────────────────
+const T = {
+  uz: {
+    back: 'Orqaga', wait: 'Yashil bo\'lishini kuting...', tap_hint: 'Ekranning istalgan joyini bosing',
+    go: 'BOSING!', early: 'Erta bosdingiz! ❌', early_sub: 'Biroz sabr qiling...',
+    result_label: 'Urinish {a}/5', continue_btn: 'Davom etish →',
+    your_results: '📊 Natijalaringiz', average: 'O\'rtacha', best: 'Eng tez',
+    worst: 'Eng sekin', record: 'Rekord', menu: 'Menyu', retry: 'Qayta', next: 'Keyingi',
+    attempt: 'Urinish', new_record: '🏆 Yangi rekord!',
+    rating: { ultra: 'Reaktsiya mutaxassisi', excellent: "A'lo", good: 'Yaxshi', average: "O'rtacha", slow: 'Sekin' }
+  },
+  ru: {
+    back: 'Назад', wait: 'Ждите зелёного...', tap_hint: 'Нажмите в любом месте',
+    go: 'ЖМИТЕ!', early: 'Слишком рано! ❌', early_sub: 'Подождите немного...',
+    result_label: 'Попытка {a}/5', continue_btn: 'Продолжить →',
+    your_results: '📊 Ваши результаты', average: 'Среднее', best: 'Лучший',
+    worst: 'Худший', record: 'Рекорд', menu: 'Меню', retry: 'Повтор', next: 'Следующий',
+    attempt: 'Попытка', new_record: '🏆 Новый рекорд!',
+    rating: { ultra: 'Мастер реакции', excellent: 'Отлично', good: 'Хорошо', average: 'Среднее', slow: 'Медленно' }
+  },
+  en: {
+    back: 'Back', wait: 'Wait for green...', tap_hint: 'Click anywhere on screen',
+    go: 'CLICK!', early: 'Too early! ❌', early_sub: 'Wait a bit longer...',
+    result_label: 'Attempt {a}/5', continue_btn: 'Continue →',
+    your_results: '📊 Your Results', average: 'Average', best: 'Best',
+    worst: 'Worst', record: 'Record', menu: 'Menu', retry: 'Retry', next: 'Next',
+    attempt: 'Attempt', new_record: '🏆 New Record!',
+    rating: { ultra: 'Reaction Master', excellent: 'Excellent', good: 'Good', average: 'Average', slow: 'Slow' }
+  }
+};
+
+let lang = localStorage.getItem('reaction_lang') || 'uz';
+function t(key, vars = {}) {
+  const keys = key.split('.');
+  let val = T[lang];
+  for (const k of keys) val = val?.[k];
+  val = val || key;
+  for (const [k, v] of Object.entries(vars)) val = val.replace(`{${k}}`, v);
+  return val;
+}
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('reaction_lang', l);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
+  applyTranslations();
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    el.textContent = t(key);
+  });
+}
+
+function getRating(avg) {
+  if (avg < 200) return { icon: '⚡', key: 'rating.ultra' };
+  if (avg < 250) return { icon: '🟢', key: 'rating.excellent' };
+  if (avg < 300) return { icon: '🟡', key: 'rating.good' };
+  if (avg < 400) return { icon: '🟠', key: 'rating.average' };
+  return               { icon: '🔴', key: 'rating.slow' };
+}
+
+// ── GAME STATE ────────────────────────────────────────────────────────────────
+const TOTAL_ATTEMPTS = 5;
+let state = 'idle';   // idle | waiting | ready | result | early
+let attempts = [];    // array of ms values
+let currentAttempt = 0;
+let greenStart = 0;
+let waitTimer = null;
+
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const zone     = document.getElementById('game-zone');
+const zoneText = document.getElementById('zone-text');
+const zoneSub  = document.getElementById('zone-subtext');
+
+function buildDots() {
+  const row = document.getElementById('dots-row');
+  row.innerHTML = '';
+  for (let i = 0; i < TOTAL_ATTEMPTS; i++) {
+    const d = document.createElement('div');
+    d.className = 'attempt-dot' + (i === currentAttempt ? ' current' : '');
+    d.id = `dot-${i}`;
+    row.appendChild(d);
+  }
+}
+
+function updateDots() {
+  for (let i = 0; i < TOTAL_ATTEMPTS; i++) {
+    const d = document.getElementById(`dot-${i}`);
+    if (!d) continue;
+    d.className = 'attempt-dot';
+    if (i < attempts.length) d.classList.add('done');
+    else if (i === currentAttempt) d.classList.add('current');
+  }
+}
+
+function addHistoryItem(ms, idx) {
+  const list = document.getElementById('history-list');
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `<div class="hi-num">${t('attempt')} ${idx}</div><div class="hi-ms">${ms} ms</div>`;
+  item.style.opacity = '0';
+  item.style.transform = 'scale(0.8)';
+  list.appendChild(item);
+  requestAnimationFrame(() => {
+    item.style.transition = 'opacity 0.3s, transform 0.3s';
+    item.style.opacity = '1';
+    item.style.transform = 'scale(1)';
+  });
+}
+
+// ── GAME FLOW ─────────────────────────────────────────────────────────────────
+function startGame() {
+  attempts = [];
+  currentAttempt = 0;
+  document.getElementById('history-list').innerHTML = '';
+  document.getElementById('screen-game').classList.add('active');
+  document.getElementById('screen-final').classList.remove('active');
+  buildDots();
+  beginWaiting();
+}
+
+function restartGame() {
+  clearTimeout(waitTimer);
+  showScreen('screen-game');
+  startGame();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function beginWaiting() {
+  state = 'waiting';
+  zone.className = 'game-zone waiting';
+  zoneText.textContent = t('wait');
+  zoneSub.textContent = t('tap_hint');
+  zoneSub.style.display = '';
+  updateDots();
+
+  const delay = 1000 + Math.random() * 4000;
+  waitTimer = setTimeout(goGreen, delay);
+}
+
+function goGreen() {
+  state = 'ready';
+  greenStart = performance.now();
+  zone.className = 'game-zone ready';
+  zoneText.textContent = t('go');
+  zoneSub.style.display = 'none';
+}
+
+function handleClick() {
+  if (state === 'waiting') {
+    // Too early
+    tooEarly();
+  } else if (state === 'ready') {
+    const ms = Math.round(performance.now() - greenStart);
+    recordResult(ms);
+  } else if (state === 'result') {
+    nextAttempt();
+  }
+}
+
+function tooEarly() {
+  clearTimeout(waitTimer);
+  state = 'early';
+  zone.className = 'game-zone early';
+  zoneText.textContent = t('early');
+  zoneSub.textContent = t('early_sub');
+  zoneSub.style.display = '';
+
+  // Mark all remaining dots as failed
+  for (let i = currentAttempt; i < TOTAL_ATTEMPTS; i++) {
+    const d = document.getElementById(`dot-${i}`);
+    if (d) d.classList.add('early');
+  }
+
+  setTimeout(() => {
+    showFinal();
+  }, 1200);
+}
+
+function recordResult(ms) {
+  state = 'result';
+  attempts.push(ms);
+
+  // Show result inside zone
+  zone.className = 'game-zone result-bg';
+  zone.innerHTML = `
+    <div class="result-ms" id="anim-ms">0<span class="unit">ms</span></div>
+    <div class="result-label">${t('result_label', { a: attempts.length })}</div>
+    ${attempts.length < TOTAL_ATTEMPTS
+      ? `<button class="continue-btn" style="margin-top:24px" onclick="event.stopPropagation();nextAttempt()">${t('continue_btn')}</button>`
+      : `<button class="continue-btn" style="margin-top:24px" onclick="event.stopPropagation();showFinal()">${t('continue_btn')}</button>`
+    }
+  `;
+
+  // Animate counter
+  animateCount(document.getElementById('anim-ms'), ms);
+
+  addHistoryItem(ms, attempts.length);
+  updateDots();
+}
+
+function animateCount(el, target) {
+  const dur = 350;
+  const start = performance.now();
+  function frame(now) {
+    const p = Math.min(1, (now - start) / dur);
+    const val = Math.round(p * p * target); // ease-in
+    el.innerHTML = `${val}<span class="unit">ms</span>`;
+    if (p < 1) requestAnimationFrame(frame);
+    else el.innerHTML = `${target}<span class="unit">ms</span>`;
+  }
+  requestAnimationFrame(frame);
+}
+
+function nextAttempt() {
+  currentAttempt++;
+  // Rebuild game zone
+  zone.className = 'game-zone waiting';
+  zone.innerHTML = `
+    <div class="zone-text" id="zone-text" data-t="wait">${t('wait')}</div>
+    <div class="zone-subtext" id="zone-subtext">${t('tap_hint')}</div>
+  `;
+  beginWaiting();
+}
+
+function showFinal() {
+  if (attempts.length === 0) {
+    restartGame();
+    return;
+  }
+  showScreen('screen-final');
+
+  const avg  = Math.round(attempts.reduce((a, b) => a + b, 0) / attempts.length);
+  const best = Math.min(...attempts);
+  const worst = Math.max(...attempts);
+
+  // Animate avg
+  const avgEl = document.getElementById('final-avg');
+  animateCount(avgEl, avg);
+
+  document.getElementById('final-best').textContent  = `${best} ms`;
+  document.getElementById('final-worst').textContent = `${worst} ms`;
+
+  // Rating
+  const rating = getRating(avg);
+  document.getElementById('rating-icon').textContent = rating.icon;
+  document.getElementById('rating-text').textContent = t(rating.key);
+
+  // Chips
+  const chips = document.getElementById('final-chips');
+  chips.innerHTML = '';
+  attempts.forEach((ms, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'attempt-chip' + (ms === best ? ' best-chip' : '');
+    chip.innerHTML = `<span class="chip-num">${t('attempt')} ${i + 1}</span><span class="chip-ms">${ms} ms</span>`;
+    chips.appendChild(chip);
+  });
+
+  // Record
+  const prevRecord = parseInt(localStorage.getItem('reaction_best') || '99999');
+  const recordEl = document.getElementById('record-val');
+  const badgeEl  = document.getElementById('record-badge');
+  if (best < prevRecord) {
+    localStorage.setItem('reaction_best', best);
+    recordEl.innerHTML = `${best} ms <span class="new-record">${t('new_record')}</span>`;
+    badgeEl.style.borderColor = 'rgba(241,196,15,0.4)';
+    badgeEl.style.background  = 'rgba(241,196,15,0.1)';
+  } else {
+    recordEl.textContent = `${prevRecord} ms`;
+  }
+
+  applyTranslations();
+}
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault();
+    handleClick();
+  }
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+setLang(lang);
+startGame();
+</script>
+</body>
+</html>

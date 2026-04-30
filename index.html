@@ -172,7 +172,11 @@
   .card-6 { background: linear-gradient(135deg, #f7971e, #ffd200); }
   .card-7 { background: linear-gradient(135deg, #56ccf2, #2f80ed); }
   .card-8 { background: linear-gradient(135deg, #1a1a2e, #16213e); }
-  .card-9 { background: linear-gradient(135deg, #5c3317, #8B4513); }
+  .card-9  { background: linear-gradient(135deg, #5c3317, #8B4513); }
+  .card-10 { background: linear-gradient(135deg, #1a237e, #4a148c); }
+  .card-11 { background: linear-gradient(135deg, #f7971e, #ffd200); }
+  .card-12 { background: linear-gradient(135deg, #e96c4a, #f5a623); }
+  .card-13 { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
   /* ── Footer ── */
   footer {
@@ -258,6 +262,24 @@
     <span class="card-record"></span>
   </a>
 
+  <a class="card card-11" href="reaction_time.html" data-game="reaction_time.html">
+    <span class="card-icon">⚡</span>
+    <span class="card-name" data-key="reaction"></span>
+    <span class="card-record" data-record="reaction_time.html"></span>
+  </a>
+
+  <a class="card card-12" href="sequence_memory.html" data-game="sequence_memory.html">
+    <span class="card-icon">🔮</span>
+    <span class="card-name" data-key="sequence"></span>
+    <span class="card-record" data-record="sequence_memory.html"></span>
+  </a>
+
+  <a class="card card-13" href="mental_math.html" data-game="mental_math.html">
+    <span class="card-icon">🧮</span>
+    <span class="card-name" data-key="mental"></span>
+    <span class="card-record" data-record="mental_math.html"></span>
+  </a>
+
 </div>
 
 <footer>
@@ -286,6 +308,10 @@
       fly:        'Chivin',
       chess:      'Shaxmat',
       checkers:   'Shashka',
+      nback:      'N-Back',
+      reaction:   'Reaktsiya',
+      sequence:   'Ketma-ketlik',
+      mental:     'Mental Math',
       best:       'Rekord',
       noRecord:   '--',
     },
@@ -301,6 +327,10 @@
       fly:        'Муха',
       chess:      'Шахматы',
       checkers:   'Шашки',
+      nback:      'N-Back',
+      reaction:   'Реакция',
+      sequence:   'Последовательность',
+      mental:     'Mental Math',
       best:       'Рекорд',
       noRecord:   '--',
     },
@@ -316,6 +346,10 @@
       fly:        'Fly',
       chess:      'Chess',
       checkers:   'Checkers',
+      nback:      'N-Back',
+      reaction:   'Reaction',
+      sequence:   'Sequence',
+      mental:     'Mental Math',
       best:       'Best',
       noRecord:   '--',
     },
@@ -329,7 +363,11 @@
     'math_game.html':     { key: 'math_best_score', fmt: v => v },
     'iq_game.html':       { key: 'iq_best',         fmt: v => v },
     'pattern_game.html':  { key: 'pattern_best',    fmt: v => v },
-    'fly_game.html':      { key: 'fly_best',        fmt: v => v },
+    'fly_game.html':      { key: 'fly_best',         fmt: v => v },
+    'nback.html':         { key: 'nback_best_n',     fmt: v => v + '-Back' },
+    'reaction_time.html': { key: 'reaction_best',    fmt: v => v + ' ms' },
+    'sequence_memory.html':{ key: 'sequence_best',   fmt: v => v },
+    'mental_math.html':   { key: 'mental_best_score',fmt: v => v },
   };
 
   function fmtTime(s) {
