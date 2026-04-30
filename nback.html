@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N-Back</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f0f1a;
+    color: #e0e0ff;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+  }
+
+  .back-btn {
+    background: #2d2d4e;
+    border: none;
+    color: #a0a0cc;
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: #3d3d6e; }
+
+  .header-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #c0c0ff;
+    letter-spacing: 1px;
+  }
+
+  .lang-btns { display: flex; gap: 6px; }
+  .lang-btn {
+    background: #2d2d4e;
+    border: 1px solid #3d3d6e;
+    color: #a0a0cc;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    background: #4a90e2;
+    border-color: #4a90e2;
+    color: #fff;
+  }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 520px;
+    padding: 0 20px 40px;
+  }
+  .screen.active { display: flex; }
+
+  /* INTRO SCREEN */
+  .intro-icon { font-size: 72px; margin: 24px 0 16px; }
+  .intro-title { font-size: 36px; font-weight: 800; color: #c0c0ff; margin-bottom: 20px; }
+  .intro-desc {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 14px;
+    padding: 20px 24px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #a0a0cc;
+    text-align: center;
+    margin-bottom: 32px;
+    width: 100%;
+  }
+  .intro-desc strong { color: #e0e0ff; }
+
+  .start-btn {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 18px 56px;
+    border-radius: 14px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(74,144,226,0.4);
+  }
+  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(74,144,226,0.5); }
+  .start-btn:active { transform: scale(0.97); }
+
+  /* BEST SCORE */
+  .best-badge {
+    margin-top: 20px;
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+    color: #a0a0cc;
+  }
+  .best-badge span { color: #4a90e2; font-weight: 700; font-size: 16px; }
+
+  /* GAME SCREEN */
+  .level-label {
+    font-size: 22px;
+    font-weight: 700;
+    color: #c0c0ff;
+    margin: 8px 0 20px;
+    letter-spacing: 1px;
+  }
+  .level-label span { color: #4a90e2; font-size: 28px; }
+
+  .game-card {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    padding: 28px 24px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 80px);
+    grid-template-rows: repeat(3, 80px);
+    gap: 10px;
+  }
+  .cell {
+    width: 80px; height: 80px;
+    background: #2d2d4e;
+    border-radius: 10px;
+    transition: background 0.1s, box-shadow 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .cell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .cell.active {
+    background: #4a90e2;
+    box-shadow: 0 0 24px rgba(74,144,226,0.7), 0 0 8px rgba(74,144,226,0.9);
+  }
+  .cell.active::after {
+    background: radial-gradient(circle at center, rgba(255,255,255,0.25), transparent 70%);
+    opacity: 1;
+  }
+
+  /* LETTER DISPLAY */
+  .letter-display {
+    font-size: 48px;
+    font-weight: 800;
+    color: #e0e0ff;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(224,224,255,0.3);
+    transition: opacity 0.15s;
+  }
+  .letter-display.hidden { opacity: 0; }
+
+  /* ACTION BUTTONS */
+  .action-btns {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+  }
+  .btn-pos, .btn-letter {
+    flex: 1;
+    padding: 16px 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-pos {
+    background: #4a90e2;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(74,144,226,0.35);
+  }
+  .btn-letter {
+    background: #e24a90;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(226,74,144,0.35);
+  }
+  .btn-pos:hover { background: #357abd; }
+  .btn-letter:hover { background: #bd3574; }
+  .btn-pos:active, .btn-letter:active { transform: scale(0.95); }
+  .btn-pos:disabled, .btn-letter:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-flash-correct {
+    animation: flashCorrect 0.35s ease;
+  }
+  .btn-flash-wrong {
+    animation: flashWrong 0.35s ease;
+  }
+  @keyframes flashCorrect {
+    0% { background: #27ae60; box-shadow: 0 0 20px rgba(39,174,96,0.8); }
+    100% {}
+  }
+  @keyframes flashWrong {
+    0% { background: #e74c3c; box-shadow: 0 0 20px rgba(231,76,60,0.8); }
+    100% {}
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-size: 14px;
+    color: #8888aa;
+    padding: 0 4px;
+  }
+  .stats-row .signal-count { font-size: 15px; color: #c0c0ff; font-weight: 600; }
+  .stats-row .score { display: flex; gap: 16px; }
+  .score-correct { color: #27ae60; font-weight: 700; font-size: 16px; }
+  .score-wrong { color: #e74c3c; font-weight: 700; font-size: 16px; }
+
+  /* WAITING INDICATOR */
+  .waiting-bar {
+    width: 100%;
+    height: 4px;
+    background: #2d2d4e;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .waiting-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #4a90e2, #e24a90);
+    border-radius: 2px;
+    width: 0%;
+    transition: none;
+  }
+
+  /* FLASH MESSAGE */
+  .flash-msg {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(26,26,46,0.97);
+    border: 1px solid #4a90e2;
+    border-radius: 16px;
+    padding: 20px 36px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #e0e0ff;
+    z-index: 100;
+    display: none;
+    text-align: center;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    animation: popIn 0.25s ease;
+  }
+  @keyframes popIn {
+    from { transform: translate(-50%,-50%) scale(0.85); opacity: 0; }
+    to { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  }
+
+  /* RESULT SCREEN */
+  .result-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #c0c0ff;
+    margin: 20px 0 24px;
+    text-align: center;
+  }
+  .result-card {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    padding: 28px 32px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 17px;
+  }
+  .result-row .label { color: #8888aa; }
+  .result-row .value { font-weight: 700; color: #e0e0ff; font-size: 18px; }
+  .result-row .value.green { color: #27ae60; }
+  .result-row .value.red { color: #e74c3c; }
+  .result-row .value.blue { color: #4a90e2; }
+
+  .result-accuracy-bar {
+    width: 100%;
+    height: 8px;
+    background: #2d2d4e;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: -8px;
+  }
+  .result-accuracy-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  .level-change-msg {
+    text-align: center;
+    font-size: 16px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .level-change-msg.up { background: rgba(39,174,96,0.15); color: #27ae60; border: 1px solid rgba(39,174,96,0.3); }
+  .level-change-msg.same { background: rgba(74,144,226,0.12); color: #4a90e2; border: 1px solid rgba(74,144,226,0.25); }
+  .level-change-msg.down { background: rgba(231,76,60,0.12); color: #e74c3c; border: 1px solid rgba(231,76,60,0.25); }
+
+  /* END BUTTONS */
+  .end-btns {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    justify-content: center;
+  }
+  .end-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    color: #c0c0ff;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-decoration: none;
+    flex: 1;
+  }
+  .end-btn .icon { font-size: 26px; }
+  .end-btn:hover { background: #2d2d4e; border-color: #4a90e2; transform: translateY(-2px); }
+
+  /* KEYBOARD HINT */
+  .key-hint {
+    font-size: 12px;
+    color: #555577;
+    text-align: center;
+    margin-top: 6px;
+  }
+  .key-hint kbd {
+    background: #2d2d4e;
+    border: 1px solid #4444aa;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    color: #8888cc;
+  }
+
+  /* INTRO BEST */
+  .stat-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 440px) {
+    .grid { grid-template-columns: repeat(3, 68px); grid-template-rows: repeat(3, 68px); }
+    .cell { width: 68px; height: 68px; }
+    .action-btns { flex-direction: column; gap: 10px; }
+    .btn-pos, .btn-letter { padding: 14px; }
+    .end-btns { gap: 10px; }
+    .end-btn { padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="back-btn">← <span data-t="back">Orqaga</span></a>
+  <div class="header-title">🧠 N-Back</div>
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('uz')">UZ</button>
+    <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<!-- INTRO SCREEN -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-icon">🧠</div>
+  <div class="intro-title">N-Back</div>
+  <div class="intro-desc" data-t="intro_desc">
+    N-Back o'yini <strong>ishchi xotirani</strong> rivojlantiradi.<br><br>
+    Har 2 soniyada pozitsiya va tovush ko'rsatiladi.<br>
+    <strong>N ta oldingi</strong> pozitsiya va harfni eslab qoling,<br>
+    mos kelsa tugmani bosing!
+  </div>
+  <button class="start-btn" onclick="startGame()" data-t="start">▶ Boshlash</button>
+  <div class="best-badge">
+    <span data-t="best">Eng yaxshi</span>: <span id="best-display">—</span>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="screen-game" class="screen">
+  <div class="level-label">
+    <span id="n-display">1</span>-Back
+  </div>
+
+  <div class="game-card">
+    <div class="grid" id="grid"></div>
+
+    <div class="letter-display" id="letter-display">—</div>
+
+    <div class="waiting-bar"><div class="waiting-progress" id="wait-bar"></div></div>
+
+    <div class="action-btns">
+      <button class="btn-pos" id="btn-pos" onclick="handlePress('pos')" data-t="pos">P — Pozitsiya</button>
+      <button class="btn-letter" id="btn-letter" onclick="handlePress('letter')" data-t="let">H — Harf</button>
+    </div>
+
+    <div class="stats-row">
+      <span class="signal-count"><span data-t="signal">Signal</span>: <span id="sig-count">0</span>/20</span>
+      <span class="score">
+        <span class="score-correct">✅ <span id="score-c">0</span></span>
+        <span class="score-wrong">❌ <span id="score-w">0</span></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="key-hint">
+    <kbd>A</kbd> <span data-t="pos">Pozitsiya</span> &nbsp; <kbd>L</kbd> <span data-t="let">Harf</span>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="screen-result" class="screen">
+  <div class="result-title" data-t="round_over">Raund tugadi! 🎯</div>
+  <div class="result-card">
+    <div class="result-row">
+      <span class="label">✅ <span data-t="correct">To'g'ri</span></span>
+      <span class="value green" id="res-correct">—</span>
+    </div>
+    <div class="result-row">
+      <span class="label">❌ <span data-t="wrong">Xato</span></span>
+      <span class="value red" id="res-wrong">—</span>
+    </div>
+    <div class="result-row">
+      <span class="label">📊 <span data-t="accuracy">Aniqlik</span></span>
+      <span class="value blue" id="res-accuracy">—</span>
+    </div>
+    <div class="result-accuracy-bar">
+      <div class="result-accuracy-fill" id="acc-fill" style="width:0%"></div>
+    </div>
+    <div class="result-row">
+      <span class="label">🎯 <span data-t="level">Daraja</span></span>
+      <span class="value" id="res-level">—</span>
+    </div>
+  </div>
+
+  <div class="level-change-msg" id="level-change-msg"></div>
+
+  <br>
+
+  <div class="end-btns">
+    <a href="index.html" class="end-btn">
+      <span class="icon">🏠</span>
+      <span data-t="menu">Menyu</span>
+    </a>
+    <button class="end-btn" onclick="restartGame()">
+      <span class="icon">🔄</span>
+      <span data-t="retry">Qayta</span>
+    </button>
+    <a href="reaction_time.html" class="end-btn">
+      <span class="icon">⏭️</span>
+      <span data-t="next">Keyingi</span>
+    </a>
+  </div>
+</div>
+
+<!-- FLASH MESSAGE -->
+<div class="flash-msg" id="flash-msg"></div>
+
+<script>
+// ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
+const T = {
+  uz: {
+    back: 'Orqaga', start: '▶ Boshlash', best: 'Eng yaxshi',
+    signal: 'Signal', pos: 'P — Pozitsiya', let: 'H — Harf',
+    round_over: 'Raund tugadi! 🎯', correct: "To'g'ri", wrong: 'Xato',
+    accuracy: 'Aniqlik', level: 'Daraja', menu: 'Menyu', retry: 'Qayta',
+    next: 'Keyingi', level_up: "🎉 Daraja oshdi! {n}-Back",
+    level_down: "📉 Daraja tushdi: {n}-Back",
+    level_same: "⭐ Daraja: {n}-Back (saqlanadi)",
+    intro_desc: `N-Back o'yini <strong>ishchi xotirani</strong> rivojlantiradi.<br><br>Har 2 soniyada pozitsiya va tovush ko'rsatiladi.<br><strong>N ta oldingi</strong> pozitsiya va harfni eslab qoling,<br>mos kelsa tugmani bosing!`,
+    nback_level: '{n}-Back darajasi',
+  },
+  ru: {
+    back: 'Назад', start: '▶ Начать', best: 'Лучший результат',
+    signal: 'Сигнал', pos: 'P — Позиция', let: 'H — Буква',
+    round_over: 'Раунд окончен! 🎯', correct: 'Правильно', wrong: 'Ошибка',
+    accuracy: 'Точность', level: 'Уровень', menu: 'Меню', retry: 'Повтор',
+    next: 'Следующий', level_up: '🎉 Уровень повышен! {n}-Back',
+    level_down: '📉 Уровень снижен: {n}-Back',
+    level_same: '⭐ Уровень: {n}-Back (сохранён)',
+    intro_desc: `N-Back развивает <strong>рабочую память</strong>.<br><br>Каждые 2 секунды показывается позиция и звук.<br>Запомните <strong>N последних</strong> позиций и букв,<br>нажмите кнопку при совпадении!`,
+    nback_level: 'Уровень {n}-Back',
+  },
+  en: {
+    back: 'Back', start: '▶ Start', best: 'Best',
+    signal: 'Signal', pos: 'P — Position', let: 'L — Letter',
+    round_over: 'Round over! 🎯', correct: 'Correct', wrong: 'Wrong',
+    accuracy: 'Accuracy', level: 'Level', menu: 'Menu', retry: 'Retry',
+    next: 'Next', level_up: '🎉 Level up! {n}-Back',
+    level_down: '📉 Level down: {n}-Back',
+    level_same: '⭐ Level: {n}-Back (kept)',
+    intro_desc: `N-Back trains your <strong>working memory</strong>.<br><br>Every 2 seconds a position and letter are shown.<br>Remember the <strong>last N</strong> positions and letters,<br>press a button when they match!`,
+    nback_level: '{n}-Back Level',
+  }
+};
+
+let lang = localStorage.getItem('nback_lang') || 'uz';
+function t(key, vars = {}) {
+  let str = T[lang][key] || key;
+  for (const [k, v] of Object.entries(vars)) str = str.replace(`{${k}}`, v);
+  return str;
+}
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('nback_lang', l);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
+  applyTranslations();
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    if (key === 'intro_desc') { el.innerHTML = t(key); return; }
+    el.textContent = t(key);
+  });
+  document.getElementById('n-display').textContent = n;
+}
+
+// ─── GAME STATE ───────────────────────────────────────────────────────────────
+const LETTERS = ['C', 'H', 'K', 'L', 'Q', 'R', 'S', 'T'];
+const TOTAL_SIGNALS = 20;
+const CELL_ON_MS = 500;
+const WAIT_MS = 1500;
+
+let n = 1;
+let signals = [];
+let signalIdx = 0;   // next signal to show
+let scoringIdx = -1; // signal currently being scored (most recently shown)
+let posPressed = false;
+let letPressed = false;
+let correctCount = 0;
+let wrongCount = 0;
+let gameActive = false;
+let signalTimer = null;
+let waitAnimFrame = null;
+let waitStart = null;
+
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.id = `cell-${i}`;
+    grid.appendChild(cell);
+  }
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ─── SPEECH ───────────────────────────────────────────────────────────────────
+function speak(letter) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(letter);
+  u.lang = 'en-US';
+  u.rate = 1.2;
+  speechSynthesis.speak(u);
+}
+
+// ─── GAME LOGIC ───────────────────────────────────────────────────────────────
+function generateSignals() {
+  signals = [];
+  for (let i = 0; i < TOTAL_SIGNALS; i++) {
+    const pos = Math.floor(Math.random() * 9);
+    const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+    signals.push({ pos, letter });
+  }
+  // Guarantee ~30% matches for both pos and letter (starting from index n)
+  for (let i = n; i < TOTAL_SIGNALS; i++) {
+    if (Math.random() < 0.3) signals[i].pos = signals[i - n].pos;
+    if (Math.random() < 0.3) signals[i].letter = signals[i - n].letter;
+  }
+}
+
+function startGame() {
+  generateSignals();
+  signalIdx = 0;
+  scoringIdx = -1;
+  correctCount = 0;
+  wrongCount = 0;
+  posPressed = false;
+  letPressed = false;
+  gameActive = true;
+  buildGrid();
+  updateStats();
+  updateBest();
+  showScreen('screen-game');
+  document.getElementById('n-display').textContent = n;
+  document.getElementById('letter-display').classList.add('hidden');
+  document.getElementById('letter-display').textContent = '';
+  enableButtons(false);
+  setTimeout(runSignal, 800);
+}
+
+function restartGame() {
+  clearTimers();
+  n = 1;
+  startGame();
+}
+
+function continuGame() {
+  clearTimers();
+  startGame();
+}
+
+function clearTimers() {
+  clearTimeout(signalTimer);
+  if (waitAnimFrame) cancelAnimationFrame(waitAnimFrame);
+  speechSynthesis && speechSynthesis.cancel();
+}
+
+function runSignal() {
+  if (!gameActive) return;
+
+  // ── 1. Score the PREVIOUS signal (before showing next) ──
+  if (scoringIdx >= n) {
+    const sig  = signals[scoringIdx];
+    const prev = signals[scoringIdx - n];
+    if (sig.pos    === prev.pos    && !posPressed) wrongCount += 0.5;
+    if (sig.letter === prev.letter && !letPressed) wrongCount += 0.5;
+    updateStats();
+  }
+
+  // ── 2. Check if round is over ──
+  if (signalIdx >= TOTAL_SIGNALS) { endRound(); return; }
+
+  // ── 3. Prepare new signal ──
+  posPressed = false;
+  letPressed = false;
+  scoringIdx = signalIdx;
+
+  const sig = signals[signalIdx];
+
+  // Hide previous letter, light cell
+  document.getElementById('letter-display').classList.add('hidden');
+  lightCell(sig.pos);
+
+  // Enable buttons if we can score (scoringIdx >= n)
+  enableButtons(scoringIdx >= n);
+  updateStats();
+
+  // After 500ms show letter + keep cell
+  signalTimer = setTimeout(() => {
+    document.getElementById('letter-display').textContent = sig.letter;
+    document.getElementById('letter-display').classList.remove('hidden');
+    speak(sig.letter);
+
+    // After another 500ms turn off cell (letter stays visible)
+    signalTimer = setTimeout(() => {
+      clearCell();
+
+      signalIdx++;
+      // Start wait — buttons STAY enabled so user can still respond
+      startWaitBar();
+    }, CELL_ON_MS);
+  }, CELL_ON_MS);
+}
+
+function startWaitBar() {
+  // Do NOT disable buttons — user can press during wait period
+  const bar = document.getElementById('wait-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  waitStart = performance.now();
+
+  function animate() {
+    const elapsed = performance.now() - waitStart;
+    const pct = Math.min(100, (elapsed / WAIT_MS) * 100);
+    bar.style.width = pct + '%';
+    if (pct < 100) {
+      waitAnimFrame = requestAnimationFrame(animate);
+    } else {
+      bar.style.width = '0%';
+      runSignal();
+    }
+  }
+  waitAnimFrame = requestAnimationFrame(animate);
+}
+
+function lightCell(idx) {
+  clearCell();
+  document.getElementById(`cell-${idx}`).classList.add('active');
+  cellActive = true;
+}
+function clearCell() {
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
+  cellActive = false;
+}
+
+function enableButtons(on) {
+  document.getElementById('btn-pos').disabled = !on;
+  document.getElementById('btn-letter').disabled = !on;
+}
+
+function handlePress(type) {
+  if (!gameActive || scoringIdx < n) return;
+  const sig  = signals[scoringIdx];
+  const prev = signals[scoringIdx - n];
+
+  if (type === 'pos') {
+    if (posPressed) return;
+    posPressed = true;
+    const correct = sig.pos === prev.pos;
+    if (correct) { correctCount++; flashBtn('btn-pos', true); }
+    else { wrongCount += 0.5; flashBtn('btn-pos', false); }
+  } else {
+    if (letPressed) return;
+    letPressed = true;
+    const correct = sig.letter === prev.letter;
+    if (correct) { correctCount++; flashBtn('btn-letter', true); }
+    else { wrongCount += 0.5; flashBtn('btn-letter', false); }
+  }
+  updateStats();
+}
+
+function flashBtn(id, success) {
+  const btn = document.getElementById(id);
+  btn.classList.remove('btn-flash-correct', 'btn-flash-wrong');
+  void btn.offsetWidth;
+  btn.classList.add(success ? 'btn-flash-correct' : 'btn-flash-wrong');
+  setTimeout(() => btn.classList.remove('btn-flash-correct', 'btn-flash-wrong'), 400);
+}
+
+function updateStats() {
+  document.getElementById('sig-count').textContent = signalIdx;
+  document.getElementById('score-c').textContent = Math.floor(correctCount);
+  document.getElementById('score-w').textContent = Math.floor(wrongCount);
+}
+
+function updateBest() {
+  const best = localStorage.getItem('nback_best_n') || '—';
+  document.getElementById('best-display').textContent = best === '—' ? '—' : `${best}-Back`;
+}
+
+// ─── ROUND END ────────────────────────────────────────────────────────────────
+function endRound() {
+  gameActive = false;
+  clearTimers();
+  clearCell();
+  enableButtons(false);
+
+  // Total possible correct presses
+  let totalPossible = 0;
+  for (let i = n; i < TOTAL_SIGNALS; i++) {
+    if (signals[i].pos    === signals[i - n].pos)    totalPossible++;
+    if (signals[i].letter === signals[i - n].letter) totalPossible++;
+  }
+
+  const totalScored = correctCount;
+  const accuracy = totalPossible > 0 ? Math.round((totalScored / totalPossible) * 100) : 100;
+
+  // Level change
+  const prevN = n;
+  let changeClass = 'same', changeMsg = t('level_same', { n });
+
+  if (accuracy >= 80) {
+    n++;
+    changeClass = 'up';
+    changeMsg = t('level_up', { n });
+  } else if (accuracy <= 50 && n > 1) {
+    n--;
+    changeClass = 'down';
+    changeMsg = t('level_down', { n });
+  }
+
+  // Update best
+  const best = parseInt(localStorage.getItem('nback_best_n') || '0');
+  if (n > best) localStorage.setItem('nback_best_n', n);
+
+  // Fill result screen
+  document.getElementById('res-correct').textContent = `${Math.floor(totalScored)}/${totalPossible}`;
+  document.getElementById('res-wrong').textContent = Math.ceil(wrongCount);
+  document.getElementById('res-accuracy').textContent = `${accuracy}%`;
+  document.getElementById('res-level').textContent = `${prevN}-Back → ${n}-Back`;
+
+  const fill = document.getElementById('acc-fill');
+  fill.style.width = '0%';
+  fill.style.background = accuracy >= 80 ? '#27ae60' : accuracy >= 60 ? '#f39c12' : '#e74c3c';
+  setTimeout(() => { fill.style.transition = 'width 0.8s ease'; fill.style.width = accuracy + '%'; }, 100);
+
+  const msg = document.getElementById('level-change-msg');
+  msg.textContent = changeMsg;
+  msg.className = `level-change-msg ${changeClass}`;
+
+  showScreen('screen-result');
+  applyTranslations();
+}
+
+// ─── KEYBOARD ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (!gameActive) return;
+  const key = e.key.toLowerCase();
+  if (key === 'a' || key === 'p') { e.preventDefault(); handlePress('pos'); }
+  if (key === 'l' || key === 'h') { e.preventDefault(); handlePress('letter'); }
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+buildGrid();
+setLang(lang);
+updateBest();
+</script>
+</body>
+</html>

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mental Math</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f0f1a;
+    color: #e0e0ff;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    background: #2d2d4e;
+    border: none;
+    color: #a0a0cc;
+    font-size: 13px;
+    padding: 7px 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: #3d3d6e; }
+  .header-title { font-size: 17px; font-weight: 700; color: #c0c0ff; }
+  .lang-btns { display: flex; gap: 5px; }
+  .lang-btn {
+    background: #2d2d4e;
+    border: 1px solid #3d3d6e;
+    color: #a0a0cc;
+    font-size: 11px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+  .lang-btn.active, .lang-btn:hover { background: #4a90e2; border-color: #4a90e2; color: #fff; }
+
+  /* SCREENS */
+  .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 480px; padding: 0 16px 24px; flex: 1; }
+  .screen.active { display: flex; }
+
+  /* ── INTRO ── */
+  .intro-icon { font-size: 60px; margin: 12px 0 10px; }
+  .intro-title { font-size: 28px; font-weight: 800; color: #c0c0ff; margin-bottom: 14px; }
+  .intro-desc {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 14px;
+    padding: 16px 20px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #a0a0cc;
+    text-align: center;
+    margin-bottom: 24px;
+    width: 100%;
+  }
+  .intro-desc strong { color: #e0e0ff; }
+  .start-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: none; color: #fff; font-size: 19px; font-weight: 700;
+    padding: 16px 52px; border-radius: 14px; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(245,158,11,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(245,158,11,0.5); }
+  .start-btn:active { transform: scale(0.97); }
+  .best-badge {
+    margin-top: 14px; background: #1a1a2e; border: 1px solid #2d2d4e;
+    border-radius: 10px; padding: 9px 18px; font-size: 13px; color: #a0a0cc;
+  }
+  .best-badge span { color: #f59e0b; font-weight: 700; font-size: 15px; }
+
+  /* ── GAME ── */
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #8888aa;
+  }
+  .stat-item { display: flex; align-items: center; gap: 5px; }
+  .stat-item strong { color: #c0c0ff; font-size: 14px; }
+  .stat-correct { color: #43a047; font-weight: 700; font-size: 15px; }
+  .stat-wrong   { color: #e53935; font-weight: 700; font-size: 15px; }
+
+  /* Timer bar */
+  .timer-wrap {
+    width: 100%;
+    background: #2d2d4e;
+    border-radius: 4px;
+    height: 7px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .timer-bar {
+    height: 100%;
+    background: #f59e0b;
+    border-radius: 4px;
+    width: 100%;
+    transition: none;
+  }
+  .timer-bar.warning { background: #e53935; }
+  .timer-secs {
+    text-align: right;
+    font-size: 12px;
+    color: #8888aa;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  /* Question card */
+  .question-card {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    width: 100%;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+    min-height: 160px;
+    justify-content: center;
+    position: relative;
+  }
+
+  .question-num {
+    position: absolute;
+    top: 10px; right: 14px;
+    font-size: 12px; color: #555577;
+  }
+
+  .question-expr {
+    font-size: 42px;
+    font-weight: 800;
+    color: #e0e0ff;
+    letter-spacing: 2px;
+    text-align: center;
+    line-height: 1.15;
+  }
+  .op-plus  { color: #43a047; }
+  .op-minus { color: #e53935; }
+  .op-mul   { color: #4a90e2; }
+  .op-div   { color: #f59e0b; }
+
+  .answer-display {
+    font-size: 32px;
+    font-weight: 700;
+    color: #e0e0ff;
+    background: #0f0f1a;
+    border: 2px solid #4a4a7a;
+    border-radius: 12px;
+    padding: 10px 28px;
+    min-width: 140px;
+    text-align: center;
+    letter-spacing: 3px;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .answer-display.correct { border-color: #43a047; background: rgba(67,160,71,0.12); color: #43a047; }
+  .answer-display.wrong   { border-color: #e53935; background: rgba(229,57,53,0.12); color: #e53935; }
+
+  .feedback-text {
+    font-size: 16px;
+    font-weight: 700;
+    min-height: 22px;
+    text-align: center;
+    transition: opacity 0.2s;
+  }
+  .feedback-text.correct { color: #43a047; }
+  .feedback-text.wrong   { color: #e53935; }
+
+  /* NUMPAD */
+  .numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 280px;
+  }
+  .key {
+    height: 68px;
+    border-radius: 14px;
+    background: #2d2d4e;
+    color: #e0e0ff;
+    font-size: 22px;
+    font-weight: 700;
+    border: 1px solid #4a4a7a;
+    cursor: pointer;
+    transition: transform 0.08s, background 0.08s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .key:active { transform: scale(0.91); background: #4a4a7a; }
+  .key-enter  { background: #1e5e21; border-color: #43a047; color: #fff; font-size: 26px; }
+  .key-enter:active { background: #43a047; }
+  .key-del    { background: #5a1a1a; border-color: #e53935; color: #fff; font-size: 20px; }
+  .key-del:active { background: #e53935; }
+
+  /* Score flash */
+  .score-flash {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40px;
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .score-flash.show {
+    opacity: 1;
+    animation: floatUp 0.7s ease forwards;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    60%  { opacity: 1; transform: translate(-50%, -80%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -120%) scale(0.8); }
+  }
+
+  /* ── RESULT ── */
+  .result-card {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    padding: 24px 22px;
+    width: 100%;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .result-title { font-size: 20px; font-weight: 800; color: #c0c0ff; text-align: center; }
+
+  .big-score {
+    font-size: 56px;
+    font-weight: 900;
+    color: #f59e0b;
+    text-align: center;
+    line-height: 1;
+  }
+  .big-score-label { font-size: 13px; color: #8888aa; text-align: center; margin-top: 2px; }
+
+  .res-stats { display: flex; flex-direction: column; gap: 10px; }
+  .res-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+  }
+  .res-row .lbl { color: #8888aa; }
+  .res-row .val { font-weight: 700; color: #e0e0ff; }
+
+  .accuracy-bar-wrap { width: 100%; background: #2d2d4e; border-radius: 4px; height: 6px; overflow: hidden; }
+  .accuracy-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+
+  .rating-box {
+    background: #0f0f1a;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .rating-stars { font-size: 24px; margin-bottom: 4px; }
+  .rating-word  { font-size: 17px; font-weight: 700; color: #e0e0ff; }
+
+  .record-badge {
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px;
+    padding: 9px 14px;
+    text-align: center;
+    font-size: 13px;
+    color: #8888aa;
+  }
+  .record-badge span { color: #f59e0b; font-weight: 700; font-size: 15px; }
+  .new-rec { color: #f1c40f; font-weight: 800; }
+
+  .end-btns {
+    display: flex; gap: 12px; width: 100%; justify-content: center;
+  }
+  .end-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 14px;
+    padding: 14px 16px; cursor: pointer; color: #c0c0ff; font-size: 12px;
+    font-weight: 600; transition: all 0.2s; text-decoration: none; flex: 1;
+  }
+  .end-btn .icon { font-size: 24px; }
+  .end-btn:hover { background: #2d2d4e; border-color: #f59e0b; transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="back-btn">← <span data-t="back">Orqaga</span></a>
+  <div class="header-title">🧮 Mental Math</div>
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('uz')">UZ</button>
+    <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-icon">🧮</div>
+  <div class="intro-title">Mental Math</div>
+  <div class="intro-desc" data-t="intro_desc">
+    Misollarni imkon qadar <strong>tez va to'g'ri</strong> yeching.<br>
+    Tez javob — <strong>ko'proq ball!</strong><br>
+    Daraja avtomatik oshib va tushib boradi.
+  </div>
+  <button class="start-btn" onclick="startGame()" data-t="start">▶ Boshlash</button>
+  <div class="best-badge">
+    <span data-t="best">Rekord</span>: <span id="best-display">—</span>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="stats-row">
+    <div class="stat-item"><span data-t="level">Daraja</span>: <strong id="g-level">1</strong></div>
+    <div class="stat-item">
+      <span class="stat-correct">✅ <span id="g-correct">0</span></span>
+      &nbsp;
+      <span class="stat-wrong">❌ <span id="g-wrong">0</span></span>
+    </div>
+    <div class="stat-item"><span data-t="score">Ball</span>: <strong id="g-score">0</strong></div>
+  </div>
+
+  <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+  <div class="timer-secs"><span id="timer-secs">10.0</span>s &nbsp; <span id="q-counter">1/20</span></div>
+
+  <div class="question-card">
+    <div class="question-num" id="q-num">1/20</div>
+    <div class="question-expr" id="q-expr">—</div>
+    <div class="answer-display" id="answer-display">_</div>
+    <div class="feedback-text" id="feedback-text"></div>
+  </div>
+
+  <div class="numpad">
+    <button class="key" onclick="numPress('7')">7</button>
+    <button class="key" onclick="numPress('8')">8</button>
+    <button class="key" onclick="numPress('9')">9</button>
+    <button class="key" onclick="numPress('4')">4</button>
+    <button class="key" onclick="numPress('5')">5</button>
+    <button class="key" onclick="numPress('6')">6</button>
+    <button class="key" onclick="numPress('1')">1</button>
+    <button class="key" onclick="numPress('2')">2</button>
+    <button class="key" onclick="numPress('3')">3</button>
+    <button class="key key-del" onclick="numDel()">⌫</button>
+    <button class="key" onclick="numPress('0')">0</button>
+    <button class="key key-enter" onclick="numEnter()">✓</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="screen-result" class="screen">
+  <div class="result-card">
+    <div class="result-title" data-t="results">📊 Natijalar</div>
+
+    <div class="big-score" id="res-score">0</div>
+    <div class="big-score-label" data-t="score">Ball</div>
+
+    <div class="rating-box">
+      <div class="rating-stars" id="res-stars">⭐⭐⭐</div>
+      <div class="rating-word"  id="res-word">—</div>
+    </div>
+
+    <div class="res-stats">
+      <div class="res-row">
+        <span class="lbl">✅ <span data-t="correct_lbl">To'g'ri</span></span>
+        <span class="val" id="res-correct">—</span>
+      </div>
+      <div class="res-row">
+        <span class="lbl">📊 <span data-t="accuracy">Aniqlik</span></span>
+        <span class="val" id="res-acc">—</span>
+      </div>
+      <div class="accuracy-bar-wrap">
+        <div class="accuracy-bar-fill" id="acc-fill" style="width:0%"></div>
+      </div>
+      <div class="res-row">
+        <span class="lbl">⏱ <span data-t="avg_time">O'rtacha vaqt</span></span>
+        <span class="val" id="res-avgtime">—</span>
+      </div>
+      <div class="res-row">
+        <span class="lbl">🎯 <span data-t="level">Daraja</span></span>
+        <span class="val" id="res-level">—</span>
+      </div>
+    </div>
+
+    <div class="record-badge" id="rec-badge">
+      <span data-t="best">Rekord</span>: <span id="res-record">—</span>
+    </div>
+  </div>
+
+  <div class="end-btns">
+    <a href="index.html" class="end-btn"><span class="icon">🏠</span><span data-t="menu">Menyu</span></a>
+    <button class="end-btn" onclick="startGame()"><span class="icon">🔄</span><span data-t="retry">Qayta</span></button>
+    <a href="nback.html" class="end-btn"><span class="icon">⏭️</span><span data-t="next">Keyingi</span></a>
+  </div>
+</div>
+
+<div class="score-flash" id="score-flash">+150</div>
+
+<script>
+// ── TRANSLATIONS ──────────────────────────────────────────────────────────────
+const T = {
+  uz: {
+    back: 'Orqaga', start: '▶ Boshlash', best: 'Rekord', level: 'Daraja',
+    score: 'Ball', correct_lbl: "To'g'ri", accuracy: 'Aniqlik', avg_time: "O'rtacha vaqt",
+    results: '📊 Natijalar', menu: 'Menyu', retry: 'Qayta', next: 'Keyingi',
+    correct_msg: "✅ To'g'ri!", wrong_msg: '❌ Noto\'g\'ri!', timeout_msg: '⏰ Vaqt tugadi!',
+    new_record: '🏆 Yangi rekord!',
+    ratings: ["⭐ Mashq kerak", "⭐⭐ O'rtacha", "⭐⭐⭐ Yaxshi", "⭐⭐⭐⭐ Zo'r!", "⭐⭐⭐⭐⭐ Daho!"],
+    intro_desc: `Misollarni imkon qadar <strong>tez va to'g'ri</strong> yeching.<br>Tez javob — <strong>ko'proq ball!</strong><br>Daraja avtomatik oshib va tushib boradi.`,
+  },
+  ru: {
+    back: 'Назад', start: '▶ Начать', best: 'Рекорд', level: 'Уровень',
+    score: 'Очки', correct_lbl: 'Правильно', accuracy: 'Точность', avg_time: 'Среднее время',
+    results: '📊 Результаты', menu: 'Меню', retry: 'Повтор', next: 'Следующий',
+    correct_msg: '✅ Правильно!', wrong_msg: '❌ Неверно!', timeout_msg: '⏰ Время вышло!',
+    new_record: '🏆 Новый рекорд!',
+    ratings: ['⭐ Нужна практика', '⭐⭐ Среднее', '⭐⭐⭐ Хорошо', '⭐⭐⭐⭐ Отлично!', '⭐⭐⭐⭐⭐ Гений!'],
+    intro_desc: `Решайте задачи как можно <strong>быстро и точно</strong>.<br>Быстрый ответ — <strong>больше очков!</strong><br>Уровень повышается и понижается автоматически.`,
+  },
+  en: {
+    back: 'Back', start: '▶ Start', best: 'Best', level: 'Level',
+    score: 'Score', correct_lbl: 'Correct', accuracy: 'Accuracy', avg_time: 'Avg time',
+    results: '📊 Results', menu: 'Menu', retry: 'Retry', next: 'Next',
+    correct_msg: '✅ Correct!', wrong_msg: '❌ Wrong!', timeout_msg: "⏰ Time's up!",
+    new_record: '🏆 New Record!',
+    ratings: ['⭐ Keep practicing', '⭐⭐ Average', '⭐⭐⭐ Good', '⭐⭐⭐⭐ Great!', '⭐⭐⭐⭐⭐ Genius!'],
+    intro_desc: `Solve problems as <strong>fast and accurately</strong> as possible.<br>Faster answer — <strong>more points!</strong><br>Level adjusts automatically.`,
+  }
+};
+
+let lang = localStorage.getItem('mental_lang') || 'uz';
+function t(key) { return T[lang][key] || key; }
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('mental_lang', l);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
+  applyTranslations();
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    if (key === 'intro_desc') { el.innerHTML = t(key); return; }
+    el.textContent = t(key);
+  });
+  document.getElementById('best-display').textContent = bestScore();
+}
+
+// ── QUESTION GENERATION ───────────────────────────────────────────────────────
+function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+function makeAddSub(max) {
+  const a = rnd(1, max), b = rnd(1, max);
+  const op = Math.random() < 0.5 ? '+' : '-';
+  if (op === '-') {
+    const big = Math.max(a, b), small = Math.min(a, b);
+    return { expr: `${big} − ${small}`, ans: big - small, op: '-' };
+  }
+  return { expr: `${a} + ${b}`, ans: a + b, op: '+' };
+}
+
+function makeMulDiv(max) {
+  const a = rnd(2, max), b = rnd(2, max);
+  const op = Math.random() < 0.5 ? '×' : '÷';
+  if (op === '÷') {
+    const product = a * b;
+    return { expr: `${product} ÷ ${a}`, ans: b, op: '÷' };
+  }
+  return { expr: `${a} × ${b}`, ans: a * b, op: '×' };
+}
+
+function makeMixed(max) {
+  const choice = rnd(0, 3);
+  if (choice === 0) return makeAddSub(max);
+  if (choice === 1) return makeMulDiv(10);
+  // two-step: a op b op c
+  const a = rnd(1, 20), b = rnd(1, 20), c = rnd(1, 10);
+  const ops = ['+', '-'];
+  const op1 = ops[rnd(0, 1)], op2 = ops[rnd(0, 1)];
+  let mid = op1 === '+' ? a + b : Math.abs(a - b);
+  let ans = op2 === '+' ? mid + c : mid - c;
+  if (ans < 0) ans = mid + c;
+  const sign1 = op1 === '+' ? '+' : '−';
+  const sign2 = op2 === '+' ? '+' : '−';
+  const a2 = op1 === '+' ? a : Math.max(a, b);
+  const b2 = op1 === '+' ? b : Math.min(a, b);
+  return { expr: `${a2} ${sign1} ${b2} ${sign2} ${c}`, ans: op2 === '+' ? (a2 + (sign1==='+'?b2:-b2)) + c : (a2 + (sign1==='+'?b2:-b2)) - c, op: op1 };
+}
+
+function getQuestion(level) {
+  if (level <= 3)  return makeAddSub(20);
+  if (level <= 6)  return makeAddSub(100);
+  if (level <= 9)  return makeMulDiv(10);
+  if (level <= 12) return makeMixed(100);
+  return makeMixed(200);
+}
+
+// ── GAME STATE ────────────────────────────────────────────────────────────────
+const TOTAL_QS = 20;
+const TIME_LIMIT = 10;
+
+let level = 1;
+let qIdx = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let totalScore = 0;
+let currentQ = null;
+let inputVal = '';
+let timerRaf = null;
+let timerStart = 0;
+let waitingNext = false;
+let responseTimes = [];
+let recentCorrect = 0;
+let recentTotal = 0;
+
+function bestScore() {
+  const s = localStorage.getItem('mental_best_score');
+  return s ? s : '—';
+}
+
+// ── GAME FLOW ─────────────────────────────────────────────────────────────────
+function startGame() {
+  level = 1; qIdx = 0; correctCount = 0; wrongCount = 0; totalScore = 0;
+  responseTimes = []; recentCorrect = 0; recentTotal = 0;
+  inputVal = '';
+  waitingNext = false;
+  clearRaf();
+  showScreen('screen-game');
+  updateStats();
+  nextQuestion();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function nextQuestion() {
+  if (qIdx >= TOTAL_QS) { showResult(); return; }
+  inputVal = '';
+  waitingNext = false;
+  currentQ = getQuestion(level);
+  renderQuestion();
+  updateStats();
+  startTimer();
+}
+
+function renderQuestion() {
+  const el = document.getElementById('q-expr');
+  // Color the operator
+  const expr = currentQ.expr;
+  const colored = expr
+    .replace(/ \+ /g, ' <span class="op-plus">+</span> ')
+    .replace(/ − /g, ' <span class="op-minus">−</span> ')
+    .replace(/ × /g, ' <span class="op-mul">×</span> ')
+    .replace(/ ÷ /g, ' <span class="op-div">÷</span> ');
+  el.innerHTML = colored + ' <span style="color:#8888aa">=</span> ?';
+  document.getElementById('q-num').textContent = `${qIdx + 1}/${TOTAL_QS}`;
+  document.getElementById('q-counter').textContent = `${qIdx + 1}/${TOTAL_QS}`;
+  setAnswerDisplay('_');
+  setFeedback('', '');
+  const ad = document.getElementById('answer-display');
+  ad.className = 'answer-display';
+}
+
+function setAnswerDisplay(txt) {
+  document.getElementById('answer-display').textContent = txt || '_';
+}
+
+function setFeedback(text, cls) {
+  const el = document.getElementById('feedback-text');
+  el.textContent = text;
+  el.className = 'feedback-text' + (cls ? ' ' + cls : '');
+}
+
+function updateStats() {
+  document.getElementById('g-level').textContent = level;
+  document.getElementById('g-correct').textContent = correctCount;
+  document.getElementById('g-wrong').textContent = wrongCount;
+  document.getElementById('g-score').textContent = totalScore;
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+function startTimer() {
+  clearRaf();
+  timerStart = performance.now();
+  const bar = document.getElementById('timer-bar');
+  const secs = document.getElementById('timer-secs');
+  bar.style.width = '100%';
+  bar.className = 'timer-bar';
+
+  function tick() {
+    const elapsed = (performance.now() - timerStart) / 1000;
+    const left = Math.max(0, TIME_LIMIT - elapsed);
+    const pct = (left / TIME_LIMIT) * 100;
+    bar.style.width = pct + '%';
+    secs.textContent = left.toFixed(1);
+    if (left <= 3) bar.className = 'timer-bar warning';
+    if (left <= 0) { onTimeout(); return; }
+    timerRaf = requestAnimationFrame(tick);
+  }
+  timerRaf = requestAnimationFrame(tick);
+}
+
+function clearRaf() {
+  if (timerRaf) { cancelAnimationFrame(timerRaf); timerRaf = null; }
+}
+
+function onTimeout() {
+  clearRaf();
+  if (waitingNext) return;
+  waitingNext = true;
+  wrongCount++;
+  recentTotal++;
+  responseTimes.push(TIME_LIMIT * 1000);
+  setFeedback(t('timeout_msg'), 'wrong');
+  const ad = document.getElementById('answer-display');
+  ad.className = 'answer-display wrong';
+  ad.textContent = String(currentQ.ans);
+  qIdx++;
+  checkLevelAdjust();
+  updateStats();
+  setTimeout(() => { nextQuestion(); }, 1200);
+}
+
+// ── INPUT ─────────────────────────────────────────────────────────────────────
+function numPress(ch) {
+  if (waitingNext) return;
+  if (inputVal.length >= 5) return;
+  if (ch === '-' && inputVal.length > 0) return;
+  inputVal += ch;
+  setAnswerDisplay(inputVal);
+}
+
+function numDel() {
+  if (waitingNext) return;
+  inputVal = inputVal.slice(0, -1);
+  setAnswerDisplay(inputVal || '_');
+}
+
+function numEnter() {
+  if (waitingNext || !inputVal || inputVal === '-') return;
+  submitAnswer();
+}
+
+function submitAnswer() {
+  clearRaf();
+  const elapsed = performance.now() - timerStart;
+  const userAns = parseInt(inputVal, 10);
+  const correct = userAns === currentQ.ans;
+  waitingNext = true;
+  responseTimes.push(elapsed);
+  recentTotal++;
+
+  const ad = document.getElementById('answer-display');
+
+  if (correct) {
+    correctCount++;
+    recentCorrect++;
+    const timeLeft = Math.max(0, TIME_LIMIT - elapsed / 1000);
+    const timeBonus = Math.floor((timeLeft / TIME_LIMIT) * 50);
+    const gained = 100 + timeBonus;
+    totalScore += gained;
+    ad.className = 'answer-display correct';
+    ad.textContent = String(userAns);
+    setFeedback(t('correct_msg'), 'correct');
+    showScoreFlash('+' + gained, '#43a047');
+  } else {
+    wrongCount++;
+    ad.className = 'answer-display wrong';
+    ad.textContent = String(currentQ.ans);
+    setFeedback(t('wrong_msg') + ` (${currentQ.ans})`, 'wrong');
+    showScoreFlash('❌', '#e53935');
+  }
+
+  qIdx++;
+  checkLevelAdjust();
+  updateStats();
+  setTimeout(nextQuestion, 1100);
+}
+
+function checkLevelAdjust() {
+  if (recentTotal > 0 && recentTotal % 5 === 0) {
+    const acc = recentCorrect / 5;
+    if (acc >= 0.8) { level++; }
+    else if (acc <= 0.5 && level > 1) { level--; }
+    recentCorrect = 0;
+  }
+}
+
+function showScoreFlash(text, color) {
+  const el = document.getElementById('score-flash');
+  el.textContent = text;
+  el.style.color = color;
+  el.className = 'score-flash';
+  void el.offsetWidth;
+  el.className = 'score-flash show';
+  setTimeout(() => { el.className = 'score-flash'; }, 800);
+}
+
+// ── RESULT ────────────────────────────────────────────────────────────────────
+function showResult() {
+  showScreen('screen-result');
+
+  const accuracy = Math.round((correctCount / TOTAL_QS) * 100);
+  const avgTime  = responseTimes.length
+    ? (responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length / 1000).toFixed(1)
+    : '—';
+
+  document.getElementById('res-score').textContent   = totalScore;
+  document.getElementById('res-correct').textContent = `${correctCount}/${TOTAL_QS}`;
+  document.getElementById('res-acc').textContent     = `${accuracy}%`;
+  document.getElementById('res-avgtime').textContent = `${avgTime}s`;
+  document.getElementById('res-level').textContent   = level;
+
+  // Accuracy bar
+  const fill = document.getElementById('acc-fill');
+  fill.style.width = '0%';
+  fill.style.background = accuracy >= 80 ? '#43a047' : accuracy >= 60 ? '#f59e0b' : '#e53935';
+  setTimeout(() => { fill.style.transition = 'width 0.8s ease'; fill.style.width = accuracy + '%'; }, 100);
+
+  // Rating
+  const ratingIdx = accuracy >= 95 ? 4 : accuracy >= 85 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0;
+  const ratingStr = t('ratings')[ratingIdx];
+  const starMatch = ratingStr.match(/⭐+/);
+  const wordMatch = ratingStr.replace(/⭐+\s*/,'');
+  document.getElementById('res-stars').textContent = starMatch ? starMatch[0] : '⭐';
+  document.getElementById('res-word').textContent  = wordMatch;
+
+  // Record
+  const prev = parseInt(localStorage.getItem('mental_best_score') || '0');
+  const isNew = totalScore > prev;
+  if (isNew) localStorage.setItem('mental_best_score', totalScore);
+  const best = localStorage.getItem('mental_best_score');
+  const recEl = document.getElementById('res-record');
+  const badge = document.getElementById('rec-badge');
+  if (isNew) {
+    recEl.innerHTML = `${best} <span class="new-rec">${t('new_record')}</span>`;
+    badge.style.borderColor = 'rgba(241,196,15,0.4)';
+    badge.style.background  = 'rgba(241,196,15,0.08)';
+  } else {
+    recEl.textContent = best || '—';
+  }
+
+  document.getElementById('best-display').textContent = best || '—';
+  applyTranslations();
+}
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const active = document.querySelector('.screen.active')?.id;
+  if (active !== 'screen-game') return;
+  if (e.key >= '0' && e.key <= '9') { e.preventDefault(); numPress(e.key); }
+  else if (e.key === 'Backspace') { e.preventDefault(); numDel(); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); numEnter(); }
+  else if (e.key === '-' && inputVal.length === 0) { e.preventDefault(); numPress('-'); }
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+setLang(lang);
+</script>
+</body>
+</html>

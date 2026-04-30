@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sequence Memory</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f0f1a;
+    color: #e0e0ff;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    background: #2d2d4e;
+    border: none;
+    color: #a0a0cc;
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: #3d3d6e; }
+  .header-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #c0c0ff;
+    letter-spacing: 0.5px;
+  }
+  .lang-btns { display: flex; gap: 6px; }
+  .lang-btn {
+    background: #2d2d4e;
+    border: 1px solid #3d3d6e;
+    color: #a0a0cc;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    background: #4a90e2;
+    border-color: #4a90e2;
+    color: #fff;
+  }
+
+  /* SCORE BAR */
+  .score-bar {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    padding: 0 20px 12px;
+    font-size: 14px;
+    color: #8888aa;
+  }
+  .score-bar span { font-weight: 700; color: #c0c0ff; font-size: 15px; }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 520px;
+    padding: 0 20px 40px;
+    flex: 1;
+  }
+  .screen.active { display: flex; }
+
+  /* ── INTRO ── */
+  .intro-icon { font-size: 64px; margin: 16px 0 12px; }
+  .intro-title { font-size: 30px; font-weight: 800; color: #c0c0ff; margin-bottom: 18px; }
+  .intro-desc {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 14px;
+    padding: 18px 22px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #a0a0cc;
+    text-align: center;
+    margin-bottom: 28px;
+    width: 100%;
+  }
+  .intro-desc strong { color: #e0e0ff; }
+  .start-btn {
+    background: linear-gradient(135deg, #6a4aff, #4a2acc);
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 18px 56px;
+    border-radius: 14px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 24px rgba(106,74,255,0.45);
+  }
+  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(106,74,255,0.55); }
+  .start-btn:active { transform: scale(0.97); }
+  .best-badge {
+    margin-top: 18px;
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+    color: #a0a0cc;
+  }
+  .best-badge span { color: #6a4aff; font-weight: 700; font-size: 16px; }
+
+  /* ── GAME SCREEN ── */
+  .status-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #c0c0ff;
+    margin-bottom: 20px;
+    min-height: 32px;
+    text-align: center;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s;
+  }
+
+  /* SIMON BOARD */
+  .simon-wrap {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin-bottom: 24px;
+  }
+
+  .simon-grid {
+    width: 300px;
+    height: 300px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .sim-btn {
+    border: none;
+    cursor: pointer;
+    transition: filter 0.08s;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+  .sim-btn:disabled { cursor: not-allowed; }
+
+  .btn-green  { background: #1a6e1a; }
+  .btn-red    { background: #6e1a1a; }
+  .btn-blue   { background: #1a1a6e; }
+  .btn-yellow { background: #6e6e1a; }
+
+  .btn-green.active  { background: #4cff4c; box-shadow: inset 0 0 40px rgba(255,255,255,0.3); filter: brightness(1.15); }
+  .btn-red.active    { background: #ff4c4c; box-shadow: inset 0 0 40px rgba(255,255,255,0.3); filter: brightness(1.15); }
+  .btn-blue.active   { background: #4c4cff; box-shadow: inset 0 0 40px rgba(255,255,255,0.3); filter: brightness(1.15); }
+  .btn-yellow.active { background: #ffff4c; box-shadow: inset 0 0 40px rgba(255,255,255,0.3); filter: brightness(1.15); }
+
+  /* CENTER CIRCLE */
+  .center-circle {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 110px; height: 110px;
+    background: #0f0f1a;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border: 3px solid #2d2d4e;
+    pointer-events: none;
+    box-shadow: 0 0 0 6px #0f0f1a;
+  }
+  .center-level {
+    font-size: 32px;
+    font-weight: 900;
+    color: #e0e0ff;
+    line-height: 1;
+  }
+  .center-label {
+    font-size: 11px;
+    color: #6666aa;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* SEQUENCE PROGRESS */
+  .seq-progress {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 340px;
+    min-height: 18px;
+    margin-bottom: 12px;
+  }
+  .seq-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #2d2d4e;
+    border: 1.5px solid #3d3d6e;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .seq-dot.done  { background: #6a4aff; border-color: #6a4aff; }
+  .seq-dot.current { background: #c0c0ff; border-color: #c0c0ff; box-shadow: 0 0 6px #c0c0ff; }
+  .seq-dot.wrong { background: #ff4c4c; border-color: #ff4c4c; }
+
+  /* ── GAME OVER ── */
+  .gameover-card {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    padding: 32px 28px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .gameover-icon { font-size: 56px; }
+  .gameover-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #ff6666;
+    text-align: center;
+  }
+  .gameover-level {
+    font-size: 64px;
+    font-weight: 900;
+    color: #e0e0ff;
+    line-height: 1;
+  }
+  .gameover-level-label { font-size: 14px; color: #8888aa; }
+
+  .gameover-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+  .go-stat {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+  }
+  .go-stat .label { color: #8888aa; }
+  .go-stat .value { font-weight: 700; color: #e0e0ff; }
+
+  .new-record-banner {
+    background: rgba(241,196,15,0.12);
+    border: 1px solid rgba(241,196,15,0.35);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1c40f;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* END BUTTONS */
+  .end-btns {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    justify-content: center;
+  }
+  .end-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    color: #c0c0ff;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-decoration: none;
+    flex: 1;
+  }
+  .end-btn .icon { font-size: 26px; }
+  .end-btn:hover { background: #2d2d4e; border-color: #6a4aff; transform: translateY(-2px); }
+
+  /* FLASH OVERLAY */
+  .flash-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,77,77,0.18);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 50;
+  }
+  .flash-overlay.show { opacity: 1; }
+
+  @media (max-width: 360px) {
+    .simon-wrap { width: 260px; height: 260px; }
+    .simon-grid { width: 260px; height: 260px; }
+    .center-circle { width: 90px; height: 90px; }
+    .center-level { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="back-btn">← <span data-t="back">Orqaga</span></a>
+  <div class="header-title">🔮 Sequence Memory</div>
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('uz')">UZ</button>
+    <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<div class="score-bar" id="score-bar" style="display:none">
+  <div><span data-t="level">Daraja</span>: <span id="cur-level">1</span></div>
+  <div><span data-t="record">Rekord</span>: <span id="cur-record">—</span> 🏆</div>
+</div>
+
+<!-- INTRO -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-icon">🔮</div>
+  <div class="intro-title">Sequence Memory</div>
+  <div class="intro-desc" data-t="intro_desc">
+    Tugmalar ketma-ketligini <strong>eslab qoling</strong>.<br>
+    Xuddi shu tartibda bosing.<br>
+    Har to'g'ri javobda ketma-ketlik <strong>uzayadi!</strong>
+  </div>
+  <button class="start-btn" onclick="startGame()" data-t="start">▶ Boshlash</button>
+  <div class="best-badge">
+    <span data-t="record">Rekord</span>: <span id="best-display">—</span>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="status-text" id="status-text">👀 Eslab qoling!</div>
+
+  <div class="simon-wrap">
+    <div class="simon-grid">
+      <button class="sim-btn btn-green"  id="btn-green"  onclick="handleBtnPress('green')"  disabled></button>
+      <button class="sim-btn btn-red"    id="btn-red"    onclick="handleBtnPress('red')"    disabled></button>
+      <button class="sim-btn btn-blue"   id="btn-blue"   onclick="handleBtnPress('blue')"   disabled></button>
+      <button class="sim-btn btn-yellow" id="btn-yellow" onclick="handleBtnPress('yellow')" disabled></button>
+    </div>
+    <div class="center-circle">
+      <div class="center-level" id="center-level">1</div>
+      <div class="center-label" data-t="level">Daraja</div>
+    </div>
+  </div>
+
+  <div class="seq-progress" id="seq-progress"></div>
+</div>
+
+<!-- GAME OVER -->
+<div id="screen-gameover" class="screen">
+  <div class="gameover-card">
+    <div class="gameover-icon">❌</div>
+    <div class="gameover-title" data-t="wrong">Noto'g'ri!</div>
+    <div class="gameover-level" id="go-level">0</div>
+    <div class="gameover-level-label" data-t="level">Daraja</div>
+    <div class="gameover-stats">
+      <div class="go-stat">
+        <span class="label">🏆 <span data-t="record">Rekord</span></span>
+        <span class="value" id="go-record">—</span>
+      </div>
+    </div>
+    <div class="new-record-banner" id="new-record-banner" style="display:none">🎉 <span data-t="new_record">Yangi rekord!</span></div>
+  </div>
+  <div class="end-btns">
+    <a href="index.html" class="end-btn">
+      <span class="icon">🏠</span>
+      <span data-t="menu">Menyu</span>
+    </a>
+    <button class="end-btn" onclick="startGame()">
+      <span class="icon">🔄</span>
+      <span data-t="retry">Qayta</span>
+    </button>
+    <a href="mental_math.html" class="end-btn">
+      <span class="icon">⏭️</span>
+      <span data-t="next">Keyingi</span>
+    </a>
+  </div>
+</div>
+
+<div class="flash-overlay" id="flash-overlay"></div>
+
+<script>
+// ── TRANSLATIONS ──────────────────────────────────────────────────────────────
+const T = {
+  uz: {
+    back: 'Orqaga', start: '▶ Boshlash', record: 'Rekord', level: 'Daraja',
+    watch: '👀 Eslab qoling!', your_turn: '👆 Siz navbatingiz!',
+    correct: '✅ Ajoyib!', wrong: "❌ Noto'g'ri!", menu: 'Menyu', retry: 'Qayta',
+    next: 'Keyingi', new_record: 'Yangi rekord!',
+    intro_desc: `Tugmalar ketma-ketligini <strong>eslab qoling</strong>.<br>Xuddi shu tartibda bosing.<br>Har to'g'ri javobda ketma-ketlik <strong>uzayadi!</strong>`,
+  },
+  ru: {
+    back: 'Назад', start: '▶ Начать', record: 'Рекорд', level: 'Уровень',
+    watch: '👀 Запоминайте!', your_turn: '👆 Ваш ход!',
+    correct: '✅ Отлично!', wrong: '❌ Неверно!', menu: 'Меню', retry: 'Повтор',
+    next: 'Следующий', new_record: 'Новый рекорд!',
+    intro_desc: `<strong>Запомните</strong> последовательность кнопок.<br>Нажмите в том же порядке.<br>Каждый правильный ответ <strong>удлиняет</strong> последовательность!`,
+  },
+  en: {
+    back: 'Back', start: '▶ Start', record: 'Best', level: 'Level',
+    watch: '👀 Watch!', your_turn: '👆 Your turn!',
+    correct: '✅ Correct!', wrong: '❌ Wrong!', menu: 'Menu', retry: 'Retry',
+    next: 'Next', new_record: 'New Record!',
+    intro_desc: `<strong>Memorize</strong> the sequence of buttons.<br>Press them in the same order.<br>Each correct answer <strong>extends</strong> the sequence!`,
+  }
+};
+
+let lang = localStorage.getItem('sequence_lang') || 'uz';
+function t(key) { return T[lang][key] || key; }
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('sequence_lang', l);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
+  applyTranslations();
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    if (key === 'intro_desc') { el.innerHTML = t(key); return; }
+    el.textContent = t(key);
+  });
+}
+
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx || audioCtx.state === 'closed') audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq, duration) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration / 1000);
+  } catch(e) {}
+}
+const TONES = { green: 261, red: 329, blue: 392, yellow: 523 };
+const WRONG_TONE = 120;
+
+// ── GAME STATE ────────────────────────────────────────────────────────────────
+const COLORS = ['green', 'red', 'blue', 'yellow'];
+let sequence = [];
+let playerIdx = 0;
+let level = 0;
+let gamePhase = 'idle'; // idle | showing | input
+
+function getSpeed(lvl) {
+  if (lvl < 5)  return { on: 800, off: 200 };
+  if (lvl < 10) return { on: 600, off: 200 };
+  if (lvl < 15) return { on: 400, off: 150 };
+  return               { on: 300, off: 100 };
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('score-bar').style.display = (id === 'screen-game') ? 'flex' : 'none';
+}
+
+function setStatus(text) {
+  const el = document.getElementById('status-text');
+  el.style.opacity = '0';
+  setTimeout(() => { el.textContent = text; el.style.opacity = '1'; }, 150);
+}
+
+function setButtonsEnabled(on) {
+  COLORS.forEach(c => {
+    document.getElementById(`btn-${c}`).disabled = !on;
+  });
+}
+
+function flashBtn(color, duration) {
+  return new Promise(resolve => {
+    const btn = document.getElementById(`btn-${color}`);
+    btn.classList.add('active');
+    playTone(TONES[color], duration - 50);
+    setTimeout(() => { btn.classList.remove('active'); resolve(); }, duration);
+  });
+}
+
+function updateCenterLevel() {
+  document.getElementById('center-level').textContent = level;
+  document.getElementById('cur-level').textContent = level;
+  const best = localStorage.getItem('sequence_best') || '—';
+  document.getElementById('cur-record').textContent = best;
+}
+
+function buildSeqDots() {
+  const container = document.getElementById('seq-progress');
+  container.innerHTML = '';
+  for (let i = 0; i < sequence.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'seq-dot';
+    d.id = `sdot-${i}`;
+    container.appendChild(d);
+  }
+}
+
+function updateSeqDots(upTo, wrongIdx = -1) {
+  for (let i = 0; i < sequence.length; i++) {
+    const d = document.getElementById(`sdot-${i}`);
+    if (!d) continue;
+    d.className = 'seq-dot';
+    if (i === wrongIdx) d.classList.add('wrong');
+    else if (i < upTo) d.classList.add('done');
+    else if (i === upTo) d.classList.add('current');
+  }
+}
+
+// ── GAME LOGIC ────────────────────────────────────────────────────────────────
+function startGame() {
+  sequence = [];
+  level = 0;
+  playerIdx = 0;
+  gamePhase = 'idle';
+  updateBestDisplay();
+  showScreen('screen-game');
+  setTimeout(nextRound, 600);
+}
+
+function updateBestDisplay() {
+  const best = localStorage.getItem('sequence_best') || '—';
+  document.getElementById('best-display').textContent = best === '—' ? '—' : best;
+  document.getElementById('cur-record').textContent = best;
+}
+
+function nextRound() {
+  level++;
+  playerIdx = 0;
+  gamePhase = 'showing';
+  setButtonsEnabled(false);
+  updateCenterLevel();
+
+  // Add random color
+  sequence.push(COLORS[Math.floor(Math.random() * 4)]);
+  buildSeqDots();
+  setStatus(t('watch'));
+
+  setTimeout(() => showSequence(), 700);
+}
+
+async function showSequence() {
+  const speed = getSpeed(level);
+  for (let i = 0; i < sequence.length; i++) {
+    await flashBtn(sequence[i], speed.on);
+    await delay(speed.off);
+  }
+  beginInput();
+}
+
+function beginInput() {
+  gamePhase = 'input';
+  playerIdx = 0;
+  setButtonsEnabled(true);
+  setStatus(t('your_turn'));
+  updateSeqDots(0);
+}
+
+function handleBtnPress(color) {
+  if (gamePhase !== 'input') return;
+
+  const expected = sequence[playerIdx];
+
+  if (color === expected) {
+    flashBtn(color, 200);
+    updateSeqDots(playerIdx + 1);
+    playerIdx++;
+
+    if (playerIdx === sequence.length) {
+      // Completed sequence
+      gamePhase = 'showing';
+      setButtonsEnabled(false);
+      setStatus(t('correct'));
+      setTimeout(nextRound, 900);
+    }
+  } else {
+    // Wrong
+    gamePhase = 'idle';
+    setButtonsEnabled(false);
+    playTone(WRONG_TONE, 600);
+    updateSeqDots(playerIdx, playerIdx);
+    setStatus(t('wrong'));
+
+    // Flash wrong overlay
+    const overlay = document.getElementById('flash-overlay');
+    overlay.classList.add('show');
+    setTimeout(() => overlay.classList.remove('show'), 400);
+
+    setTimeout(showGameOver, 900);
+  }
+}
+
+function showGameOver() {
+  const reached = level - 1; // level was already incremented
+  document.getElementById('go-level').textContent = reached;
+
+  const prev = parseInt(localStorage.getItem('sequence_best') || '0');
+  const isNew = reached > prev;
+  if (isNew) localStorage.setItem('sequence_best', reached);
+
+  const best = localStorage.getItem('sequence_best');
+  document.getElementById('go-record').textContent = `${best}`;
+  document.getElementById('new-record-banner').style.display = isNew ? 'block' : 'none';
+
+  showScreen('screen-gameover');
+  applyTranslations();
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+setLang(lang);
+updateBestDisplay();
+</script>
+</body>
+</html>
