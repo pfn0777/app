@@ -141,7 +141,11 @@
   .card:nth-child(5) .card-icon { animation-delay: 1.6s; }
   .card:nth-child(6) .card-icon { animation-delay: 2.0s; }
   .card:nth-child(7) .card-icon { animation-delay: 2.4s; }
-  .card:nth-child(8) .card-icon { animation-delay: 2.8s; }
+  .card:nth-child(8)  .card-icon { animation-delay: 2.8s; }
+  .card:nth-child(9)  .card-icon { animation-delay: 3.2s; }
+  .card:nth-child(10) .card-icon { animation-delay: 3.6s; }
+  .card:nth-child(11) .card-icon { animation-delay: 4.0s; }
+  .card:nth-child(12) .card-icon { animation-delay: 4.4s; }
 
   .card-name {
     font-size: 16px;
@@ -172,7 +176,10 @@
   .card-6 { background: linear-gradient(135deg, #f7971e, #ffd200); }
   .card-7 { background: linear-gradient(135deg, #56ccf2, #2f80ed); }
   .card-8 { background: linear-gradient(135deg, #1a1a2e, #16213e); }
-  .card-9 { background: linear-gradient(135deg, #5c3317, #8B4513); }
+  .card-9  { background: linear-gradient(135deg, #5c3317, #8B4513); }
+  .card-10 { background: linear-gradient(135deg, #f7971e, #ffd200); }
+  .card-11 { background: linear-gradient(135deg, #e96c4a, #f5a623); }
+  .card-12 { background: linear-gradient(135deg, #11998e, #38ef7d); }
 
   /* ── Footer ── */
   footer {
@@ -258,6 +265,24 @@
     <span class="card-record"></span>
   </a>
 
+  <a class="card card-10" href="reaction_time.html" data-game="reaction_time.html">
+    <span class="card-icon">⚡</span>
+    <span class="card-name" data-key="reaction"></span>
+    <span class="card-record" data-record="reaction_time.html"></span>
+  </a>
+
+  <a class="card card-11" href="sequence_memory.html" data-game="sequence_memory.html">
+    <span class="card-icon">🔮</span>
+    <span class="card-name" data-key="sequence"></span>
+    <span class="card-record" data-record="sequence_memory.html"></span>
+  </a>
+
+  <a class="card card-12" href="mental_math.html" data-game="mental_math.html">
+    <span class="card-icon">🧮</span>
+    <span class="card-name" data-key="mentalmath"></span>
+    <span class="card-record" data-record="mental_math.html"></span>
+  </a>
+
 </div>
 
 <footer>
@@ -286,6 +311,9 @@
       fly:        'Chivin',
       chess:      'Shaxmat',
       checkers:   'Shashka',
+      reaction:   'Reaktsiya',
+      sequence:   'Ketma-ketlik',
+      mentalmath: 'Tez Hisob',
       best:       'Rekord',
       noRecord:   '--',
     },
@@ -301,6 +329,9 @@
       fly:        'Муха',
       chess:      'Шахматы',
       checkers:   'Шашки',
+      reaction:   'Реакция',
+      sequence:   'Последовательность',
+      mentalmath: 'Быстрый счёт',
       best:       'Рекорд',
       noRecord:   '--',
     },
@@ -316,6 +347,9 @@
       fly:        'Fly',
       chess:      'Chess',
       checkers:   'Checkers',
+      reaction:   'Reaction',
+      sequence:   'Sequence',
+      mentalmath: 'Mental Math',
       best:       'Best',
       noRecord:   '--',
     },
@@ -329,7 +363,10 @@
     'math_game.html':     { key: 'math_best_score', fmt: v => v },
     'iq_game.html':       { key: 'iq_best',         fmt: v => v },
     'pattern_game.html':  { key: 'pattern_best',    fmt: v => v },
-    'fly_game.html':      { key: 'fly_best',        fmt: v => v },
+    'fly_game.html':      { key: 'fly_best',          fmt: v => v },
+    'reaction_time.html':   { key: 'reaction_best',     fmt: v => v, label: { uz: 'ms', ru: 'мс', en: 'ms' } },
+    'sequence_memory.html': { key: 'sequence_best',     fmt: v => v, label: { uz: 'Daraja', ru: 'Уровень', en: 'Level' } },
+    'mental_math.html':     { key: 'mental_best_score', fmt: v => v, label: { uz: 'Ball', ru: 'Очки', en: 'Score' } },
   };
 
   function fmtTime(s) {
@@ -366,7 +403,8 @@
       if (!val || val === '0') {
         el.textContent = t.noRecord;
       } else {
-        el.textContent = '🏆 ' + t.best + ': ' + rec.fmt(val);
+        const suffix = rec.label ? ' ' + rec.label[lang] : '';
+        el.textContent = '🏆 ' + t.best + ': ' + rec.fmt(val) + suffix;
       }
     });
   }

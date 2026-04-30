@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mental Math</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #1a1a2e;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: #fff;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #16213e;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+    z-index: 10;
+  }
+
+  .h-logo { font-size: 20px; font-weight: 900; color: #e2e8f0; white-space: nowrap; }
+
+  .h-info {
+    font-size: 13px; color: #94a3b8; font-weight: 600;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .h-info .badge {
+    background: #0f3460; border-radius: 12px; padding: 3px 10px;
+    font-size: 13px; color: #93c5fd;
+  }
+
+  .h-langs { display: flex; gap: 6px; }
+  .lang-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 2px solid #334155;
+    background: #1e293b;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .lang-btn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+  .lang-btn:hover:not(.active) { border-color: #64748b; color: #e2e8f0; }
+
+  .h-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .h-stat {
+    display: flex; align-items: baseline; gap: 4px;
+    font-size: 13px; font-weight: 600; color: #94a3b8; white-space: nowrap;
+  }
+  .h-stat span { font-size: 20px; font-weight: 900; color: #60a5fa; }
+
+  #finish-btn {
+    padding: 7px 14px;
+    background: #ef4444;
+    color: #fff; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit; white-space: nowrap;
+    transition: background 0.15s;
+  }
+  #finish-btn:hover { background: #dc2626; }
+
+  /* ── Progress ── */
+  .progress-track { height: 6px; background: #0f172a; flex-shrink: 0; }
+  #progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    width: 100%;
+    transition: width linear;
+  }
+
+  /* ── Game area ── */
+  #game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px 16px 28px;
+  }
+
+  /* ── Question card ── */
+  #question-card {
+    background: #16213e;
+    border: 2px solid #1e3a5f;
+    border-radius: 24px;
+    padding: 36px 52px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    min-width: min(80vw, 360px);
+  }
+
+  #question-text {
+    font-size: clamp(32px, 8vw, 56px);
+    font-weight: 900;
+    color: #f1f5f9;
+    letter-spacing: 2px;
+    line-height: 1.2;
+  }
+
+  /* ── Answers ── */
+  #answers {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    width: min(90vw, 360px);
+  }
+
+  .ans-btn {
+    padding: 18px 8px;
+    border: 2px solid #1e3a5f;
+    border-radius: 16px;
+    background: #16213e;
+    font-size: clamp(20px, 5vw, 28px);
+    font-weight: 900;
+    color: #60a5fa;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+    font-family: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+    text-align: center;
+  }
+  .ans-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-color: #3b82f6; }
+  .ans-btn:active { transform: scale(0.95); }
+  .ans-btn.flash-ok  { animation: fOk  0.38s ease forwards; }
+  .ans-btn.flash-err { animation: fErr 0.38s ease forwards; }
+
+  @keyframes fOk {
+    0%   { background:#16213e; border-color:#1e3a5f; color:#60a5fa; transform:scale(1); }
+    45%  { background:#16a34a; border-color:#16a34a; color:#fff; transform:scale(1.07); }
+    100% { background:#16213e; border-color:#1e3a5f; color:#60a5fa; transform:scale(1); }
+  }
+  @keyframes fErr {
+    0%   { background:#16213e; border-color:#1e3a5f; color:#60a5fa; transform:scale(1); }
+    45%  { background:#dc2626; border-color:#dc2626; color:#fff; transform:scale(1.07); }
+    100% { background:#16213e; border-color:#1e3a5f; color:#60a5fa; transform:scale(1); }
+  }
+
+  /* ── Overlays ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; padding: 20px;
+    backdrop-filter: blur(6px);
+  }
+  .overlay.hidden { display: none; }
+
+  .ov-card {
+    background: #16213e;
+    border: 1px solid #1e3a5f;
+    border-radius: 24px;
+    padding: 36px 40px;
+    max-width: 440px; width: 100%;
+    text-align: center;
+    box-shadow: 0 16px 56px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column; gap: 18px;
+    animation: slideUp 0.28s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .ov-icon { font-size: 48px; line-height: 1; }
+  .ov-card h2 { font-size: 24px; font-weight: 900; color: #f1f5f9; }
+
+  /* ── Op selector ── */
+  .section-label {
+    font-size: 14px; font-weight: 700; color: #94a3b8;
+    text-align: left; letter-spacing: 0.3px;
+  }
+
+  .op-row {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  }
+
+  .op-btn {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; padding: 12px 16px;
+    border-radius: 14px; border: 2px solid #334155;
+    background: #0f172a; cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+    min-width: 72px;
+  }
+  .op-btn .op-sym { font-size: 22px; line-height: 1; }
+  .op-btn .op-lbl { font-size: 11px; font-weight: 700; color: #64748b; }
+  .op-btn.selected { background: #166534; border-color: #16a34a; }
+  .op-btn.selected .op-lbl { color: #86efac; }
+  .op-btn:hover:not(.selected) { border-color: #475569; }
+
+  /* ── Mode selector ── */
+  .mode-row {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  }
+
+  .mode-btn {
+    flex: 1; min-width: 90px;
+    padding: 12px 8px;
+    border-radius: 14px; border: 2px solid #334155;
+    background: #0f172a; cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .mode-btn .mode-stars { font-size: 14px; }
+  .mode-btn .mode-lbl { font-size: 13px; font-weight: 700; color: #94a3b8; }
+  .mode-btn .mode-time { font-size: 11px; color: #64748b; }
+  .mode-btn.selected { background: #1e3a5f; border-color: #3b82f6; }
+  .mode-btn.selected .mode-lbl { color: #93c5fd; }
+  .mode-btn.selected .mode-time { color: #60a5fa; }
+  .mode-btn:hover:not(.selected) { border-color: #475569; }
+
+  /* ── Lang row ── */
+  .ov-lang-row { display: flex; justify-content: center; gap: 8px; }
+  .ov-lang-btn {
+    padding: 6px 14px; border-radius: 20px;
+    border: 2px solid #334155; background: #0f172a;
+    color: #94a3b8; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .ov-lang-btn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+  .ov-lang-btn:hover:not(.active) { border-color: #64748b; color: #e2e8f0; }
+
+  /* ── Error message ── */
+  #op-error {
+    font-size: 13px; font-weight: 700; color: #f87171;
+    min-height: 18px;
+  }
+
+  /* ── Play button ── */
+  .ov-play-btn {
+    padding: 15px 48px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff; border: none; border-radius: 50px;
+    font-size: 18px; font-weight: 800; cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(59,130,246,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .ov-play-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(59,130,246,0.5); }
+  .ov-play-btn:active:not(:disabled) { transform: scale(0.97); }
+  .ov-play-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── End overlay rows ── */
+  .ov-rows { display: flex; flex-direction: column; }
+  .ov-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid #1e293b;
+    font-size: 15px; color: #94a3b8; gap: 12px; text-align: left;
+  }
+  .ov-row:last-child { border-bottom: none; }
+  .ov-row strong { font-size: 20px; color: #f1f5f9; font-weight: 900; white-space: nowrap; }
+
+  .ov-record-msg { font-size: 16px; font-weight: 800; color: #34d399; min-height: 22px; }
+
+  .end-btns {
+    display: flex; gap: 12px; justify-content: center; margin-top: 4px;
+  }
+  .icon-btn {
+    width: 52px; height: 52px; border-radius: 50%; border: none;
+    font-size: 22px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: transform 0.12s;
+  }
+  .icon-btn:hover { transform: scale(1.1); }
+  .icon-btn:active { transform: scale(0.93); }
+
+  @media (max-width: 480px) {
+    .ov-card { padding: 24px 18px; }
+    header { padding: 8px 10px; }
+    #answers { gap: 10px; }
+    .ans-btn { padding: 14px 6px; }
+    #question-card { padding: 24px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-logo">🧮 Mental Math</div>
+  <div class="h-info" id="h-info"></div>
+  <div class="h-langs">
+    <button class="lang-btn" data-lang="uz">UZ</button>
+    <button class="lang-btn" data-lang="ru">RU</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+  </div>
+  <div class="h-right">
+    <div class="h-stat"><label id="lbl-score"></label>&nbsp;<span id="h-score">0</span></div>
+    <div class="h-stat"><label id="lbl-best"></label>&nbsp;<span id="h-best">0</span></div>
+    <button id="finish-btn">🏁 <span id="lbl-finish"></span></button>
+  </div>
+</header>
+
+<div class="progress-track"><div id="progress-bar"></div></div>
+
+<div id="game-area">
+  <div id="question-card">
+    <div id="question-text"></div>
+  </div>
+  <div id="answers"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay" id="start-ov">
+  <div class="ov-card">
+    <div class="ov-icon">🧮</div>
+    <h2>Mental Math</h2>
+
+    <div>
+      <div class="section-label" id="lbl-ops"></div>
+      <div style="height:8px"></div>
+      <div class="op-row" id="op-row"></div>
+      <div style="height:6px"></div>
+      <div id="op-error"></div>
+    </div>
+
+    <div>
+      <div class="section-label" id="lbl-modes"></div>
+      <div style="height:8px"></div>
+      <div class="mode-row" id="mode-row"></div>
+    </div>
+
+    <div class="ov-lang-row">
+      <button class="ov-lang-btn" data-lang="uz">🇺🇿 UZ</button>
+      <button class="ov-lang-btn" data-lang="ru">🇷🇺 RU</button>
+      <button class="ov-lang-btn" data-lang="en">🇬🇧 EN</button>
+    </div>
+
+    <button class="ov-play-btn" id="play-btn"></button>
+  </div>
+</div>
+
+<!-- End overlay -->
+<div class="overlay hidden" id="end-ov">
+  <div class="ov-card">
+    <div class="ov-icon" id="end-icon"></div>
+    <h2 id="end-reason"></h2>
+    <div class="ov-rows">
+      <div class="ov-row"><span id="lbl-correct"></span><strong id="end-correct"></strong></div>
+      <div class="ov-row"><span id="lbl-accuracy"></span><strong id="end-accuracy"></strong></div>
+      <div class="ov-row"><span id="lbl-end-best"></span><strong id="end-best-val"></strong></div>
+    </div>
+    <div class="ov-record-msg" id="end-record-msg"></div>
+    <div class="end-btns">
+      <button class="icon-btn" id="btn-home" style="background:#1e293b;" onclick="window.location.href='index.html'">🏠</button>
+      <button class="icon-btn" id="btn-replay" style="background:linear-gradient(135deg,#667eea,#764ba2);">🔄</button>
+      <button class="icon-btn" id="btn-next" onclick="window.location.href=nextGame" style="background:#16a34a;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+          <polygon points="6,4 20,12 6,20" fill="white"/>
+          <rect x="19" y="4" width="3" height="16" rx="1" fill="white"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const nextGame = 'iq_game.html';
+
+/* ── Config ─────────────────────────────────────────────────────────────── */
+const operations = {
+  add: { symbol: '+', emoji: '➕', selected: true },
+  sub: { symbol: '−', emoji: '➖', selected: true },
+  mul: { symbol: '×', emoji: '✖️', selected: false },
+  div: { symbol: '÷', emoji: '➗', selected: false },
+};
+
+const modes = {
+  easy:   { add:{min:1,max:20},  sub:{min:1,max:20},  mul:{min:2,max:10}, div:{min:2,max:10}, timeLimit:15 },
+  medium: { add:{min:10,max:100},sub:{min:10,max:100},mul:{min:2,max:20}, div:{min:2,max:20}, timeLimit:10 },
+  hard:   { add:{min:50,max:999},sub:{min:50,max:999},mul:{min:10,max:50},div:{min:10,max:50},timeLimit:8  },
+};
+
+let currentMode = 'easy';
+
+/* ── Translations ─────────────────────────────────────────────────────── */
+const TR = {
+  uz: {
+    opsLabel:   "Amallarni tanlang:",
+    modesLabel: "Rejim tanlang:",
+    opNames:    { add:"Qo'shish", sub:"Ayirish", mul:"Ko'paytirish", div:"Bo'lish" },
+    modeNames:  { easy:"Oddiy", medium:"O'rta", hard:"Qiyin" },
+    modeTime:   s => `${s}s`,
+    opError:    "Kamida 1 ta amal tanlang!",
+    playBtn:    "▶ Boshlash",
+    finish:     "Tugatish",
+    scoreLabel: "To'g'ri:",
+    bestLabel:  "Rekord:",
+    hOps:       "Amallar:",
+    hMode:      "Rejim:",
+    endTimeout: "⏱️ Vaqt tugadi!",
+    endWrong:   "❌ Noto'g'ri!",
+    endFinish:  "🏁 Tugatildi",
+    lblCorrect: "✅ To'g'ri javoblar:",
+    lblAccuracy:"🎯 Aniqlik:",
+    lblBest:    "🏆 Rekord:",
+    newRecord:  "🎉 Yangi rekord!",
+    homeBtn:    "Bosh sahifa",
+    replayBtn:  "Qayta o'ynash",
+    nextBtn:    "Keyingi o'yin",
+  },
+  ru: {
+    opsLabel:   "Выберите операции:",
+    modesLabel: "Выберите режим:",
+    opNames:    { add:"Сложение", sub:"Вычитание", mul:"Умножение", div:"Деление" },
+    modeNames:  { easy:"Лёгкий", medium:"Средний", hard:"Сложный" },
+    modeTime:   s => `${s}с`,
+    opError:    "Выберите хотя бы 1 операцию!",
+    playBtn:    "▶ Начать",
+    finish:     "Завершить",
+    scoreLabel: "Правильных:",
+    bestLabel:  "Рекорд:",
+    hOps:       "Операции:",
+    hMode:      "Режим:",
+    endTimeout: "⏱️ Время вышло!",
+    endWrong:   "❌ Неверный ответ!",
+    endFinish:  "🏁 Завершено",
+    lblCorrect: "✅ Правильных ответов:",
+    lblAccuracy:"🎯 Точность:",
+    lblBest:    "🏆 Рекорд:",
+    newRecord:  "🎉 Новый рекорд!",
+    homeBtn:    "Главная",
+    replayBtn:  "Играть снова",
+    nextBtn:    "Следующая игра",
+  },
+  en: {
+    opsLabel:   "Choose operations:",
+    modesLabel: "Choose mode:",
+    opNames:    { add:"Addition", sub:"Subtraction", mul:"Multiplication", div:"Division" },
+    modeNames:  { easy:"Easy", medium:"Medium", hard:"Hard" },
+    modeTime:   s => `${s}s`,
+    opError:    "Select at least 1 operation!",
+    playBtn:    "▶ Start",
+    finish:     "Finish",
+    scoreLabel: "Correct:",
+    bestLabel:  "Best:",
+    hOps:       "Ops:",
+    hMode:      "Mode:",
+    endTimeout: "⏱️ Time's up!",
+    endWrong:   "❌ Wrong answer!",
+    endFinish:  "🏁 Finished",
+    lblCorrect: "✅ Correct answers:",
+    lblAccuracy:"🎯 Accuracy:",
+    lblBest:    "🏆 Best:",
+    newRecord:  "🎉 New record!",
+    homeBtn:    "Home",
+    replayBtn:  "Play again",
+    nextBtn:    "Next game",
+  },
+};
+
+/* ── State ───────────────────────────────────────────────────────────────── */
+let lang         = localStorage.getItem('mmath_lang') || 'uz';
+let best         = parseInt(localStorage.getItem('mental_best_score') || '0', 10);
+let score        = 0;
+let totalAnswers = 0;
+let running      = false;
+let locked       = false;
+let timerTO      = null;
+let currentAnswer = 0;
+
+/* ── DOM ─────────────────────────────────────────────────────────────────── */
+const questionText = document.getElementById('question-text');
+const answersEl    = document.getElementById('answers');
+const progressBar  = document.getElementById('progress-bar');
+const hScoreEl     = document.getElementById('h-score');
+const hBestEl      = document.getElementById('h-best');
+const lblScore     = document.getElementById('lbl-score');
+const lblBest      = document.getElementById('lbl-best');
+const lblFinish    = document.getElementById('lbl-finish');
+const finishBtn    = document.getElementById('finish-btn');
+const startOv      = document.getElementById('start-ov');
+const endOv        = document.getElementById('end-ov');
+const playBtn      = document.getElementById('play-btn');
+const opRow        = document.getElementById('op-row');
+const modeRow      = document.getElementById('mode-row');
+const opError      = document.getElementById('op-error');
+const hInfo        = document.getElementById('h-info');
+const endIcon      = document.getElementById('end-icon');
+const endReason    = document.getElementById('end-reason');
+const endCorrect   = document.getElementById('end-correct');
+const endAccuracy  = document.getElementById('end-accuracy');
+const endBestVal   = document.getElementById('end-best-val');
+const endRecordMsg = document.getElementById('end-record-msg');
+const lblCorrect   = document.getElementById('lbl-correct');
+const lblAccuracy  = document.getElementById('lbl-accuracy');
+const lblEndBest   = document.getElementById('lbl-end-best');
+
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
+function T() { return TR[lang]; }
+function rand(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function selectedOps() {
+  return Object.keys(operations).filter(k => operations[k].selected);
+}
+
+/* ── Build start screen ──────────────────────────────────────────────────── */
+function buildOpButtons() {
+  opRow.innerHTML = '';
+  Object.entries(operations).forEach(([key, op]) => {
+    const btn = document.createElement('button');
+    btn.className = 'op-btn' + (op.selected ? ' selected' : '');
+    btn.dataset.op = key;
+    btn.innerHTML = `<span class="op-sym">${op.emoji}</span><span class="op-lbl">${T().opNames[key]}</span>`;
+    btn.addEventListener('click', () => {
+      op.selected = !op.selected;
+      btn.classList.toggle('selected', op.selected);
+      updateOpLabels();
+      validateOps();
+    });
+    opRow.appendChild(btn);
+  });
+}
+
+function updateOpLabels() {
+  opRow.querySelectorAll('.op-btn').forEach(btn => {
+    const key = btn.dataset.op;
+    btn.querySelector('.op-lbl').textContent = T().opNames[key];
+  });
+}
+
+function buildModeButtons() {
+  modeRow.innerHTML = '';
+  const stars = { easy: '⭐', medium: '⭐⭐', hard: '⭐⭐⭐' };
+  Object.entries(modes).forEach(([key, cfg]) => {
+    const btn = document.createElement('button');
+    btn.className = 'mode-btn' + (currentMode === key ? ' selected' : '');
+    btn.dataset.mode = key;
+    btn.innerHTML = `
+      <span class="mode-stars">${stars[key]}</span>
+      <span class="mode-lbl">${T().modeNames[key]}</span>
+      <span class="mode-time">${T().modeTime(cfg.timeLimit)}</span>
+    `;
+    btn.addEventListener('click', () => {
+      currentMode = key;
+      modeRow.querySelectorAll('.mode-btn').forEach(b =>
+        b.classList.toggle('selected', b.dataset.mode === key)
+      );
+    });
+    modeRow.appendChild(btn);
+  });
+}
+
+function updateModeLabels() {
+  const stars = { easy: '⭐', medium: '⭐⭐', hard: '⭐⭐⭐' };
+  modeRow.querySelectorAll('.mode-btn').forEach(btn => {
+    const key = btn.dataset.mode;
+    btn.querySelector('.mode-lbl').textContent = T().modeNames[key];
+    btn.querySelector('.mode-time').textContent = T().modeTime(modes[key].timeLimit);
+  });
+}
+
+function validateOps() {
+  const valid = selectedOps().length > 0;
+  opError.textContent = valid ? '' : T().opError;
+  playBtn.disabled = !valid;
+  return valid;
+}
+
+/* ── Question generation ─────────────────────────────────────────────────── */
+function generateQuestion() {
+  const ops = selectedOps();
+  const op  = ops[Math.floor(Math.random() * ops.length)];
+  const cfg = modes[currentMode][op];
+  let a, b, answer;
+
+  if (op === 'div') {
+    b = rand(cfg.min, cfg.max);
+    const maxAns = Math.max(1, Math.floor(cfg.max / b));
+    answer = rand(1, maxAns);
+    a = b * answer;
+  } else if (op === 'sub') {
+    a = rand(cfg.min, cfg.max);
+    b = rand(cfg.min, a);
+    answer = a - b;
+  } else if (op === 'add') {
+    a = rand(cfg.min, cfg.max);
+    b = rand(cfg.min, cfg.max);
+    answer = a + b;
+  } else { // mul
+    a = rand(cfg.min, cfg.max);
+    b = rand(cfg.min, cfg.max);
+    answer = a * b;
+  }
+
+  const sym = operations[op].symbol;
+  return { display: `${a} ${sym} ${b} = ?`, answer };
+}
+
+/* ── Build answer buttons ────────────────────────────────────────────────── */
+function buildAnswers(correct) {
+  const wrongs = new Set();
+  let attempts = 0;
+  const spread = correct > 100 ? Math.ceil(correct * 0.15) : correct > 20 ? 10 : 5;
+  while (wrongs.size < 3 && attempts < 300) {
+    const delta = rand(1, spread) * (Math.random() < 0.5 ? 1 : -1);
+    const val = correct + delta;
+    if (val > 0 && val !== correct) wrongs.add(val);
+    attempts++;
+  }
+  // Fallback
+  let fb = 1;
+  while (wrongs.size < 3) { if (fb !== correct) wrongs.add(fb); fb++; }
+
+  const opts = shuffle([correct, ...[...wrongs].slice(0, 3)]);
+  answersEl.innerHTML = '';
+  opts.forEach(val => {
+    const btn = document.createElement('button');
+    btn.className = 'ans-btn';
+    btn.textContent = val;
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      onAnswer(btn, val === correct, false);
+    });
+    answersEl.appendChild(btn);
+  });
+}
+
+/* ── Next question ───────────────────────────────────────────────────────── */
+function nextQuestion() {
+  locked = false;
+  clearTimeout(timerTO);
+  answersEl.innerHTML = '';
+
+  const q = generateQuestion();
+  currentAnswer = q.answer;
+  questionText.textContent = q.display;
+
+  buildAnswers(q.answer);
+  startTimer();
+}
+
+/* ── Timer ───────────────────────────────────────────────────────────────── */
+function startTimer() {
+  const ms = modes[currentMode].timeLimit * 1000;
+  progressBar.style.transition = 'none';
+  progressBar.style.width = '100%';
+  progressBar.getBoundingClientRect();
+  progressBar.style.transition = `width ${ms}ms linear`;
+  progressBar.style.width = '0%';
+
+  timerTO = setTimeout(() => {
+    if (!locked) onAnswer(null, false, true);
+  }, ms);
+}
+
+/* ── Answer handler ──────────────────────────────────────────────────────── */
+function onAnswer(btn, isCorrect, isTimeout) {
+  if (locked || !running) return;
+  locked = true;
+  clearTimeout(timerTO);
+
+  const w = getComputedStyle(progressBar).width;
+  progressBar.style.transition = 'none';
+  progressBar.style.width = w;
+
+  totalAnswers++;
+
+  if (isCorrect) {
+    score++;
+    hScoreEl.textContent = score;
+    if (btn) btn.classList.add('flash-ok');
+    setTimeout(() => {
+      if (btn) btn.classList.remove('flash-ok');
+      nextQuestion();
+    }, 400);
+  } else {
+    if (btn) btn.classList.add('flash-err');
+    setTimeout(() => {
+      if (btn) btn.classList.remove('flash-err');
+      endGame(isTimeout ? 'timeout' : 'wrong');
+    }, 440);
+  }
+}
+
+/* ── End game ────────────────────────────────────────────────────────────── */
+function endGame(reason) {
+  running = false;
+  clearTimeout(timerTO);
+  answersEl.innerHTML = '';
+
+  const t = T();
+  const icons = { timeout: '⏱️', wrong: '❌', finish: '🏁' };
+  const msgs  = { timeout: t.endTimeout, wrong: t.endWrong, finish: t.endFinish };
+  endIcon.textContent    = icons[reason];
+  endReason.textContent  = msgs[reason];
+  endCorrect.textContent = score;
+
+  const pct = totalAnswers > 0 ? Math.round(score / totalAnswers * 100) : 0;
+  endAccuracy.textContent = pct + '%';
+
+  lblCorrect.textContent  = t.lblCorrect;
+  lblAccuracy.textContent = t.lblAccuracy;
+  lblEndBest.textContent  = t.lblBest;
+
+  if (score > best) {
+    best = score;
+    localStorage.setItem('mental_best_score', best);
+    endRecordMsg.textContent = t.newRecord;
+  } else {
+    endRecordMsg.textContent = '';
+  }
+  endBestVal.textContent = best;
+  hBestEl.textContent    = best;
+  endOv.classList.remove('hidden');
+}
+
+/* ── Apply language ──────────────────────────────────────────────────────── */
+function applyLang(l) {
+  lang = l;
+  localStorage.setItem('mmath_lang', lang);
+  document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang)
+  );
+  const t = T();
+  document.getElementById('lbl-ops').textContent   = t.opsLabel;
+  document.getElementById('lbl-modes').textContent = t.modesLabel;
+  updateOpLabels();
+  updateModeLabels();
+  opError.textContent = opError.textContent ? t.opError : '';
+  playBtn.textContent  = t.playBtn;
+  lblFinish.textContent = t.finish;
+  lblScore.textContent  = t.scoreLabel;
+  lblBest.textContent   = t.bestLabel;
+  hBestEl.textContent   = best;
+  document.getElementById('btn-home').title   = t.homeBtn;
+  document.getElementById('btn-replay').title = t.replayBtn;
+  document.getElementById('btn-next').title   = t.nextBtn;
+  updateHeaderInfo();
+}
+
+function updateHeaderInfo() {
+  if (!running) { hInfo.innerHTML = ''; return; }
+  const t = T();
+  const opEmojis = selectedOps().map(k => operations[k].emoji).join(' ');
+  const stars = { easy:'⭐', medium:'⭐⭐', hard:'⭐⭐⭐' };
+  hInfo.innerHTML = `
+    <span>${t.hOps}</span><span class="badge">${opEmojis}</span>
+    <span>${t.hMode}</span><span class="badge">${stars[currentMode]} ${t.modeNames[currentMode]}</span>
+  `;
+}
+
+/* ── Start game ──────────────────────────────────────────────────────────── */
+function startGame() {
+  if (!validateOps()) return;
+  score        = 0;
+  totalAnswers = 0;
+  running      = true;
+  hScoreEl.textContent = '0';
+  startOv.classList.add('hidden');
+  endOv.classList.add('hidden');
+  updateHeaderInfo();
+  nextQuestion();
+}
+
+/* ── Events ──────────────────────────────────────────────────────────────── */
+document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
+  b.addEventListener('click', () => applyLang(b.dataset.lang))
+);
+playBtn.addEventListener('click', startGame);
+document.getElementById('btn-replay').addEventListener('click', () => {
+  endOv.classList.add('hidden');
+  startOv.classList.remove('hidden');
+});
+finishBtn.addEventListener('click', () => {
+  if (running) { clearTimeout(timerTO); endGame('finish'); }
+});
+
+/* ── Init ────────────────────────────────────────────────────────────────── */
+buildOpButtons();
+buildModeButtons();
+applyLang(lang);
+validateOps();
+</script>
+</body>
+</html>
