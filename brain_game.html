@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 MIYA GENIUSI — Yarimsha Sinxronizatsiyasi</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --left: #00d4ff;
+    --right: #ff6b35;
+    --sync: #a855f7;
+    --bg: #050a0f;
+    --card: #0d1b2a;
+    --card2: #0a1628;
+    --glow-l: 0 0 20px #00d4ff55;
+    --glow-r: 0 0 20px #ff6b3555;
+    --glow-s: 0 0 30px #a855f755;
+    --text: #e8f4fd;
+    --dim: #6b8fa8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Exo 2', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 600px 400px at 20% 50%, #00d4ff08 0%, transparent 70%),
+      radial-gradient(ellipse 600px 400px at 80% 50%, #ff6b3508 0%, transparent 70%),
+      radial-gradient(ellipse 400px 300px at 50% 10%, #a855f710 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 40px 20px 20px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--left), var(--sync), var(--right));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px #a855f755);
+    animation: logoFloat 3s ease-in-out infinite;
+  }
+
+  @keyframes logoFloat {
+    0%, 100% { filter: drop-shadow(0 0 20px #a855f755); }
+    50% { filter: drop-shadow(0 0 40px #a855f7aa); }
+  }
+
+  .subtitle {
+    color: var(--dim);
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* BRAIN VIZ */
+  .brain-vis {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    margin: 20px auto;
+    max-width: 500px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .hemi {
+    width: 120px;
+    height: 80px;
+    border-radius: 60px 0 0 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+    position: relative;
+    cursor: default;
+  }
+
+  .hemi-left {
+    background: linear-gradient(135deg, #00d4ff22, #00d4ff44);
+    border: 1px solid #00d4ff55;
+    color: var(--left);
+    box-shadow: var(--glow-l);
+    padding-left: 20px;
+  }
+
+  .hemi-right {
+    background: linear-gradient(225deg, #ff6b3522, #ff6b3544);
+    border: 1px solid #ff6b3555;
+    border-radius: 0 60px 60px 0;
+    color: var(--right);
+    box-shadow: var(--glow-r);
+    padding-right: 20px;
+  }
+
+  .corpus {
+    width: 30px;
+    height: 60px;
+    background: linear-gradient(180deg, #a855f722, #a855f755);
+    border-top: 1px solid #a855f788;
+    border-bottom: 1px solid #a855f788;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: var(--sync);
+    writing-mode: vertical-rl;
+    letter-spacing: 2px;
+    box-shadow: var(--glow-s);
+    transition: all 0.3s;
+  }
+
+  .corpus.active {
+    background: linear-gradient(180deg, #a855f766, #a855f799);
+    box-shadow: 0 0 40px #a855f7aa;
+  }
+
+  /* SCORE BAR */
+  .score-bar {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 15px 20px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .score-item {
+    text-align: center;
+  }
+
+  .score-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .score-item:nth-child(1) .score-val { color: var(--left); }
+  .score-item:nth-child(2) .score-val { color: var(--sync); }
+  .score-item:nth-child(3) .score-val { color: var(--right); }
+
+  .score-label {
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* GAME TABS */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 15px 20px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 10;
+  }
+
+  .tab-btn {
+    padding: 10px 18px;
+    border: 1px solid #ffffff22;
+    background: #0d1b2a88;
+    color: var(--dim);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+  }
+
+  .tab-btn:hover { border-color: #ffffff44; color: var(--text); }
+
+  .tab-btn.active-left {
+    border-color: var(--left);
+    color: var(--left);
+    background: #00d4ff15;
+    box-shadow: var(--glow-l);
+  }
+
+  .tab-btn.active-right {
+    border-color: var(--right);
+    color: var(--right);
+    background: #ff6b3515;
+    box-shadow: var(--glow-r);
+  }
+
+  .tab-btn.active-sync {
+    border-color: var(--sync);
+    color: var(--sync);
+    background: #a855f715;
+    box-shadow: var(--glow-s);
+  }
+
+  /* GAME AREA */
+  .game-area {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .game-panel {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .game-panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+  }
+
+  .panel-desc {
+    text-align: center;
+    font-size: 13px;
+    color: var(--dim);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .panel-left .panel-title { color: var(--left); }
+  .panel-right .panel-title { color: var(--right); }
+  .panel-sync .panel-title { color: var(--sync); }
+
+  /* MATH GAME */
+  .math-display {
+    background: var(--card);
+    border: 1px solid #00d4ff33;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: var(--glow-l);
+  }
+
+  .math-question {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 700;
+    color: var(--left);
+    margin-bottom: 10px;
+  }
+
+  .math-timer-bar {
+    height: 4px;
+    background: #ffffff11;
+    border-radius: 2px;
+    margin-top: 15px;
+    overflow: hidden;
+  }
+
+  .math-timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--left), var(--sync));
+    border-radius: 2px;
+    transition: width 0.1s linear;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+  }
+
+  .option-btn {
+    padding: 18px;
+    border: 1px solid #ffffff22;
+    background: #0d1b2a;
+    color: var(--text);
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    transition: all 0.15s;
+  }
+
+  .option-btn:hover { border-color: #00d4ff66; background: #00d4ff11; transform: scale(1.02); }
+  .option-btn.correct { border-color: #22c55e; background: #22c55e22; color: #22c55e; }
+  .option-btn.wrong { border-color: #ef4444; background: #ef444422; color: #ef4444; }
+
+  /* MEMORY GAME */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .mem-card {
+    aspect-ratio: 1;
+    border: 1px solid #ffffff22;
+    background: var(--card);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    transition: all 0.3s;
+    perspective: 600px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mem-card .front {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    backface-visibility: hidden;
+    transition: transform 0.4s;
+  }
+
+  .mem-card .back {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--right);
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    backface-visibility: hidden;
+    transform: rotateY(180deg);
+    transition: transform 0.4s;
+    background: linear-gradient(135deg, #ff6b3511, #ff6b3522);
+    border-radius: 10px;
+  }
+
+  .mem-card.flipped .front { transform: rotateY(-180deg); }
+  .mem-card.flipped .back { transform: rotateY(0); }
+  .mem-card.matched { border-color: #22c55e66; background: #22c55e11; opacity: 0.7; }
+
+  /* STROOP GAME */
+  .stroop-display {
+    background: var(--card);
+    border: 1px solid #a855f733;
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: var(--glow-s);
+  }
+
+  .stroop-instruction {
+    font-size: 13px;
+    color: var(--dim);
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .stroop-word {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(36px, 7vw, 60px);
+    font-weight: 900;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    transition: all 0.3s;
+    text-shadow: 0 0 30px currentColor;
+  }
+
+  .stroop-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .stroop-btn {
+    padding: 14px 24px;
+    border-radius: 10px;
+    border: 2px solid;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+    background: transparent;
+  }
+
+  .stroop-btn:hover { transform: scale(1.05); filter: brightness(1.3); }
+
+  /* SEQUENCE GAME */
+  .seq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 20px auto;
+    max-width: 360px;
+  }
+
+  .seq-btn {
+    aspect-ratio: 1;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    transition: all 0.2s;
+    background: var(--card);
+  }
+
+  .seq-btn:hover { transform: scale(1.04); }
+  .seq-btn.flash { transform: scale(0.95); filter: brightness(2); }
+
+  /* SYNC DRAW GAME */
+  .draw-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .canvas-wrap {
+    text-align: center;
+  }
+
+  .canvas-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  canvas {
+    border-radius: 12px;
+    cursor: crosshair;
+    display: block;
+    margin: 0 auto;
+    touch-action: none;
+  }
+
+  /* WORD LOGIC GAME */
+  .word-display {
+    background: var(--card);
+    border: 1px solid #00d4ff33;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .word-scrambled {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(24px, 5vw, 40px);
+    font-weight: 900;
+    color: var(--left);
+    letter-spacing: 8px;
+    margin-bottom: 15px;
+  }
+
+  .word-hint {
+    font-size: 13px;
+    color: var(--dim);
+    margin-bottom: 20px;
+  }
+
+  .word-input-wrap {
+    display: flex;
+    gap: 10px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  input[type=text] {
+    flex: 1;
+    padding: 14px 18px;
+    background: #0a1628;
+    border: 1px solid #00d4ff44;
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type=text]:focus { border-color: var(--left); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 13px 28px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .btn-blue {
+    background: linear-gradient(135deg, #00d4ff33, #00d4ff55);
+    border: 1px solid var(--left);
+    color: var(--left);
+    box-shadow: var(--glow-l);
+  }
+
+  .btn-purple {
+    background: linear-gradient(135deg, #a855f733, #a855f755);
+    border: 1px solid var(--sync);
+    color: var(--sync);
+    box-shadow: var(--glow-s);
+  }
+
+  .btn-orange {
+    background: linear-gradient(135deg, #ff6b3533, #ff6b3555);
+    border: 1px solid var(--right);
+    color: var(--right);
+    box-shadow: var(--glow-r);
+  }
+
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
+  .btn:active { transform: scale(0.97); }
+
+  .center { text-align: center; margin-top: 10px; }
+
+  /* STATUS */
+  .status-msg {
+    text-align: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 12px;
+    border-radius: 10px;
+    margin: 10px 0;
+    animation: statusPop 0.3s ease;
+  }
+
+  @keyframes statusPop {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .status-good { background: #22c55e22; border: 1px solid #22c55e55; color: #22c55e; }
+  .status-bad { background: #ef444422; border: 1px solid #ef444455; color: #ef4444; }
+  .status-info { background: #a855f722; border: 1px solid #a855f755; color: var(--sync); }
+
+  /* LEVEL BAR */
+  .level-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: #0d1b2a88;
+    border-radius: 10px;
+    border: 1px solid #ffffff11;
+  }
+
+  .level-badge {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+
+  .lvl-left { background: #00d4ff22; border: 1px solid var(--left); color: var(--left); }
+  .lvl-right { background: #ff6b3522; border: 1px solid var(--right); color: var(--right); }
+  .lvl-sync { background: #a855f722; border: 1px solid var(--sync); color: var(--sync); }
+
+  .level-progress { flex: 1; height: 6px; background: #ffffff11; border-radius: 3px; overflow: hidden; }
+  .level-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+  /* REACTION GAME */
+  .react-area {
+    border-radius: 16px;
+    padding: 60px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.1s;
+    margin-bottom: 20px;
+    border: 2px solid #ffffff11;
+    user-select: none;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .react-text {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(20px, 4vw, 32px);
+    font-weight: 700;
+    letter-spacing: 3px;
+  }
+
+  .react-sub {
+    font-size: 13px;
+    color: var(--dim);
+    letter-spacing: 2px;
+  }
+
+  /* PATTERN GAME */
+  .pattern-display {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .pattern-item {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 2px solid #ffffff22;
+  }
+
+  /* INFO CARD */
+  .info-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid #ffffff11;
+  }
+
+  .info-card h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+
+  .info-card p {
+    font-size: 13px;
+    color: var(--dim);
+    line-height: 1.7;
+  }
+
+  /* HOME SCREEN */
+  .home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .game-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 22px 18px;
+    border: 1px solid #ffffff11;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .game-card:hover { border-color: #ffffff33; transform: translateY(-3px); }
+
+  .game-card .icon { font-size: 36px; margin-bottom: 10px; }
+  .game-card h3 { font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+  .game-card p { font-size: 11px; color: var(--dim); line-height: 1.5; }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 8px;
+  }
+
+  .tag-l { background: #00d4ff22; color: var(--left); }
+  .tag-r { background: #ff6b3522; color: var(--right); }
+  .tag-s { background: #a855f722; color: var(--sync); }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .memory-grid { grid-template-columns: repeat(4, 1fr); gap: 7px; }
+    .draw-area { grid-template-columns: 1fr; }
+    .stroop-buttons { gap: 8px; }
+    .stroop-btn { padding: 12px 18px; font-size: 13px; }
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ffffff22, transparent);
+    margin: 20px 0;
+  }
+
+  .combo-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: var(--sync);
+    text-align: center;
+    letter-spacing: 2px;
+  }
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🧠 MIYA GENIUSI</div>
+  <div class="subtitle">Yarimshalar Sinxronizatsiyasi Platformasi</div>
+</div>
+
+<!-- Brain Visualization -->
+<div class="brain-vis">
+  <div class="hemi hemi-left" id="hemiLeft">CHAP<br><small style="font-size:9px">MANTIQ</small></div>
+  <div class="corpus" id="corpus">KORP</div>
+  <div class="hemi hemi-right" id="hemiRight">O'NG<br><small style="font-size:9px">IJODIY</small></div>
+</div>
+
+<!-- Score Bar -->
+<div class="score-bar">
+  <div class="score-item">
+    <div class="score-val" id="scoreLeft">0</div>
+    <div class="score-label">Chap yadro</div>
+  </div>
+  <div class="score-item">
+    <div class="score-val" id="scoreTotal">0</div>
+    <div class="score-label">Umumiy</div>
+  </div>
+  <div class="score-item">
+    <div class="score-val" id="scoreRight">0</div>
+    <div class="score-label">O'ng yadro</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn" onclick="showTab('home')">🏠 Asosiy</button>
+  <button class="tab-btn active-left" onclick="showTab('math')">➕ Matematik</button>
+  <button class="tab-btn active-right" onclick="showTab('memory')">🎭 Xotira</button>
+  <button class="tab-btn active-sync" onclick="showTab('stroop')">🎨 Stroop</button>
+  <button class="tab-btn active-left" onclick="showTab('reaction')">⚡ Reaktsiya</button>
+  <button class="tab-btn active-right" onclick="showTab('sequence')">🔢 Ketma-ketlik</button>
+  <button class="tab-btn active-sync" onclick="showTab('word')">📝 So'z</button>
+</div>
+
+<!-- Game Area -->
+<div class="game-area">
+
+  <!-- HOME -->
+  <div class="game-panel active" id="panel-home">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--sync);letter-spacing:2px;margin-bottom:8px">MIYA HAQIDA BILIM</div>
+      <p style="font-size:13px;color:var(--dim);line-height:1.7;max-width:500px;margin:0 auto">Chap yarimsha: Mantiq, til, matematika, tahlil. O'ng yarimsha: Ijodkorlik, tasviriy fikrlash, his-tuyg'ular, musiqa. Miya qo'sh yarimsharlari birgalikda ishlasa — IQ 10 barobar oshadi!</p>
+    </div>
+    <div class="home-grid">
+      <div class="game-card" onclick="showTab('math')">
+        <div class="icon">🔢</div>
+        <h3>MATEMATIK</h3>
+        <p>Tez hisoblash, mantiqiy fikrlash</p>
+        <span class="tag tag-l">CHAP YARIMSHA</span>
+      </div>
+      <div class="game-card" onclick="showTab('memory')">
+        <div class="icon">🎭</div>
+        <h3>XOTIRA</h3>
+        <p>Vizual xotira, juftliklar topish</p>
+        <span class="tag tag-r">O'NG YARIMSHA</span>
+      </div>
+      <div class="game-card" onclick="showTab('stroop')">
+        <div class="icon">🎨</div>
+        <h3>STROOP TESTI</h3>
+        <p>Yarimshalar ziddiyati va sinxronizatsiya</p>
+        <span class="tag tag-s">SINXRONIZATSIYA</span>
+      </div>
+      <div class="game-card" onclick="showTab('reaction')">
+        <div class="icon">⚡</div>
+        <h3>REAKTSIYA</h3>
+        <p>Tezlik va e'tibor sinovi</p>
+        <span class="tag tag-l">CHAP YARIMSHA</span>
+      </div>
+      <div class="game-card" onclick="showTab('sequence')">
+        <div class="icon">🔢</div>
+        <h3>KETMA-KETLIK</h3>
+        <p>Qisqa muddatli xotira va naqsh</p>
+        <span class="tag tag-r">O'NG YARIMSHA</span>
+      </div>
+      <div class="game-card" onclick="showTab('word')">
+        <div class="icon">📝</div>
+        <h3>SO'Z TOPISH</h3>
+        <p>Til va ijodiy fikrlash kombinatsiyasi</p>
+        <span class="tag tag-s">SINXRONIZATSIYA</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="info-card" style="border-color:#00d4ff33">
+      <h3 style="color:var(--left)">🔵 CHAP YARIMSHA — Mantiq Markazi</h3>
+      <p>Til va nutq, matematik hisoblash, mantiqiy tahlil, tartibli fikrlash, o'qish va yozish. Bu yarimsha to'g'ri tomonni boshqaradi. Matematik va reaktsiya o'yinlari bu yarimshani rivojlantiradi.</p>
+    </div>
+    <div class="info-card" style="border-color:#ff6b3533">
+      <h3 style="color:var(--right)">🟠 O'NG YARIMSHA — Ijodkorlik Markazi</h3>
+      <p>Fazoviy yo'nalish, musiqiy qobiliyat, tasviriy va ijodiy fikrlash, his-tuyg'ularni anglash, metaforalar, intuitsiya. Chap tomonni boshqaradi. Xotira va ketma-ketlik o'yinlari shu yarimshani uyg'otadi.</p>
+    </div>
+    <div class="info-card" style="border-color:#a855f733">
+      <h3 style="color:var(--sync)">🟣 MOYA QOVOQCHASI — Sinxronizatsiya Kaliti</h3>
+      <p>Milodiy milyon nerv tolalaridan iborat bu tuzilma ikkala yarimsha o'rtasida ma'lumot almashinuvini ta'minlaydi. Einstein'ning miya qovoqchasi odatdagidan sezilarli darajada kattaroq edi. Stroop testi aynan shu kanalni mashq qildiradi.</p>
+    </div>
+  </div>
+
+  <!-- MATH GAME -->
+  <div class="game-panel panel-left" id="panel-math">
+    <div class="panel-title">MATEMATIK MAYDON</div>
+    <div class="panel-desc">Chap yarimsha: Tez hisoblash va mantiqiy fikrlash</div>
+
+    <div class="level-info">
+      <span class="level-badge lvl-left" id="mathLevel">BOSHLANG'ICH</span>
+      <div class="level-progress"><div class="level-fill" id="mathBar" style="width:0%;background:var(--left)"></div></div>
+      <span style="font-family:'Orbitron',monospace;font-size:12px;color:var(--left)" id="mathScore">0</span>
+    </div>
+
+    <div class="math-display">
+      <div class="math-question" id="mathQ">?</div>
+      <div id="mathStatus"></div>
+      <div class="math-timer-bar"><div class="math-timer-fill" id="mathTimer" style="width:100%"></div></div>
+    </div>
+
+    <div class="options-grid" id="mathOptions"></div>
+    <div class="combo-text" id="mathCombo"></div>
+    <div class="center"><button class="btn btn-blue" onclick="startMath()">▶ YANGI O'YIN</button></div>
+  </div>
+
+  <!-- MEMORY GAME -->
+  <div class="game-panel panel-right" id="panel-memory">
+    <div class="panel-title">VIZUAL XOTIRA</div>
+    <div class="panel-desc">O'ng yarimsha: Emoji juftliklarini topish</div>
+
+    <div class="level-info">
+      <span class="level-badge lvl-right" id="memLevel">4×4 GRID</span>
+      <div class="level-progress"><div class="level-fill" id="memBar" style="width:0%;background:var(--right)"></div></div>
+      <span style="font-family:'Orbitron',monospace;font-size:12px;color:var(--right)" id="memScore">0</span>
+    </div>
+
+    <div id="memStatus" class="status-msg status-info" style="display:none"></div>
+    <div class="memory-grid" id="memGrid"></div>
+    <div class="center"><button class="btn btn-orange" onclick="startMemory()">▶ YANGI O'YIN</button></div>
+  </div>
+
+  <!-- STROOP GAME -->
+  <div class="game-panel panel-sync" id="panel-stroop">
+    <div class="panel-title">STROOP SINXRONIZATSIYASI</div>
+    <div class="panel-desc">Ikkala yarimsha: So'z RANGINI aniqlang, ma'nosini emas!</div>
+
+    <div class="level-info">
+      <span class="level-badge lvl-sync" id="stroopLevel">SINXRON</span>
+      <div class="level-progress"><div class="level-fill" id="stroopBar" style="width:0%;background:var(--sync)"></div></div>
+      <span style="font-family:'Orbitron',monospace;font-size:12px;color:var(--sync)" id="stroopScore">0</span>
+    </div>
+
+    <div class="stroop-display">
+      <div class="stroop-instruction">SO'Z RANGINI BOSING</div>
+      <div class="stroop-word" id="stroopWord">TAYYOR</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--dim)" id="stroopTimer">⏱ 3 soniya</div>
+    </div>
+
+    <div id="stroopStatus" style="margin-bottom:10px"></div>
+    <div class="stroop-buttons" id="stroopBtns"></div>
+    <div class="center" style="margin-top:15px"><button class="btn btn-purple" onclick="startStroop()">▶ YANGI O'YIN</button></div>
+  </div>
+
+  <!-- REACTION GAME -->
+  <div class="game-panel panel-left" id="panel-reaction">
+    <div class="panel-title">REAKTSIYA TESTI</div>
+    <div class="panel-desc">E'tibor va tezlik — chap yarimsha mashqi</div>
+
+    <div class="level-info">
+      <span class="level-badge lvl-left">TEZLIK</span>
+      <div class="level-progress"><div class="level-fill" id="reactBar" style="width:0%;background:var(--left)"></div></div>
+      <span style="font-family:'Orbitron',monospace;font-size:12px;color:var(--left)" id="reactScore">0</span>
+    </div>
+
+    <div class="react-area" id="reactArea" onclick="handleReact()" style="background:var(--card)">
+      <div class="react-text" id="reactText" style="color:var(--dim)">BOSISH UCHUN TAYYOR BO'LING</div>
+      <div class="react-sub" id="reactSub">O'yinni boshlash uchun tugmani bosing</div>
+    </div>
+
+    <div id="reactResults" style="text-align:center"></div>
+    <div class="center"><button class="btn btn-blue" onclick="startReaction()">▶ BOSHLASH</button></div>
+  </div>
+
+  <!-- SEQUENCE GAME -->
+  <div class="game-panel panel-right" id="panel-sequence">
+    <div class="panel-title">KETMA-KETLIK XOTIRASI</div>
+    <div class="panel-desc">O'ng yarimsha: Ketma-ketlikni eslab, takrorlang</div>
+
+    <div class="level-info">
+      <span class="level-badge lvl-right" id="seqLevel">DARAJA 1</span>
+      <div class="level-progress"><div class="level-fill" id="seqBar" style="width:0%;background:var(--right)"></div></div>
+      <span style="font-family:'Orbitron',monospace;font-size:12px;color:var(--right)" id="seqScore">0</span>
+    </div>
+
+    <div id="seqInfo" style="text-align:center;margin-bottom:10px;font-family:'Orbitron',monospace;font-size:14px;color:var(--dim)">O'yin boshlanishini kuting...</div>
+
+    <div class="seq-grid" id="seqGrid"></div>
+    <div class="center"><button class="btn btn-orange" onclick="startSequence()">▶ BOSHLASH</button></div>
+  </div>
+
+  <!-- WORD GAME -->
+  <div class="game-panel panel-sync" id="panel-word">
+    <div class="panel-title">ARALASH SO'Z TOPISH</div>
+    <div class="panel-desc">Sinxronizatsiya: Aralashtirilgan harflardan so'z toping</div>
+
+    <div class="level-info">
+      <span class="level-badge lvl-sync" id="wordLevel">BOSHLANG'ICH</span>
+      <div class="level-progress"><div class="level-fill" id="wordBar" style="width:0%;background:var(--sync)"></div></div>
+      <span style="font-family:'Orbitron',monospace;font-size:12px;color:var(--sync)" id="wordScore">0</span>
+    </div>
+
+    <div class="word-display">
+      <div class="word-scrambled" id="wordScrambled">- - - -</div>
+      <div class="word-hint" id="wordHint">Izoh: ...</div>
+      <div class="word-input-wrap">
+        <input type="text" id="wordInput" placeholder="JAVOB" maxlength="12" onkeydown="if(event.key==='Enter')checkWord()">
+        <button class="btn btn-purple" onclick="checkWord()">✓</button>
+      </div>
+    </div>
+
+    <div id="wordStatus" style="margin-bottom:10px"></div>
+    <div class="center" style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-purple" onclick="nextWord()">⟳ KEYINGI</button>
+      <button class="btn btn-blue" onclick="startWord()">▶ YANGI</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ====== STATE ======
+let scores = { left: 0, right: 0, total: 0 };
+let combo = 0;
+
+function updateScores(type, pts) {
+  scores.total += pts;
+  if (type === 'left') scores.left += pts;
+  if (type === 'right') scores.right += pts;
+  if (type === 'sync') { scores.left += pts; scores.right += pts; scores.total += pts; }
+  document.getElementById('scoreLeft').textContent = scores.left;
+  document.getElementById('scoreRight').textContent = scores.right;
+  document.getElementById('scoreTotal').textContent = scores.total;
+  // brain pulse
+  const c = document.getElementById('corpus');
+  c.classList.add('active');
+  setTimeout(() => c.classList.remove('active'), 600);
+}
+
+function showTab(id) {
+  document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+}
+
+// ====== MATH GAME ======
+let mathState = { score: 0, combo: 0, correct: 0, level: 1, timer: null, timerVal: 100 };
+
+const mathOps = [
+  { op: '+', range: [2, 20], fn: (a,b) => a+b },
+  { op: '−', range: [2, 20], fn: (a,b) => a-b },
+  { op: '×', range: [2, 9], fn: (a,b) => a*b },
+];
+
+function startMath() {
+  mathState = { score: 0, combo: 0, correct: 0, level: 1, timer: null, timerVal: 100 };
+  document.getElementById('mathScore').textContent = '0';
+  document.getElementById('mathBar').style.width = '0%';
+  document.getElementById('mathCombo').textContent = '';
+  nextMath();
+}
+
+function nextMath() {
+  clearInterval(mathState.timer);
+  const lvl = Math.min(mathState.level, 3);
+  const opData = mathOps[Math.floor(Math.random() * (lvl === 1 ? 2 : mathOps.length))];
+  const [min, max] = opData.range;
+  let a = Math.floor(Math.random() * (max - min + 1)) + min;
+  let b = Math.floor(Math.random() * (max - min + 1)) + min;
+  if (opData.op === '−' && b > a) [a, b] = [b, a];
+  const answer = opData.fn(a, b);
+  document.getElementById('mathQ').textContent = `${a} ${opData.op} ${b} = ?`;
+
+  // Generate options
+  let opts = new Set([answer]);
+  while (opts.size < 4) {
+    let wrong = answer + (Math.floor(Math.random() * 8) - 4);
+    if (wrong !== answer) opts.add(wrong);
+  }
+  opts = [...opts].sort(() => Math.random() - 0.5);
+
+  const container = document.getElementById('mathOptions');
+  container.innerHTML = '';
+  opts.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = o;
+    btn.onclick = () => checkMath(btn, o, answer, opts);
+    container.appendChild(btn);
+  });
+
+  document.getElementById('mathStatus').innerHTML = '';
+  mathState.timerVal = 100;
+  const timeLimit = Math.max(2000, 5000 - mathState.level * 400);
+  const step = 100 / (timeLimit / 100);
+  mathState.timer = setInterval(() => {
+    mathState.timerVal -= step;
+    document.getElementById('mathTimer').style.width = Math.max(0, mathState.timerVal) + '%';
+    if (mathState.timerVal <= 0) {
+      clearInterval(mathState.timer);
+      checkMath(null, null, answer, opts);
+    }
+  }, 100);
+}
+
+function checkMath(btn, chosen, answer, opts) {
+  clearInterval(mathState.timer);
+  document.querySelectorAll('#mathOptions .option-btn').forEach(b => {
+    b.onclick = null;
+    if (parseInt(b.textContent) === answer) b.classList.add('correct');
+  });
+
+  if (chosen === answer) {
+    mathState.combo++;
+    mathState.correct++;
+    const pts = 10 + (mathState.combo > 2 ? mathState.combo * 2 : 0);
+    mathState.score += pts;
+    if (btn) btn.classList.add('correct');
+    document.getElementById('mathCombo').textContent = mathState.combo > 1 ? `🔥 COMBO x${mathState.combo}! +${pts}` : '';
+    updateScores('left', pts);
+  } else {
+    mathState.combo = 0;
+    if (btn) btn.classList.add('wrong');
+    document.getElementById('mathCombo').textContent = '';
+  }
+
+  document.getElementById('mathScore').textContent = mathState.score;
+  mathState.level = Math.floor(mathState.correct / 5) + 1;
+  const levels = ['BOSHLANG\'ICH', 'O\'RTA', 'ILGOR', 'MASTER', 'GENIUS'];
+  document.getElementById('mathLevel').textContent = levels[Math.min(mathState.level - 1, 4)];
+  document.getElementById('mathBar').style.width = ((mathState.correct % 5) / 5 * 100) + '%';
+
+  setTimeout(nextMath, 800);
+}
+
+// ====== MEMORY GAME ======
+let memState = { cards: [], flipped: [], matched: 0, score: 0, lock: false };
+const emojis = ['🧠', '⚡', '🎯', '🔮', '🌟', '💎', '🚀', '🎭'];
+
+function startMemory() {
+  memState = { cards: [], flipped: [], matched: 0, score: 0, lock: false };
+  const pairs = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+  memState.cards = pairs.map((e, i) => ({ id: i, emoji: e, flipped: false, matched: false }));
+  renderMemory();
+  document.getElementById('memScore').textContent = '0';
+  document.getElementById('memBar').style.width = '0%';
+  document.getElementById('memStatus').style.display = 'none';
+}
+
+function renderMemory() {
+  const grid = document.getElementById('memGrid');
+  grid.innerHTML = '';
+  memState.cards.forEach((card, i) => {
+    const el = document.createElement('div');
+    el.className = 'mem-card' + (card.flipped || card.matched ? ' flipped' : '') + (card.matched ? ' matched' : '');
+    el.innerHTML = `<div class="front">🔷</div><div class="back">${card.emoji}</div>`;
+    if (!card.matched) el.onclick = () => flipCard(i);
+    grid.appendChild(el);
+  });
+}
+
+function flipCard(i) {
+  if (memState.lock || memState.flipped.length >= 2 || memState.cards[i].flipped || memState.cards[i].matched) return;
+  memState.cards[i].flipped = true;
+  memState.flipped.push(i);
+  renderMemory();
+
+  if (memState.flipped.length === 2) {
+    memState.lock = true;
+    const [a, b] = memState.flipped;
+    if (memState.cards[a].emoji === memState.cards[b].emoji) {
+      memState.cards[a].matched = true;
+      memState.cards[b].matched = true;
+      memState.matched++;
+      memState.score += 20;
+      memState.flipped = [];
+      memState.lock = false;
+      document.getElementById('memScore').textContent = memState.score;
+      document.getElementById('memBar').style.width = (memState.matched / 8 * 100) + '%';
+      updateScores('right', 20);
+      renderMemory();
+      if (memState.matched === 8) {
+        const st = document.getElementById('memStatus');
+        st.className = 'status-msg status-good';
+        st.textContent = '🎉 TABRIKLAYMIZ! Barcha juftliklar topildi!';
+        st.style.display = 'block';
+      }
+    } else {
+      setTimeout(() => {
+        memState.cards[a].flipped = false;
+        memState.cards[b].flipped = false;
+        memState.flipped = [];
+        memState.lock = false;
+        renderMemory();
+      }, 1000);
+    }
+  }
+}
+
+// ====== STROOP GAME ======
+const stroopColors = [
+  { name: 'QIZIL', hex: '#ef4444' },
+  { name: 'KO\'K', hex: '#00d4ff' },
+  { name: 'YASHIL', hex: '#22c55e' },
+  { name: 'SARIQ', hex: '#f59e0b' },
+  { name: 'BINAFSHA', hex: '#a855f7' },
+];
+let stroopState = { score: 0, current: null, timer: null, timerVal: 3 };
+
+function startStroop() {
+  stroopState = { score: 0, current: null, timer: null, timerVal: 3 };
+  document.getElementById('stroopScore').textContent = '0';
+  document.getElementById('stroopBar').style.width = '0%';
+  const btns = document.getElementById('stroopBtns');
+  btns.innerHTML = '';
+  stroopColors.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'stroop-btn';
+    btn.textContent = c.name;
+    btn.style.borderColor = c.hex;
+    btn.style.color = c.hex;
+    btn.onclick = () => checkStroop(c.name);
+    btns.appendChild(btn);
+  });
+  nextStroop();
+}
+
+function nextStroop() {
+  clearInterval(stroopState.timer);
+  const wordColor = stroopColors[Math.floor(Math.random() * stroopColors.length)];
+  let displayColor;
+  do { displayColor = stroopColors[Math.floor(Math.random() * stroopColors.length)]; }
+  while (displayColor.name === wordColor.name && Math.random() > 0.3);
+
+  stroopState.current = { wordColor, displayColor };
+  const word = document.getElementById('stroopWord');
+  word.textContent = wordColor.name;
+  word.style.color = displayColor.hex;
+
+  document.getElementById('stroopStatus').innerHTML = '';
+  stroopState.timerVal = 3;
+  document.getElementById('stroopTimer').textContent = `⏱ 3 soniya`;
+  stroopState.timer = setInterval(() => {
+    stroopState.timerVal -= 0.1;
+    document.getElementById('stroopTimer').textContent = `⏱ ${Math.max(0, stroopState.timerVal).toFixed(1)} soniya`;
+    if (stroopState.timerVal <= 0) {
+      clearInterval(stroopState.timer);
+      const st = document.getElementById('stroopStatus');
+      st.className = 'status-msg status-bad';
+      st.innerHTML = `⏰ Vaqt tugadi! To'g'ri javob: <strong>${stroopState.current.displayColor.name}</strong>`;
+      setTimeout(nextStroop, 1500);
+    }
+  }, 100);
+}
+
+function checkStroop(chosen) {
+  clearInterval(stroopState.timer);
+  const correct = stroopState.current.displayColor.name;
+  const st = document.getElementById('stroopStatus');
+  if (chosen === correct) {
+    stroopState.score += 15;
+    st.className = 'status-msg status-good';
+    st.textContent = '✅ To\'g\'ri! +15 sinxron ball';
+    document.getElementById('stroopScore').textContent = stroopState.score;
+    document.getElementById('stroopBar').style.width = Math.min(100, stroopState.score / 2) + '%';
+    updateScores('sync', 15);
+    setTimeout(nextStroop, 800);
+  } else {
+    st.className = 'status-msg status-bad';
+    st.innerHTML = `❌ Noto'g'ri! To'g'ri rang: <strong>${correct}</strong>`;
+    setTimeout(nextStroop, 1500);
+  }
+}
+
+// ====== REACTION GAME ======
+let reactState = { active: false, waiting: false, start: 0, results: [], round: 0, timeout: null };
+
+function startReaction() {
+  reactState = { active: false, waiting: false, start: 0, results: [], round: 0, timeout: null };
+  document.getElementById('reactResults').innerHTML = '';
+  scheduleReact();
+}
+
+function scheduleReact() {
+  if (reactState.round >= 5) {
+    const avg = reactState.results.reduce((a,b) => a+b, 0) / reactState.results.length;
+    const area = document.getElementById('reactArea');
+    area.style.background = 'var(--card)';
+    document.getElementById('reactText').style.color = 'var(--sync)';
+    document.getElementById('reactText').textContent = `⚡ O'RTACHA: ${Math.round(avg)} ms`;
+    document.getElementById('reactSub').textContent = avg < 250 ? '🏆 AJOYIB TEZLIK!' : avg < 400 ? '👍 YAXSHI' : '📈 Mashq qiling';
+    updateScores('left', Math.max(0, Math.floor((500 - avg) / 5)));
+    return;
+  }
+
+  const area = document.getElementById('reactArea');
+  area.style.background = '#ef444422';
+  document.getElementById('reactText').textContent = 'KUTIB TURING...';
+  document.getElementById('reactText').style.color = '#ef4444';
+  document.getElementById('reactSub').textContent = `Tur ${reactState.round + 1}/5`;
+  reactState.waiting = false;
+  reactState.active = false;
+
+  const delay = 1500 + Math.random() * 3000;
+  reactState.timeout = setTimeout(() => {
+    area.style.background = '#22c55e22';
+    document.getElementById('reactText').textContent = 'BOSING! HOZIR!';
+    document.getElementById('reactText').style.color = '#22c55e';
+    reactState.start = Date.now();
+    reactState.active = true;
+  }, delay);
+}
+
+function handleReact() {
+  if (!reactState.active && reactState.waiting) return;
+  if (reactState.active) {
+    const ms = Date.now() - reactState.start;
+    reactState.results.push(ms);
+    reactState.round++;
+    reactState.active = false;
+    document.getElementById('reactArea').style.background = 'var(--card)';
+    document.getElementById('reactText').textContent = `${ms} ms`;
+    document.getElementById('reactText').style.color = 'var(--left)';
+    document.getElementById('reactScore').textContent = reactState.round;
+    document.getElementById('reactBar').style.width = (reactState.round / 5 * 100) + '%';
+    setTimeout(scheduleReact, 600);
+  } else if (!reactState.active) {
+    clearTimeout(reactState.timeout);
+    document.getElementById('reactText').textContent = 'ERTA BOSDINGIZ! ❌';
+    document.getElementById('reactText').style.color = '#ef4444';
+    reactState.active = false;
+    setTimeout(scheduleReact, 1200);
+  }
+}
+
+// ====== SEQUENCE GAME ======
+const seqColors = ['#00d4ff', '#ff6b35', '#a855f7', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
+const seqEmojis = ['🔵', '🟠', '🟣', '🟢', '🟡', '🩷', '🩵', '🟩', '🟧'];
+let seqState = { sequence: [], input: [], level: 1, score: 0, showing: false };
+
+function startSequence() {
+  seqState = { sequence: [], input: [], level: 1, score: 0, showing: false };
+  document.getElementById('seqScore').textContent = '0';
+  document.getElementById('seqBar').style.width = '0%';
+  renderSeqGrid();
+  setTimeout(nextSequence, 500);
+}
+
+function renderSeqGrid() {
+  const grid = document.getElementById('seqGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'seq-btn';
+    btn.style.background = seqColors[i] + '22';
+    btn.style.borderColor = seqColors[i] + '66';
+    btn.style.color = seqColors[i];
+    btn.textContent = seqEmojis[i];
+    btn.id = 'seqBtn' + i;
+    btn.onclick = () => handleSeqInput(i);
+    grid.appendChild(btn);
+  }
+}
+
+function nextSequence() {
+  seqState.input = [];
+  seqState.sequence.push(Math.floor(Math.random() * 9));
+  seqState.showing = true;
+  document.getElementById('seqInfo').textContent = `👁 Ketma-ketlikni kuzating... (${seqState.sequence.length} qadam)`;
+  document.getElementById('seqLevel').textContent = `DARAJA ${seqState.level}`;
+
+  let i = 0;
+  const show = () => {
+    if (i > 0) {
+      const prev = document.getElementById('seqBtn' + seqState.sequence[i-1]);
+      if (prev) prev.classList.remove('flash');
+    }
+    if (i < seqState.sequence.length) {
+      setTimeout(() => {
+        const btn = document.getElementById('seqBtn' + seqState.sequence[i]);
+        if (btn) btn.classList.add('flash');
+        i++;
+        setTimeout(show, 600);
+      }, 200);
+    } else {
+      seqState.showing = false;
+      document.getElementById('seqInfo').textContent = '🖱 Endi siz takrorlang!';
+    }
+  };
+  setTimeout(show, 600);
+}
+
+function handleSeqInput(idx) {
+  if (seqState.showing) return;
+  const btn = document.getElementById('seqBtn' + idx);
+  btn.classList.add('flash');
+  setTimeout(() => btn.classList.remove('flash'), 300);
+
+  seqState.input.push(idx);
+  const pos = seqState.input.length - 1;
+
+  if (seqState.input[pos] !== seqState.sequence[pos]) {
+    document.getElementById('seqInfo').textContent = `❌ Xato! Ketma-ketlik ${seqState.sequence.length} bosqichda edi.`;
+    document.getElementById('seqScore').textContent = seqState.score;
+    seqState.sequence = [];
+    seqState.level = 1;
+    setTimeout(nextSequence, 1500);
+    return;
+  }
+
+  if (seqState.input.length === seqState.sequence.length) {
+    const pts = seqState.sequence.length * 10;
+    seqState.score += pts;
+    seqState.level++;
+    document.getElementById('seqScore').textContent = seqState.score;
+    document.getElementById('seqBar').style.width = Math.min(100, seqState.score / 2) + '%';
+    document.getElementById('seqInfo').textContent = `✅ To'g'ri! +${pts} ball. Keyingi daraja...`;
+    updateScores('right', pts);
+    setTimeout(nextSequence, 1000);
+  }
+}
+
+// ====== WORD GAME ======
+const wordList = [
+  { word: 'MIYA', hint: 'Inson tanasidagi eng muhim organ' },
+  { word: 'ASAL', hint: 'Asalari tayyorlaydigan shirin mahsulot' },
+  { word: 'KITOB', hint: 'Bilim manbai, o\'qish uchun' },
+  { word: 'TOSH', hint: 'Qattiq, yerdan topiladi' },
+  { word: 'BAHOR', hint: 'Yilning to\'rtinchi fasli' },
+  { word: 'QUYOSH', hint: 'Koinotdagi eng yaqin yulduz' },
+  { word: 'DARYO', hint: 'Oqar suv, dengizga quyiladi' },
+  { word: 'SABZI', hint: 'Ildiz sabzavot, to\'q sariq rangli' },
+  { word: 'XURMO', hint: 'Sharqda o\'sadigan shirin meva' },
+  { word: 'YULDUZ', hint: 'Tunda osmonda porlaydi' },
+  { word: 'BULUT', hint: 'Osmonda suzib yuradi, yomg\'ir beradi' },
+  { word: 'KAMON', hint: 'Skripkada tortib chalinadigan asbob' },
+  { word: 'TEMIR', hint: 'Metall, qattiq va mustahkam' },
+  { word: 'OLMA', hint: 'Qizil yoki yashil, shirin meva' },
+  { word: 'BOZOR', hint: 'Savdo qilinadigan joy' },
+];
+
+let wordState = { score: 0, current: null, idx: -1, usedIdxs: [] };
+
+function startWord() {
+  wordState = { score: 0, current: null, idx: -1, usedIdxs: [] };
+  document.getElementById('wordScore').textContent = '0';
+  document.getElementById('wordBar').style.width = '0%';
+  document.getElementById('wordStatus').innerHTML = '';
+  nextWord();
+}
+
+function nextWord() {
+  let available = wordList.map((_, i) => i).filter(i => !wordState.usedIdxs.includes(i));
+  if (available.length === 0) {
+    wordState.usedIdxs = [];
+    available = wordList.map((_, i) => i);
+  }
+  const idx = available[Math.floor(Math.random() * available.length)];
+  wordState.usedIdxs.push(idx);
+  wordState.current = wordList[idx];
+
+  const scrambled = wordState.current.word.split('').sort(() => Math.random() - 0.5).join('');
+  document.getElementById('wordScrambled').textContent = scrambled.split('').join(' ');
+  document.getElementById('wordHint').textContent = '💡 Izoh: ' + wordState.current.hint;
+  document.getElementById('wordInput').value = '';
+  document.getElementById('wordStatus').innerHTML = '';
+  document.getElementById('wordInput').focus();
+}
+
+function checkWord() {
+  const input = document.getElementById('wordInput').value.trim().toUpperCase();
+  const st = document.getElementById('wordStatus');
+  if (!input) return;
+
+  if (input === wordState.current.word) {
+    const pts = 20;
+    wordState.score += pts;
+    document.getElementById('wordScore').textContent = wordState.score;
+    document.getElementById('wordBar').style.width = Math.min(100, wordState.score / 2) + '%';
+    st.className = 'status-msg status-good';
+    st.textContent = `✅ TO'G'RI! "${wordState.current.word}" +${pts} ball`;
+    updateScores('sync', pts);
+    setTimeout(nextWord, 1200);
+  } else {
+    st.className = 'status-msg status-bad';
+    st.textContent = `❌ Noto'g'ri: "${input}" — Yana urinib ko'ring!`;
+    document.getElementById('wordInput').value = '';
+    document.getElementById('wordInput').focus();
+  }
+}
+
+// ====== INIT ======
+document.addEventListener('DOMContentLoaded', function() {
+  startMath();
+  startMemory();
+  startStroop();
+  startWord();
+  renderSeqGrid();
+});
+</script>
+</body>
+</html>
