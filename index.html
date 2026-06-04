@@ -281,10 +281,10 @@
     <span class="card-record" data-record="mental_math.html"></span>
   </a>
 
-  <a class="card card-14" href="brain_game.html">
+  <a class="card card-14" href="brain_game.html" data-game="brain_game.html">
     <span class="card-icon">🧠</span>
     <span class="card-name" data-key="brain_game"></span>
-    <span class="card-record"></span>
+    <span class="card-record" data-record="brain_game.html"></span>
   </a>
 
 </div>
@@ -374,6 +374,7 @@
     'reaction_time.html': { key: 'reaction_best',    fmt: v => v + ' ms' },
     'sequence_memory.html':{ key: 'sequence_best',   fmt: v => v },
     'mental_math.html':   { key: 'mental_best_score',fmt: v => v + ' Ball' },
+    'brain_game.html':    { key: 'brain_best',        fmt: v => v + ' pts' },
   };
 
   function fmtTime(s) {
