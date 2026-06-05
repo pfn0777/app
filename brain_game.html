@@ -998,10 +998,10 @@ let scores = { left: 0, right: 0, total: 0 };
 let combo = 0;
 
 function updateScores(type, pts) {
-  scores.total += pts;
   if (type === 'left') scores.left += pts;
-  if (type === 'right') scores.right += pts;
-  if (type === 'sync') { scores.left += pts; scores.right += pts; scores.total += pts; }
+  else if (type === 'right') scores.right += pts;
+  else if (type === 'sync') { scores.left += pts; scores.right += pts; }
+  scores.total += pts;
   document.getElementById('scoreLeft').textContent = scores.left;
   document.getElementById('scoreRight').textContent = scores.right;
   document.getElementById('scoreTotal').textContent = scores.total;
@@ -1012,7 +1012,10 @@ function updateScores(type, pts) {
 }
 
 var tabManager = new TabManager();
-tabManager.onBeforeSwitch(function () { TimerManager.clearAll(); });
+tabManager.onBeforeSwitch(function () {
+  TimerManager.clearAll();
+  seqState.inputLock = false;
+});
 
 function showTab(id) { tabManager.switchTo(id); }
 
@@ -1470,6 +1473,9 @@ function saveBestScore() {
 }
 
 window.addEventListener('beforeunload', saveBestScore);
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) saveBestScore();
+});
 
 // ====== INIT ======
 document.addEventListener('DOMContentLoaded', function() {
