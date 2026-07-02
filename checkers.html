@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ShashkaAI</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
@@ -185,7 +190,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-se
     <button class="time-btn selected" onclick="selectTime(5)" id="t5">5 daq</button>
     <button class="time-btn" onclick="selectTime(10)" id="t10">10 daq</button>
     <button class="time-btn" onclick="selectTime(15)" id="t15">15 daq</button>
-    <button class="time-btn full" onclick="selectTime(0)" id="t0" id="txUnlimited">∞ Cheksiz</button>
+    <button class="time-btn full" onclick="selectTime(0)" id="t0">∞ Cheksiz</button>
   </div>
   <button class="play-btn" onclick="startAIGame()" id="btnPlay">O'ynash</button>
 </div>
@@ -769,6 +774,8 @@ function executeMove(move){
   lastMoves.push(move);
   board = applyMove(board,move);
   moveCount++;
+  TG.haptic('light');
+  if(move.captures&&move.captures.length>0) SoundFX.tap();
   selectedPiece=null;
   possibleMoves=[];
 
@@ -943,6 +950,14 @@ function endGame(winner){
   const best = parseInt(localStorage.getItem('checkers_best')||'0');
   const captured = winner===playerColor?12-countPieces(board,winner==='white'?'black':'white'):0;
   if(captured>best) localStorage.setItem('checkers_best',captured);
+  ScoreManager.record('checkers',captured);
+  if(winner===playerColor){SoundFX.success();TG.haptic('success');}
+  else{SoundFX.fail();TG.haptic('error');}
+
+  // Online: raqibga o'yin tugaganini bildirish (resign/vaqt tugashi ham yetadi)
+  if(gameMode==='online'&&roomRef&&(winner==='white'||winner==='black'||winner==='draw')){
+    roomRef.update({status:'gameover',winner:winner});
+  }
 }
 
 function resignGame(){
@@ -1238,7 +1253,10 @@ function syncOnlineState(){
 
 function syncFromFirebase(d){
   if(d.turn&&d.board){
-    if(d.turn===playerColor) return; // our turn, don't overwrite
+    // BUG FIX: eski shart `if(d.turn===playerColor) return;` edi — raqib yurgach
+    // turn BIZNING rangga o'tadi, shuning uchun raqib yurishi hech qachon
+    // qo'llanmasdi. Endi doska farqiga qarab sinxronlaymiz (chess uslubida).
+    if(JSON.stringify(serializeBoard(board))===JSON.stringify(d.board)&&currentTurn===d.turn) return;
     const nb=deserializeBoard(d.board);
     board=nb;
     currentTurn=d.turn;
@@ -1246,6 +1264,9 @@ function syncFromFirebase(d){
     if(d.lastMove) lastMoves=[d.lastMove];
     mustJumpFrom=null; selectedPiece=null; possibleMoves=[];
     renderBoard(); updateUI();
+    TG.haptic('light');
+    const winner=checkWin();
+    if(winner) endGame(winner);
   }
 }
 

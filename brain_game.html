@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>рџ§  MIYA GENIUSI вЂ” Yarimsha Sinxronizatsiyasi</title>
+<title>🧠 MIYA GENIUSI — Yarimsha Sinxronizatsiyasi</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
 <script src="shared/shuffle.js"></script>
 <script src="shared/timerManager.js"></script>
 <script src="shared/tabManager.js"></script>
@@ -766,7 +770,7 @@
 <body>
 
 <div class="header">
-  <div class="logo">рџ§  MIYA GENIUSI</div>
+  <div class="logo">🧠 MIYA GENIUSI</div>
   <div class="subtitle">Yarimshalar Sinxronizatsiyasi Platformasi</div>
 </div>
 
@@ -795,13 +799,13 @@
 
 <!-- Tabs -->
 <div class="tabs">
-  <button class="tab-btn" onclick="showTab('home')">рџЏ  Asosiy</button>
-  <button class="tab-btn active-left" onclick="showTab('math')">вћ• Matematik</button>
-  <button class="tab-btn active-right" onclick="showTab('memory')">рџЋ­ Xotira</button>
-  <button class="tab-btn active-sync" onclick="showTab('stroop')">рџЋЁ Stroop</button>
-  <button class="tab-btn active-left" onclick="showTab('reaction')">вљЎ Reaktsiya</button>
-  <button class="tab-btn active-right" onclick="showTab('sequence')">рџ”ў Ketma-ketlik</button>
-  <button class="tab-btn active-sync" onclick="showTab('word')">рџ“ќ So'z</button>
+  <button class="tab-btn" onclick="showTab('home')">🏠 Asosiy</button>
+  <button class="tab-btn active-left" onclick="showTab('math')">➕ Matematik</button>
+  <button class="tab-btn active-right" onclick="showTab('memory')">🎭 Xotira</button>
+  <button class="tab-btn active-sync" onclick="showTab('stroop')">🎨 Stroop</button>
+  <button class="tab-btn active-left" onclick="showTab('reaction')">⚡ Reaktsiya</button>
+  <button class="tab-btn active-right" onclick="showTab('sequence')">🔢 Ketma-ketlik</button>
+  <button class="tab-btn active-sync" onclick="showTab('word')">📝 So'z</button>
 </div>
 
 <!-- Game Area -->
@@ -811,41 +815,41 @@
   <div class="game-panel active" id="panel-home">
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--sync);letter-spacing:2px;margin-bottom:8px">MIYA HAQIDA BILIM</div>
-      <p style="font-size:13px;color:var(--dim);line-height:1.7;max-width:500px;margin:0 auto">Chap yarimsha: Mantiq, til, matematika, tahlil. O'ng yarimsha: Ijodkorlik, tasviriy fikrlash, his-tuyg'ular, musiqa. Miya qo'sh yarimsharlari birgalikda ishlasa вЂ” IQ 10 barobar oshadi!</p>
+      <p style="font-size:13px;color:var(--dim);line-height:1.7;max-width:500px;margin:0 auto">Chap yarimsha: Mantiq, til, matematika, tahlil. O'ng yarimsha: Ijodkorlik, tasviriy fikrlash, his-tuyg'ular, musiqa. Miya qo'sh yarimsharlari birgalikda ishlasa — IQ 10 barobar oshadi!</p>
     </div>
     <div class="home-grid">
       <div class="game-card" onclick="showTab('math')">
-        <div class="icon">рџ”ў</div>
+        <div class="icon">🔢</div>
         <h3>MATEMATIK</h3>
         <p>Tez hisoblash, mantiqiy fikrlash</p>
         <span class="tag tag-l">CHAP YARIMSHA</span>
       </div>
       <div class="game-card" onclick="showTab('memory')">
-        <div class="icon">рџЋ­</div>
+        <div class="icon">🎭</div>
         <h3>XOTIRA</h3>
         <p>Vizual xotira, juftliklar topish</p>
         <span class="tag tag-r">O'NG YARIMSHA</span>
       </div>
       <div class="game-card" onclick="showTab('stroop')">
-        <div class="icon">рџЋЁ</div>
+        <div class="icon">🎨</div>
         <h3>STROOP TESTI</h3>
         <p>Yarimshalar ziddiyati va sinxronizatsiya</p>
         <span class="tag tag-s">SINXRONIZATSIYA</span>
       </div>
       <div class="game-card" onclick="showTab('reaction')">
-        <div class="icon">вљЎ</div>
+        <div class="icon">⚡</div>
         <h3>REAKTSIYA</h3>
         <p>Tezlik va e'tibor sinovi</p>
         <span class="tag tag-l">CHAP YARIMSHA</span>
       </div>
       <div class="game-card" onclick="showTab('sequence')">
-        <div class="icon">рџ”ў</div>
+        <div class="icon">🔢</div>
         <h3>KETMA-KETLIK</h3>
         <p>Qisqa muddatli xotira va naqsh</p>
         <span class="tag tag-r">O'NG YARIMSHA</span>
       </div>
       <div class="game-card" onclick="showTab('word')">
-        <div class="icon">рџ“ќ</div>
+        <div class="icon">📝</div>
         <h3>SO'Z TOPISH</h3>
         <p>Til va ijodiy fikrlash kombinatsiyasi</p>
         <span class="tag tag-s">SINXRONIZATSIYA</span>
@@ -853,15 +857,15 @@
     </div>
     <div class="divider"></div>
     <div class="info-card" style="border-color:#00d4ff33">
-      <h3 style="color:var(--left)">рџ”µ CHAP YARIMSHA вЂ” Mantiq Markazi</h3>
+      <h3 style="color:var(--left)">🔵 CHAP YARIMSHA — Mantiq Markazi</h3>
       <p>Til va nutq, matematik hisoblash, mantiqiy tahlil, tartibli fikrlash, o'qish va yozish. Bu yarimsha to'g'ri tomonni boshqaradi. Matematik va reaktsiya o'yinlari bu yarimshani rivojlantiradi.</p>
     </div>
     <div class="info-card" style="border-color:#ff6b3533">
-      <h3 style="color:var(--right)">рџџ  O'NG YARIMSHA вЂ” Ijodkorlik Markazi</h3>
+      <h3 style="color:var(--right)">🟠 O'NG YARIMSHA — Ijodkorlik Markazi</h3>
       <p>Fazoviy yo'nalish, musiqiy qobiliyat, tasviriy va ijodiy fikrlash, his-tuyg'ularni anglash, metaforalar, intuitsiya. Chap tomonni boshqaradi. Xotira va ketma-ketlik o'yinlari shu yarimshani uyg'otadi.</p>
     </div>
     <div class="info-card" style="border-color:#a855f733">
-      <h3 style="color:var(--sync)">рџџЈ MOYA QOVOQCHASI вЂ” Sinxronizatsiya Kaliti</h3>
+      <h3 style="color:var(--sync)">🟣 MOYA QOVOQCHASI — Sinxronizatsiya Kaliti</h3>
       <p>Milodiy milyon nerv tolalaridan iborat bu tuzilma ikkala yarimsha o'rtasida ma'lumot almashinuvini ta'minlaydi. Einstein'ning miya qovoqchasi odatdagidan sezilarli darajada kattaroq edi. Stroop testi aynan shu kanalni mashq qildiradi.</p>
     </div>
   </div>
@@ -885,7 +889,7 @@
 
     <div class="options-grid" id="mathOptions"></div>
     <div class="combo-text" id="mathCombo"></div>
-    <div class="center"><button class="btn btn-blue" onclick="startMath()">в–¶ YANGI O'YIN</button></div>
+    <div class="center"><button class="btn btn-blue" onclick="startMath()">▶ YANGI O'YIN</button></div>
   </div>
 
   <!-- MEMORY GAME -->
@@ -894,14 +898,14 @@
     <div class="panel-desc">O'ng yarimsha: Emoji juftliklarini topish</div>
 
     <div class="level-info">
-      <span class="level-badge lvl-right" id="memLevel">4Г—4 GRID</span>
+      <span class="level-badge lvl-right" id="memLevel">4×4 GRID</span>
       <div class="level-progress"><div class="level-fill" id="memBar" style="width:0%;background:var(--right)"></div></div>
       <span style="font-family:'Orbitron',monospace;font-size:12px;color:var(--right)" id="memScore">0</span>
     </div>
 
     <div id="memStatus" class="status-msg status-info" style="display:none"></div>
     <div class="memory-grid" id="memGrid"></div>
-    <div class="center"><button class="btn btn-orange" onclick="startMemory()">в–¶ YANGI O'YIN</button></div>
+    <div class="center"><button class="btn btn-orange" onclick="startMemory()">▶ YANGI O'YIN</button></div>
   </div>
 
   <!-- STROOP GAME -->
@@ -918,18 +922,18 @@
     <div class="stroop-display">
       <div class="stroop-instruction">SO'Z RANGINI BOSING</div>
       <div class="stroop-word" id="stroopWord">TAYYOR</div>
-      <div style="margin-top:10px;font-size:12px;color:var(--dim)" id="stroopTimer">вЏ± 3 soniya</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--dim)" id="stroopTimer">⏱ 3 soniya</div>
     </div>
 
     <div id="stroopStatus" style="margin-bottom:10px"></div>
     <div class="stroop-buttons" id="stroopBtns"></div>
-    <div class="center" style="margin-top:15px"><button class="btn btn-purple" onclick="startStroop()">в–¶ YANGI O'YIN</button></div>
+    <div class="center" style="margin-top:15px"><button class="btn btn-purple" onclick="startStroop()">▶ YANGI O'YIN</button></div>
   </div>
 
   <!-- REACTION GAME -->
   <div class="game-panel panel-left" id="panel-reaction">
     <div class="panel-title">REAKTSIYA TESTI</div>
-    <div class="panel-desc">E'tibor va tezlik вЂ” chap yarimsha mashqi</div>
+    <div class="panel-desc">E'tibor va tezlik — chap yarimsha mashqi</div>
 
     <div class="level-info">
       <span class="level-badge lvl-left">TEZLIK</span>
@@ -943,7 +947,7 @@
     </div>
 
     <div id="reactResults" style="text-align:center"></div>
-    <div class="center"><button class="btn btn-blue" onclick="startReaction()">в–¶ BOSHLASH</button></div>
+    <div class="center"><button class="btn btn-blue" onclick="startReaction()">▶ BOSHLASH</button></div>
   </div>
 
   <!-- SEQUENCE GAME -->
@@ -960,7 +964,7 @@
     <div id="seqInfo" style="text-align:center;margin-bottom:10px;font-family:'Orbitron',monospace;font-size:14px;color:var(--dim)">O'yin boshlanishini kuting...</div>
 
     <div class="seq-grid" id="seqGrid"></div>
-    <div class="center"><button class="btn btn-orange" onclick="startSequence()">в–¶ BOSHLASH</button></div>
+    <div class="center"><button class="btn btn-orange" onclick="startSequence()">▶ BOSHLASH</button></div>
   </div>
 
   <!-- WORD GAME -->
@@ -979,14 +983,14 @@
       <div class="word-hint" id="wordHint">Izoh: ...</div>
       <div class="word-input-wrap">
         <input type="text" id="wordInput" placeholder="JAVOB" maxlength="12" onkeydown="if(event.key==='Enter')checkWord()">
-        <button class="btn btn-purple" onclick="checkWord()">вњ“</button>
+        <button class="btn btn-purple" onclick="checkWord()">✓</button>
       </div>
     </div>
 
     <div id="wordStatus" style="margin-bottom:10px"></div>
     <div class="center" style="display:flex;gap:10px;justify-content:center">
-      <button class="btn btn-purple" onclick="nextWord()">вџі KEYINGI</button>
-      <button class="btn btn-blue" onclick="startWord()">в–¶ YANGI</button>
+      <button class="btn btn-purple" onclick="nextWord()">⟳ KEYINGI</button>
+      <button class="btn btn-blue" onclick="startWord()">▶ YANGI</button>
     </div>
   </div>
 
@@ -1005,6 +1009,7 @@ function updateScores(type, pts) {
   document.getElementById('scoreLeft').textContent = scores.left;
   document.getElementById('scoreRight').textContent = scores.right;
   document.getElementById('scoreTotal').textContent = scores.total;
+  TG.haptic('light');
   // brain pulse
   const c = document.getElementById('corpus');
   c.classList.add('active');
@@ -1024,8 +1029,8 @@ let mathState = { score: 0, combo: 0, correct: 0, level: 1, timer: null, timerVa
 
 const mathOps = [
   { op: '+', range: [2, 20], fn: (a,b) => a+b },
-  { op: 'в€’', range: [2, 20], fn: (a,b) => a-b },
-  { op: 'Г—', range: [2, 9], fn: (a,b) => a*b },
+  { op: '−', range: [2, 20], fn: (a,b) => a-b },
+  { op: '×', range: [2, 9], fn: (a,b) => a*b },
 ];
 
 function startMath() {
@@ -1043,7 +1048,7 @@ function nextMath() {
   const [min, max] = opData.range;
   let a = Math.floor(Math.random() * (max - min + 1)) + min;
   let b = Math.floor(Math.random() * (max - min + 1)) + min;
-  if (opData.op === 'в€’' && b > a) [a, b] = [b, a];
+  if (opData.op === '−' && b > a) [a, b] = [b, a];
   const answer = opData.fn(a, b);
   document.getElementById('mathQ').textContent = `${a} ${opData.op} ${b} = ?`;
 
@@ -1092,7 +1097,7 @@ function checkMath(btn, chosen, answer, opts) {
     const pts = 10 + (mathState.combo > 2 ? mathState.combo * 2 : 0);
     mathState.score += pts;
     if (btn) btn.classList.add('correct');
-    document.getElementById('mathCombo').textContent = mathState.combo > 1 ? `рџ”Ґ COMBO x${mathState.combo}! +${pts}` : '';
+    document.getElementById('mathCombo').textContent = mathState.combo > 1 ? `🔥 COMBO x${mathState.combo}! +${pts}` : '';
     updateScores('left', pts);
   } else {
     mathState.combo = 0;
@@ -1111,7 +1116,7 @@ function checkMath(btn, chosen, answer, opts) {
 
 // ====== MEMORY GAME ======
 let memState = { cards: [], flipped: [], matched: 0, score: 0, lock: false };
-const emojis = ['рџ§ ', 'вљЎ', 'рџЋЇ', 'рџ”®', 'рџЊџ', 'рџ’Ћ', 'рџљЂ', 'рџЋ­'];
+const emojis = ['🧠', '⚡', '🎯', '🔮', '🌟', '💎', '🚀', '🎭'];
 
 function startMemory() {
   memState = { cards: [], flipped: [], matched: 0, score: 0, lock: false };
@@ -1129,7 +1134,7 @@ function renderMemory() {
   memState.cards.forEach((card, i) => {
     const el = document.createElement('div');
     el.className = 'mem-card' + (card.flipped || card.matched ? ' flipped' : '') + (card.matched ? ' matched' : '');
-    el.innerHTML = `<div class="front">рџ”·</div><div class="back">${card.emoji}</div>`;
+    el.innerHTML = `<div class="front">🔷</div><div class="back">${card.emoji}</div>`;
     if (!card.matched) el.onclick = () => flipCard(i);
     grid.appendChild(el);
   });
@@ -1159,7 +1164,7 @@ function flipCard(i) {
       if (memState.matched === 8) {
         const st = document.getElementById('memStatus');
         st.className = 'status-msg status-good';
-        st.textContent = 'рџЋ‰ TABRIKLAYMIZ! Barcha juftliklar topildi!';
+        st.textContent = '🎉 TABRIKLAYMIZ! Barcha juftliklar topildi!';
         st.style.display = 'block';
       }
     } else {
@@ -1216,15 +1221,15 @@ function nextStroop() {
 
   document.getElementById('stroopStatus').innerHTML = '';
   stroopState.timerVal = 3;
-  document.getElementById('stroopTimer').textContent = `вЏ± 3 soniya`;
+  document.getElementById('stroopTimer').textContent = `⏱ 3 soniya`;
   stroopState.timer = TimerManager.setInterval(function () {
     stroopState.timerVal -= 0.1;
-    document.getElementById('stroopTimer').textContent = `вЏ± ${Math.max(0, stroopState.timerVal).toFixed(1)} soniya`;
+    document.getElementById('stroopTimer').textContent = `⏱ ${Math.max(0, stroopState.timerVal).toFixed(1)} soniya`;
     if (stroopState.timerVal <= 0) {
       TimerManager.clearInterval(stroopState.timer);
       const st = document.getElementById('stroopStatus');
       st.className = 'status-msg status-bad';
-      st.innerHTML = `вЏ° Vaqt tugadi! To'g'ri javob: <strong>${stroopState.current.displayColor.name}</strong>`;
+      st.innerHTML = `⏰ Vaqt tugadi! To'g'ri javob: <strong>${stroopState.current.displayColor.name}</strong>`;
       TimerManager.setTimeout(nextStroop, 1500);
     }
   }, 100);
@@ -1237,14 +1242,14 @@ function checkStroop(chosen) {
   if (chosen === correct) {
     stroopState.score += 15;
     st.className = 'status-msg status-good';
-    st.textContent = 'вњ… To\'g\'ri! +15 sinxron ball';
+    st.textContent = '✅ To\'g\'ri! +15 sinxron ball';
     document.getElementById('stroopScore').textContent = stroopState.score;
     document.getElementById('stroopBar').style.width = Math.min(100, stroopState.score / 2) + '%';
     updateScores('sync', 15);
     TimerManager.setTimeout(nextStroop, 800);
   } else {
     st.className = 'status-msg status-bad';
-    st.innerHTML = `вќЊ Noto'g'ri! To'g'ri rang: <strong>${correct}</strong>`;
+    st.innerHTML = `❌ Noto'g'ri! To'g'ri rang: <strong>${correct}</strong>`;
     TimerManager.setTimeout(nextStroop, 1500);
   }
 }
@@ -1264,8 +1269,8 @@ function scheduleReact() {
     const area = document.getElementById('reactArea');
     area.style.background = 'var(--card)';
     document.getElementById('reactText').style.color = 'var(--sync)';
-    document.getElementById('reactText').textContent = `вљЎ O'RTACHA: ${Math.round(avg)} ms`;
-    document.getElementById('reactSub').textContent = avg < 250 ? 'рџЏ† AJOYIB TEZLIK!' : avg < 400 ? 'рџ‘Ќ YAXSHI' : 'рџ“€ Mashq qiling';
+    document.getElementById('reactText').textContent = `⚡ O'RTACHA: ${Math.round(avg)} ms`;
+    document.getElementById('reactSub').textContent = avg < 250 ? '🏆 AJOYIB TEZLIK!' : avg < 400 ? '👍 YAXSHI' : '📈 Mashq qiling';
     updateScores('left', Math.max(0, Math.floor((500 - avg) / 5)));
     return;
   }
@@ -1303,7 +1308,7 @@ function handleReact() {
     TimerManager.setTimeout(scheduleReact, 600);
   } else if (!reactState.active) {
     TimerManager.clearTimeout(reactState.timeout);
-    document.getElementById('reactText').textContent = 'ERTA BOSDINGIZ! вќЊ';
+    document.getElementById('reactText').textContent = 'ERTA BOSDINGIZ! ❌';
     document.getElementById('reactText').style.color = '#ef4444';
     reactState.active = false;
     TimerManager.setTimeout(scheduleReact, 1200);
@@ -1312,7 +1317,7 @@ function handleReact() {
 
 // ====== SEQUENCE GAME ======
 const seqColors = ['#00d4ff', '#ff6b35', '#a855f7', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
-const seqEmojis = ['рџ”µ', 'рџџ ', 'рџџЈ', 'рџџў', 'рџџЎ', 'рџ©·', 'рџ©µ', 'рџџ©', 'рџџ§'];
+const seqEmojis = ['🔵', '🟠', '🟣', '🟢', '🟡', '🩷', '🩵', '🟩', '🟧'];
 let seqState = { sequence: [], input: [], level: 1, score: 0, showing: false, inputLock: false };
 
 function startSequence() {
@@ -1343,7 +1348,7 @@ function nextSequence() {
   seqState.input = [];
   seqState.sequence.push(Math.floor(Math.random() * 9));
   seqState.showing = true;
-  document.getElementById('seqInfo').textContent = `рџ‘Ѓ Ketma-ketlikni kuzating... (${seqState.sequence.length} qadam)`;
+  document.getElementById('seqInfo').textContent = `👁 Ketma-ketlikni kuzating... (${seqState.sequence.length} qadam)`;
   document.getElementById('seqLevel').textContent = `DARAJA ${seqState.level}`;
 
   let i = 0;
@@ -1361,7 +1366,7 @@ function nextSequence() {
       }, 200);
     } else {
       seqState.showing = false;
-      document.getElementById('seqInfo').textContent = 'рџ–± Endi siz takrorlang!';
+      document.getElementById('seqInfo').textContent = '🖱 Endi siz takrorlang!';
     }
   };
   TimerManager.setTimeout(show, 600);
@@ -1377,7 +1382,7 @@ function handleSeqInput(idx) {
   const pos = seqState.input.length - 1;
 
   if (seqState.input[pos] !== seqState.sequence[pos]) {
-    document.getElementById('seqInfo').textContent = `вќЊ Xato! Ketma-ketlik ${seqState.sequence.length} bosqichda edi.`;
+    document.getElementById('seqInfo').textContent = `❌ Xato! Ketma-ketlik ${seqState.sequence.length} bosqichda edi.`;
     document.getElementById('seqScore').textContent = seqState.score;
     seqState.sequence = [];
     seqState.level = 1;
@@ -1392,7 +1397,7 @@ function handleSeqInput(idx) {
     seqState.level++;
     document.getElementById('seqScore').textContent = seqState.score;
     document.getElementById('seqBar').style.width = Math.min(100, seqState.score / 2) + '%';
-    document.getElementById('seqInfo').textContent = `вњ… To'g'ri! +${pts} ball. Keyingi daraja...`;
+    document.getElementById('seqInfo').textContent = `✅ To'g'ri! +${pts} ball. Keyingi daraja...`;
     updateScores('right', pts);
     TimerManager.setTimeout(nextSequence, 1000);
   }
@@ -1404,7 +1409,7 @@ const wordList = [
   { word: 'ASAL', hint: 'Asalari tayyorlaydigan shirin mahsulot' },
   { word: 'KITOB', hint: 'Bilim manbai, o\'qish uchun' },
   { word: 'TOSH', hint: 'Qattiq, yerdan topiladi' },
-  { word: 'BAHOR', hint: 'Yilning to\'rtinchi fasli' },
+  { word: 'BAHOR', hint: 'Yilning birinchi fasli, gullar ochiladi' },
   { word: 'QUYOSH', hint: 'Koinotdagi eng yaqin yulduz' },
   { word: 'DARYO', hint: 'Oqar suv, dengizga quyiladi' },
   { word: 'SABZI', hint: 'Ildiz sabzavot, to\'q sariq rangli' },
@@ -1439,7 +1444,7 @@ function nextWord() {
 
   const scrambled = fisherYatesShuffle(wordState.current.word.split('')).join('');
   document.getElementById('wordScrambled').textContent = scrambled.split('').join(' ');
-  document.getElementById('wordHint').textContent = 'рџ’Ў Izoh: ' + wordState.current.hint;
+  document.getElementById('wordHint').textContent = '💡 Izoh: ' + wordState.current.hint;
   document.getElementById('wordInput').value = '';
   document.getElementById('wordStatus').innerHTML = '';
   document.getElementById('wordInput').focus();
@@ -1456,20 +1461,25 @@ function checkWord() {
     document.getElementById('wordScore').textContent = wordState.score;
     document.getElementById('wordBar').style.width = Math.min(100, wordState.score / 2) + '%';
     st.className = 'status-msg status-good';
-    st.textContent = `вњ… TO'G'RI! "${wordState.current.word}" +${pts} ball`;
+    st.textContent = `✅ TO'G'RI! "${wordState.current.word}" +${pts} ball`;
     updateScores('sync', pts);
     TimerManager.setTimeout(nextWord, 1200);
   } else {
     st.className = 'status-msg status-bad';
-    st.textContent = `вќЊ Noto'g'ri: "${input}" вЂ” Yana urinib ko'ring!`;
+    st.textContent = `❌ Noto'g'ri: "${input}" — Yana urinib ko'ring!`;
     document.getElementById('wordInput').value = '';
     document.getElementById('wordInput').focus();
   }
 }
 
 // ====== SCORE PERSISTENCE ======
+let lastRecordedTotal = 0;
 function saveBestScore() {
   ScoreManager.saveIfBetter('best', scores.total);
+  if (scores.total > lastRecordedTotal) {
+    ScoreManager.record('brain_game', scores.total);
+    lastRecordedTotal = scores.total;
+  }
 }
 
 window.addEventListener('beforeunload', saveBestScore);

@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Mental Math</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -684,6 +689,7 @@ function onAnswer(btn, isCorrect, isTimeout) {
   if (isCorrect) {
     score++;
     hScoreEl.textContent = score;
+    TG.haptic('light');
     if (btn) btn.classList.add('flash-ok');
     setTimeout(() => {
       if (btn) btn.classList.remove('flash-ok');
@@ -718,13 +724,18 @@ function endGame(reason) {
   lblAccuracy.textContent = t.lblAccuracy;
   lblEndBest.textContent  = t.lblBest;
 
+  let isNewBest = false;
   if (score > best) {
     best = score;
+    isNewBest = true;
     localStorage.setItem('mental_best_score', best);
     endRecordMsg.textContent = t.newRecord;
   } else {
     endRecordMsg.textContent = '';
   }
+  ScoreManager.record('mental_math', score);
+  if (isNewBest) { SoundFX.success(); TG.haptic('success'); }
+  else           { SoundFX.fail();    TG.haptic('error');   }
   endBestVal.textContent = best;
   hBestEl.textContent    = best;
   endOv.classList.remove('hidden');

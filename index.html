@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Brain Games</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -67,6 +71,43 @@
     border-color: rgba(255,255,255,0.4);
     color: rgba(255,255,255,0.9);
   }
+
+  .icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.18s;
+    font-family: inherit;
+    padding: 0;
+  }
+  .icon-btn:hover { border-color: rgba(255,255,255,0.4); }
+
+  /* ── Light theme ── */
+  [data-theme="light"] body {
+    background: linear-gradient(135deg, #eef1f8, #dde3f3);
+    color: #1a1a2e;
+  }
+  [data-theme="light"] header {
+    background: linear-gradient(135deg, rgba(238,241,248,0.95), rgba(221,227,243,0.95));
+  }
+  [data-theme="light"] .subheader { color: rgba(26,26,46,0.55); }
+  [data-theme="light"] footer { color: rgba(26,26,46,0.35); }
+  [data-theme="light"] .lang-btn,
+  [data-theme="light"] .icon-btn {
+    border-color: rgba(26,26,46,0.25);
+    background: rgba(26,26,46,0.06);
+    color: rgba(26,26,46,0.7);
+  }
+  [data-theme="light"] .lang-btn.active { color: #fff; }
 
   /* ── Subheader ── */
   .subheader {
@@ -199,6 +240,9 @@
 <header>
   <div class="logo">🧠 Brain Games</div>
   <div class="lang-row">
+    <a class="icon-btn" href="stats.html" id="statsBtn" title="Statistika">📊</a>
+    <button class="icon-btn" id="themeBtn" title="Dark mode">🌙</button>
+    <button class="icon-btn" id="soundBtn" title="Ovoz">🔊</button>
     <button class="lang-btn" data-lang="uz">UZ</button>
     <button class="lang-btn" data-lang="ru">RU</button>
     <button class="lang-btn" data-lang="en">EN</button>
@@ -254,13 +298,13 @@
   <a class="card card-8" href="chess.html" data-game="chess.html">
     <span class="card-icon">♟</span>
     <span class="card-name" data-key="chess"></span>
-    <span class="card-record"></span>
+    <span class="card-record" data-record="chess.html"></span>
   </a>
 
   <a class="card card-9" href="checkers.html" data-game="checkers.html">
     <span class="card-icon">⬤</span>
     <span class="card-name" data-key="checkers"></span>
-    <span class="card-record"></span>
+    <span class="card-record" data-record="checkers.html"></span>
   </a>
 
   <a class="card card-11" href="reaction_time.html" data-game="reaction_time.html">
@@ -287,6 +331,12 @@
     <span class="card-record" data-record="brain_game.html"></span>
   </a>
 
+  <a class="card card-10" href="nback.html" data-game="nback.html">
+    <span class="card-icon">🎯</span>
+    <span class="card-name" data-key="nback"></span>
+    <span class="card-record" data-record="nback.html"></span>
+  </a>
+
 </div>
 
 <footer>
@@ -295,11 +345,7 @@
 </footer>
 
 <script>
-  /* ── Telegram ── */
-  if (window.Telegram?.WebApp) {
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
-  }
+  /* ── Telegram ── shared/telegram.js (TG.init) allaqachon ready()/expand() qildi */
 
   /* ── Translations ── */
   const TR = {
@@ -319,6 +365,7 @@
       sequence:   'Ketma-ketlik',
       mental:     'Tez Hisob',
       brain_game: 'Miya Geniusi',
+      nback:      'N-Back',
       best:       'Rekord',
       noRecord:   '--',
     },
@@ -338,6 +385,7 @@
       sequence:   'Последовательность',
       mental:     'Быстрый счёт',
       brain_game: 'Гений мозга',
+      nback:      'N-Back',
       best:       'Рекорд',
       noRecord:   '--',
     },
@@ -357,31 +405,15 @@
       sequence:   'Sequence',
       mental:     'Mental Math',
       brain_game: 'Brain Genius',
+      nback:      'N-Back',
       best:       'Best',
       noRecord:   '--',
     },
   };
 
-  /* ── Records ── */
-  const RECORDS = {
-    'piano_tiles.html':   { key: 'pt_best',        fmt: v => parseFloat(v).toFixed(2) + ' t/s' },
-    'schulte_table.html': { key: 'schulte_best_0',  fmt: v => fmtTime(parseInt(v)) },
-    'colors_game.html':   { key: 'colors_best',     fmt: v => v },
-    'math_game.html':     { key: 'math_best_score', fmt: v => v },
-    'iq_game.html':       { key: 'iq_best',         fmt: v => v },
-    'pattern_game.html':  { key: 'pattern_best',    fmt: v => v },
-    'fly_game.html':      { key: 'fly_best',         fmt: v => v },
-    'reaction_time.html': { key: 'reaction_best',    fmt: v => v + ' ms' },
-    'sequence_memory.html':{ key: 'sequence_best',   fmt: v => v },
-    'mental_math.html':   { key: 'mental_best_score',fmt: v => v + ' Ball' },
-    'brain_game.html':    { key: 'brain_best',        fmt: v => v + ' pts' },
-  };
-
-  function fmtTime(s) {
-    if (!s || isNaN(s)) return '--';
-    const m = Math.floor(s / 60), sec = s % 60;
-    return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
-  }
+  /* ── Records — yagona format (shared/scoreManager.js) ── */
+  const FILE2GAME = {};
+  Object.keys(ScoreManager.GAMES).forEach(g => { FILE2GAME[ScoreManager.GAMES[g].file] = g; });
 
   /* ── Lang ── */
   let lang = localStorage.getItem('brain_lang') || localStorage.getItem('schulte_lang') || 'uz';
@@ -404,14 +436,12 @@
     });
 
     document.querySelectorAll('[data-record]').forEach(el => {
-      const game = el.dataset.record;
-      const rec  = RECORDS[game];
-      if (!rec) { el.textContent = t.noRecord; return; }
-      const val = localStorage.getItem(rec.key);
-      if (!val || val === '0') {
+      const game = FILE2GAME[el.dataset.record];
+      const best = game ? ScoreManager.best(game) : null;
+      if (best === null || best === 0) {
         el.textContent = t.noRecord;
       } else {
-        el.textContent = '🏆 ' + t.best + ': ' + rec.fmt(val);
+        el.textContent = '🏆 ' + t.best + ': ' + ScoreManager.bestFmt(game);
       }
     });
   }
@@ -421,6 +451,17 @@
   );
 
   applyLang(lang);
+
+  /* ── Theme & sound toggles ── */
+  const themeBtn = document.getElementById('themeBtn');
+  const soundBtn = document.getElementById('soundBtn');
+  function syncToggles() {
+    themeBtn.textContent = Theme.isDark() ? '☀️' : '🌙';
+    soundBtn.textContent = SoundFX.enabled() ? '🔊' : '🔇';
+  }
+  themeBtn.addEventListener('click', () => { Theme.toggle(); syncToggles(); TG.haptic('light'); });
+  soundBtn.addEventListener('click', () => { SoundFX.toggle(); syncToggles(); if (SoundFX.enabled()) SoundFX.tap(); });
+  syncToggles();
 
   /* ── Entrance animation ── */
   document.querySelectorAll('.card').forEach((card, i) => {

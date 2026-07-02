@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Piano Tiles</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -170,6 +175,18 @@
   }
   .intro-play-btn:hover { transform: translateY(-2px); }
 
+  /* ── Dark mode ── */
+  [data-theme="dark"] #game { background: linear-gradient(180deg, #1e3a1e 0%, #2f5233 100%); }
+  [data-theme="dark"] #overlay-box,
+  [data-theme="dark"] #intro-card { background: #1e1e2e; }
+  [data-theme="dark"] #overlay-box h2 { color: #ff6b6b; }
+  [data-theme="dark"] #ov-score { color: #e8e8f0; }
+  [data-theme="dark"] #ov-tps { color: #aaa; }
+  [data-theme="dark"] #intro-card h2 { color: #e8e8f0; }
+  [data-theme="dark"] #intro-desc { color: #aaa; }
+  [data-theme="dark"] .intro-lang-btn { background: #2a2a3e; border-color: #3a3a52; color: #aaa; }
+  [data-theme="dark"] .intro-lang-btn.active { background: #6a0dad; border-color: #6a0dad; color: #fff; }
+  [data-theme="dark"] #btn-home { background: #2a2a3e; }
 </style>
 </head>
 <body>
@@ -221,9 +238,9 @@
 
   /* ── Intro language ── */
   const INTRO_TR = {
-    uz: { desc: "4 ta ustundan qora katak tushib keladi. Yashil katak bosma — faqat qora katakni bos! Qora katak pastdan chiqib ketsa yoki yashil katak bosib qo'ysang o'yin tugaydi.", play: "O'ynash" },
-    ru: { desc: "Чёрные плитки падают в 4 колонках. Не нажимай на зелёное — только на чёрное! Если чёрная плитка упадёт вниз или нажмёшь зелёное — игра закончится.", play: "Играть" },
-    en: { desc: "Black tiles fall in 4 columns. Don't tap the green — only tap the black tiles! If a black tile falls off or you tap green, the game ends.", play: "Play" },
+    uz: { desc: "4 ta ustundan qora katak tushib keladi. Yashil katak bosma — faqat qora katakni bos! Qora katak pastdan chiqib ketsa yoki yashil katak bosib qo'ysang o'yin tugaydi.", play: "O'ynash", ball: "Ball", best: "Rekord", level: "Eng yuqori daraja" },
+    ru: { desc: "Чёрные плитки падают в 4 колонках. Не нажимай на зелёное — только на чёрное! Если чёрная плитка упадёт вниз или нажмёшь зелёное — игра закончится.", play: "Играть", ball: "Очки", best: "Рекорд", level: "Максимальный уровень" },
+    en: { desc: "Black tiles fall in 4 columns. Don't tap the green — only tap the black tiles! If a black tile falls off or you tap green, the game ends.", play: "Play", ball: "Score", best: "Best", level: "Max level" },
   };
   let introLang = localStorage.getItem('piano_lang') || 'uz';
 
@@ -404,15 +421,23 @@
     const elapsed = (performance.now() - startTime) / 1000;
     const tps     = elapsed > 0 ? score / elapsed : 0;
 
+    let isNewBest = false;
     if (tps > best) {
       best = tps;
+      isNewBest = true;
       localStorage.setItem('pt_best', best.toFixed(3));
     }
 
-    ovScore.textContent = 'Ball: ' + score;
+    // Yagona format + streak + feedback
+    ScoreManager.record('piano_tiles', Math.round(tps * 1000) / 1000);
+    if (isNewBest) { SoundFX.success(); TG.haptic('success'); }
+    else { SoundFX.fail(); TG.haptic('error'); }
+
+    const t = INTRO_TR[introLang] || INTRO_TR.uz;
+    ovScore.textContent = t.ball + ': ' + score;
     ovTps.textContent   = tps.toFixed(2) + ' tiles/s';
-    ovBest.textContent  = 'Best: ' + best.toFixed(3) + ' tiles/s';
-    ovLevel.textContent = 'Eng yuqori daraja: ' + maxLabel;
+    ovBest.textContent  = t.best + ': ' + best.toFixed(3) + ' tiles/s';
+    ovLevel.textContent = t.level + ': ' + maxLabel;
     overlay.classList.add('show');
   }
 

@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reaction Time</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -502,9 +507,12 @@ let greenStart = 0;
 let waitTimer = null;
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
-const zone     = document.getElementById('game-zone');
-const zoneText = document.getElementById('zone-text');
-const zoneSub  = document.getElementById('zone-subtext');
+const zone = document.getElementById('game-zone');
+// BUG FIX: zone.innerHTML almashtirilganda eski #zone-text/#zone-subtext DOM
+// tugunlari uzilib qolar edi (2-urinishdan GO matni ko'rinmasdi).
+// Har safar yangidan qidiramiz:
+function zoneTextEl() { return document.getElementById('zone-text'); }
+function zoneSubEl()  { return document.getElementById('zone-subtext'); }
 
 function buildDots() {
   const row = document.getElementById('dots-row');
@@ -567,9 +575,9 @@ function showScreen(id) {
 function beginWaiting() {
   state = 'waiting';
   zone.className = 'game-zone waiting';
-  zoneText.textContent = t('wait');
-  zoneSub.textContent = t('tap_hint');
-  zoneSub.style.display = '';
+  const zt = zoneTextEl(), zs = zoneSubEl();
+  if (zt) zt.textContent = t('wait');
+  if (zs) { zs.textContent = t('tap_hint'); zs.style.display = ''; }
   updateDots();
 
   const delay = 1000 + Math.random() * 4000;
@@ -580,8 +588,10 @@ function goGreen() {
   state = 'ready';
   greenStart = performance.now();
   zone.className = 'game-zone ready';
-  zoneText.textContent = t('go');
-  zoneSub.style.display = 'none';
+  const zt = zoneTextEl(), zs = zoneSubEl();
+  if (zt) zt.textContent = t('go');
+  if (zs) zs.style.display = 'none';
+  SoundFX.tap();
 }
 
 function handleClick() {
@@ -600,9 +610,10 @@ function tooEarly() {
   clearTimeout(waitTimer);
   state = 'early';
   zone.className = 'game-zone early';
-  zoneText.textContent = t('early');
-  zoneSub.textContent = t('early_sub');
-  zoneSub.style.display = '';
+  const zt = zoneTextEl(), zs = zoneSubEl();
+  if (zt) zt.textContent = t('early');
+  if (zs) { zs.textContent = t('early_sub'); zs.style.display = ''; }
+  SoundFX.fail(); TG.haptic('error');
 
   // Mark all remaining dots as failed
   for (let i = currentAttempt; i < TOTAL_ATTEMPTS; i++) {
@@ -618,6 +629,7 @@ function tooEarly() {
 function recordResult(ms) {
   state = 'result';
   attempts.push(ms);
+  TG.haptic('light');
 
   // Show result inside zone
   zone.className = 'game-zone result-bg';
@@ -703,9 +715,11 @@ function showFinal() {
     recordEl.innerHTML = `${best} ms <span class="new-record">${t('new_record')}</span>`;
     badgeEl.style.borderColor = 'rgba(241,196,15,0.4)';
     badgeEl.style.background  = 'rgba(241,196,15,0.1)';
+    SoundFX.success(); TG.haptic('success');
   } else {
     recordEl.textContent = `${prevRecord} ms`;
   }
+  ScoreManager.record('reaction_time', best);
 
   applyTranslations();
 }

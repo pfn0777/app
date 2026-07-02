@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ShaxmatAI</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -934,9 +939,12 @@ function doMove(from, to){
   possibleMoves = [];
   moveCount++;
   renderBoard();
+  TG.haptic('light');
 
   if(gameMode==='online'){
     pushOnlineMove(game.fen(), {from,to});
+    // BUG FIX: online rejimda o'z yurishimizdan keyin taymer raqibga o'tmasdi
+    switchTimerToOpponent();
   }
 
   if(checkGameOver()) return;
@@ -1039,8 +1047,10 @@ function checkGameOver(){
         icon = playerWon?'♔':'♚';
         title = playerWon ? t('youWon') : t('opponentWon');
         sub = t('checkmate');
+        recordChessResult(playerWon?'win':'loss');
       } else if(game.in_stalemate()||game.in_draw()||game.in_threefold_repetition()||game.insufficient_material()){
         icon='½'; title=t('draw'); sub=t('stalemate');
+        recordChessResult('draw');
       }
       showGameOver(icon, title, sub);
     }, 400);
@@ -1064,13 +1074,15 @@ function closeModal(){
   document.getElementById('gameOverModal').classList.remove('show');
 }
 
-function resignGame(){
-  if(!gameActive) return;
-  gameActive = false;
-  stopTimers();
-  const playerWon = false;
-  showGameOver('🏳', t('opponentWon'), t('resign_done'));
+// Natijani umumiy statistikaga yozish: 'win' | 'loss' | 'draw'
+function recordChessResult(result){
+  ScoreManager.record('chess', result==='win'?1:0);
+  if(result==='win'){ SoundFX.success(); TG.haptic('success'); }
+  else if(result==='loss'){ SoundFX.fail(); TG.haptic('error'); }
+  else { TG.haptic('warning'); }
 }
+// BUG FIX: resignGame ikki marta e'lon qilingan edi (bu yerda va online
+// bo'limida) — faqat online-aware versiyasi qoldirildi (pastda).
 
 function quitGame(){
   gameActive = false;
@@ -1115,8 +1127,10 @@ function timeUp(who){
   gameActive=false;
   stopTimers();
   if(who==='player'){
+    recordChessResult('loss');
     showGameOver('⏱', t('opponentWon'), t('timeUp'));
   } else {
+    recordChessResult('win');
     showGameOver('⏱', t('youWon'), t('timeUp'));
   }
 }
@@ -1307,6 +1321,7 @@ function syncOnlineState(data){
     const iWon = resignedBy !== myRole;
     gameActive = false;
     stopTimers();
+    recordChessResult(iWon?'win':'loss');
     showGameOver(iWon?'♔':'♚', iWon?t('youWon'):t('opponentWon'), t('resign_done'));
   }
 }
@@ -1337,8 +1352,7 @@ function cleanupOnline(){
   document.getElementById('joinCodeInput').value='';
 }
 
-// Override resign for online
-const _resignGame = resignGame;
+// Resign (AI va online rejimlar uchun yagona versiya)
 function resignGame(){
   if(!gameActive) return;
   if(gameMode==='online' && db && roomCode){
@@ -1346,6 +1360,7 @@ function resignGame(){
   }
   gameActive = false;
   stopTimers();
+  recordChessResult('loss');
   showGameOver('🏳', t('opponentWon'), t('resign_done'));
 }
 

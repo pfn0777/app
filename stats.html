@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>📊 Statistika — Brain Games</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(160deg, #0f0c29, #302b63, #24243e);
+    background-attachment: fixed;
+    color: #fff;
+    min-height: 100vh;
+    padding: 16px 14px 40px;
+  }
+  [data-theme="light"] body {
+    background: linear-gradient(160deg, #e8ecf7, #f5f0ff, #eef3fb);
+    color: #1a1a2e;
+  }
+  .top {
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 560px; margin: 0 auto 18px;
+  }
+  .back {
+    text-decoration: none; color: inherit; font-size: 15px;
+    background: rgba(255,255,255,.1); border-radius: 12px; padding: 8px 14px;
+    border: 1px solid rgba(255,255,255,.12);
+  }
+  [data-theme="light"] .back { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); }
+  h1 { font-size: 20px; text-align: center; }
+  .icon-btn {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px; padding: 8px 12px; font-size: 16px; cursor: pointer; color: inherit;
+  }
+  [data-theme="light"] .icon-btn { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); }
+
+  .cards {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    max-width: 560px; margin: 0 auto 22px;
+  }
+  .stat-card {
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 16px; padding: 14px 8px; text-align: center;
+  }
+  [data-theme="light"] .stat-card { background: rgba(255,255,255,.7); border-color: rgba(0,0,0,.08); }
+  .stat-card .num { font-size: 26px; font-weight: 800; }
+  .stat-card .lbl { font-size: 11px; opacity: .75; margin-top: 4px; }
+  .stat-card.streak .num { color: #ffb347; }
+
+  h2 {
+    max-width: 560px; margin: 0 auto 10px; font-size: 15px; opacity: .85;
+  }
+  .games {
+    max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px;
+  }
+  .grow {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px; padding: 12px 14px;
+    text-decoration: none; color: inherit;
+  }
+  [data-theme="light"] .grow { background: rgba(255,255,255,.7); border-color: rgba(0,0,0,.08); }
+  .grow .ico { font-size: 22px; width: 30px; text-align: center; }
+  .grow .name { flex: 1; font-size: 14px; font-weight: 600; }
+  .grow .best { font-size: 14px; font-weight: 700; color: #7ee8a2; }
+  [data-theme="light"] .grow .best { color: #1a8f4e; }
+  .grow .best.empty { color: inherit; opacity: .4; font-weight: 400; }
+  .footer { text-align: center; margin-top: 26px; font-size: 12px; opacity: .5; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <a class="back" href="index.html">← Menyu</a>
+    <h1>📊 Statistika</h1>
+    <button class="icon-btn" id="themeBtn" title="Mavzu">🌙</button>
+  </div>
+
+  <div class="cards">
+    <div class="stat-card streak">
+      <div class="num" id="streakNum">0</div>
+      <div class="lbl">🔥 Kunlik streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="daysNum">0</div>
+      <div class="lbl">📅 O'ynalgan kunlar</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="totalNum">0</div>
+      <div class="lbl">🎮 Jami o'yinlar</div>
+    </div>
+  </div>
+
+  <h2>Eng yaxshi natijalar</h2>
+  <div class="games" id="gamesList"></div>
+
+  <div class="footer">🧠 Brain Games • v1.1</div>
+
+<script>
+(function(){
+  var META = {
+    piano_tiles:     { icon: '🎹', name: 'Piano Tiles' },
+    schulte_table:   { icon: '🔢', name: 'Schulte jadvali' },
+    colors_game:     { icon: '🎨', name: 'Ranglar (Stroop)' },
+    math_game:       { icon: '🧮', name: 'Matematika' },
+    iq_game:         { icon: '🧠', name: 'IQ test' },
+    pattern_game:    { icon: '🔲', name: 'Pattern xotira' },
+    fly_game:        { icon: '🪰', name: 'Pashsha' },
+    chess:           { icon: '♟', name: 'Shaxmat (g\'alabalar)' },
+    checkers:        { icon: '⚪', name: 'Shashka' },
+    reaction_time:   { icon: '⚡', name: 'Reaksiya vaqti' },
+    sequence_memory: { icon: '🔮', name: 'Ketma-ket xotira' },
+    mental_math:     { icon: '➕', name: 'Mental hisob' },
+    brain_game:      { icon: '🧩', name: 'Miya Geniusi' },
+    nback:           { icon: '🎯', name: 'N-Back' }
+  };
+
+  // Yuqori kartochkalar
+  var streak = ScoreManager.getStreak();
+  document.getElementById('streakNum').textContent = streak.count;
+  document.getElementById('daysNum').textContent = ScoreManager.playedDays();
+  document.getElementById('totalNum').textContent = ScoreManager.getScores().length;
+
+  // O'yinlar ro'yxati
+  var list = document.getElementById('gamesList');
+  var html = '';
+  Object.keys(ScoreManager.GAMES).forEach(function(id){
+    var g = ScoreManager.GAMES[id];
+    var m = META[id] || { icon: '🎮', name: id };
+    var fmt = ScoreManager.bestFmt(id);
+    var empty = (fmt === '—');
+    html += '<a class="grow" href="' + g.file + '">' +
+      '<span class="ico">' + m.icon + '</span>' +
+      '<span class="name">' + m.name + '</span>' +
+      '<span class="best' + (empty ? ' empty' : '') + '">' + fmt + '</span>' +
+    '</a>';
+  });
+  list.innerHTML = html;
+
+  // Mavzu tugmasi
+  var themeBtn = document.getElementById('themeBtn');
+  function syncThemeIcon(){
+    themeBtn.textContent = (document.documentElement.getAttribute('data-theme') === 'light') ? '☀️' : '🌙';
+  }
+  syncThemeIcon();
+  themeBtn.addEventListener('click', function(){
+    if (window.Theme && Theme.toggle) Theme.toggle();
+    else {
+      var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', cur);
+      try { localStorage.setItem('bg_theme', cur); } catch(e){}
+    }
+    syncThemeIcon();
+    if (window.TG) TG.haptic('light');
+  });
+})();
+</script>
+</body>
+</html>

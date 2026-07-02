@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sequence Memory</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -472,6 +477,7 @@ function getAudioCtx() {
 }
 function playTone(freq, duration) {
   try {
+    if (window.SoundFX && !SoundFX.enabled()) return; // umumiy mute'ni hurmat qilamiz
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -617,6 +623,7 @@ function handleBtnPress(color) {
     flashBtn(color, 200);
     updateSeqDots(playerIdx + 1);
     playerIdx++;
+    TG.haptic('light');
 
     if (playerIdx === sequence.length) {
       // Completed sequence
@@ -630,6 +637,7 @@ function handleBtnPress(color) {
     gamePhase = 'idle';
     setButtonsEnabled(false);
     playTone(WRONG_TONE, 600);
+    TG.haptic('error');
     updateSeqDots(playerIdx, playerIdx);
     setStatus(t('wrong'));
 
@@ -649,6 +657,8 @@ function showGameOver() {
   const prev = parseInt(localStorage.getItem('sequence_best') || '0');
   const isNew = reached > prev;
   if (isNew) localStorage.setItem('sequence_best', reached);
+  ScoreManager.record('sequence_memory', reached);
+  if (isNew) { SoundFX.success(); TG.haptic('success'); }
 
   const best = localStorage.getItem('sequence_best');
   document.getElementById('go-record').textContent = `${best}`;

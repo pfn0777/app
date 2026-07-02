@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Pattern Game</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -208,6 +213,25 @@
     header { padding: 8px 12px; }
     #grid { gap: 6px; }
   }
+
+  /* ── Dark mode ── */
+  [data-theme="dark"] body { background: #14141f; }
+  [data-theme="dark"] header { background: #1e1e2e; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+  [data-theme="dark"] .h-logo { color: #eee; }
+  [data-theme="dark"] .h-stat { color: #aaa; }
+  [data-theme="dark"] .lang-btn:not(.active) { background: #2a2a3d; border-color: #3a3a52; color: #bbb; }
+  [data-theme="dark"] .progress-track { background: #2a2a3d; }
+  [data-theme="dark"] #game-area { background: linear-gradient(160deg, #05445e 0%, #0a6180 100%); }
+  [data-theme="dark"] .cell { background: rgba(255,255,255,0.25); }
+  [data-theme="dark"] .cell.clickable { background: rgba(255,255,255,0.25); }
+  [data-theme="dark"] .cell.clickable:hover { background: rgba(255,255,255,0.4); }
+  [data-theme="dark"] .ov-card { background: #1e1e2e; }
+  [data-theme="dark"] .ov-card h2 { color: #eee; }
+  [data-theme="dark"] .ov-desc { color: #bbb; }
+  [data-theme="dark"] .ov-row { color: #bbb; border-bottom-color: #2a2a3d; }
+  [data-theme="dark"] .ov-row strong { color: #eee; }
+  [data-theme="dark"] .ov-lang-btn:not(.active) { background: #2a2a3d; border-color: #3a3a52; color: #bbb; }
+  [data-theme="dark"] #btn-home { background: #2a2a3d; }
 </style>
 </head>
 <body>
@@ -502,6 +526,7 @@ function onCellClick(e) {
     el.classList.add('found');
     el.removeEventListener('pointerdown', onCellClick);
     foundCount++;
+    TG.haptic('light');
 
     if (foundCount === blackCount) {
       // All found
@@ -510,6 +535,7 @@ function onCellClick(e) {
       correctCount++;
       blackCount++;
       hScoreEl.textContent = correctCount;
+      SoundFX.success();
 
       setTimeout(() => {
         // Remove remaining listeners
@@ -545,18 +571,25 @@ function endGame(reason) {
   endIcon.textContent      = reason === 'timeout' ? '⏱️' : '❌';
   endReason.textContent    = reason === 'timeout' ? t.endTimeout : t.endWrong;
   endCorrect.textContent   = correctCount;
-  endMax.textContent       = blackCount;
+  // BUG FIX: blackCount muvaffaqiyatdan keyin darhol oshiriladi —
+  // aslida ko'rsatilgan oxirgi raundagi katak sonini (blackSet.size) ko'rsatamiz.
+  endMax.textContent       = blackSet.size || blackCount;
   lblCorrect.textContent   = t.lblCorrect;
   lblMax.textContent       = t.lblMax;
   lblEndBest.textContent   = t.lblBest;
 
+  let isNewBest = false;
   if (correctCount > best) {
     best = correctCount;
+    isNewBest = true;
     localStorage.setItem('pattern_best', best);
     endRecordMsg.textContent = t.newRecord;
   } else {
     endRecordMsg.textContent = '';
   }
+  ScoreManager.record('pattern_game', correctCount);
+  if (isNewBest) { SoundFX.success(); TG.haptic('success'); }
+  else           { SoundFX.fail();    TG.haptic('error'); }
   endBestVal.textContent = best;
   hBestEl.textContent    = best;
   endOv.classList.remove('hidden');

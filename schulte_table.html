@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Schulte Table</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -246,6 +251,25 @@
     .ov-card { padding: 26px 16px; }
     .cell { font-size: 18px; }
   }
+
+  /* ── Dark mode ── */
+  [data-theme="dark"] body { background: #12121e; }
+  [data-theme="dark"] .h-row1,
+  [data-theme="dark"] .h-row2 { background: #1e1e2e; border-color: #2a2a3e; }
+  [data-theme="dark"] #h-timer { color: #e8e8f0; }
+  [data-theme="dark"] .h-best-wrap { color: #999; }
+  [data-theme="dark"] .progress-track { background: #2a2a3e; }
+  [data-theme="dark"] .cell { background: #1e1e2e; color: #e8e8f0; border-color: #3a5a8a; }
+  [data-theme="dark"] .cell:hover { background: #262640; }
+  [data-theme="dark"] .cell.done { background: #191926 !important; color: #444 !important; }
+  [data-theme="dark"] .ov-card { background: #1e1e2e; }
+  [data-theme="dark"] .ov-card h2 { color: #e8e8f0; }
+  [data-theme="dark"] .ov-desc { color: #aaa; }
+  [data-theme="dark"] .ov-row { color: #aaa; border-color: #2a2a3e; }
+  [data-theme="dark"] .ov-row strong { color: #e8e8f0; }
+  [data-theme="dark"] .lang-btn, [data-theme="dark"] .ov-lang-btn { background: #2a2a3e; border-color: #3a3a52; color: #aaa; }
+  [data-theme="dark"] .lang-btn.active, [data-theme="dark"] .ov-lang-btn.active { background: #4a90d9; border-color: #4a90d9; color: #fff; }
+  [data-theme="dark"] #btn-home { background: #2a2a3e; }
 </style>
 </head>
 <body>
@@ -384,6 +408,7 @@ let startTime = 0;
 let clicked   = 0;
 let running   = false;
 let started   = false;
+let lastRecordNew = false; // oxirgi tugallangan daraja yangi rekordmi
 
 /* ── DOM ── */
 const gridEl      = document.getElementById('grid');
@@ -495,18 +520,28 @@ function onCellClick(num, el) {
     clicked++;
     next++;
     if (next > gridSize * gridSize) {
-      // Level complete — next level immediately after brief pause
+      // Level complete — BUG FIX: rekord faqat daraja tugallanganda saqlanadi
       stopTimer();
+      const spentLvl = elapsed;
+      const key  = 'schulte_best_' + level;
+      const prev = localStorage.getItem(key);
+      lastRecordNew = spentLvl > 0 && (!prev || spentLvl < parseInt(prev));
+      if (lastRecordNew) localStorage.setItem(key, spentLvl);
+      if (level === 0 && spentLvl > 0) ScoreManager.record('schulte_table', spentLvl);
+      SoundFX.success(); TG.haptic('success');
       setTimeout(() => {
         level++;
         if (level > 4) { endGame('finish'); return; }
         startLevel();
       }, 350);
+    } else {
+      TG.haptic('light');
     }
   } else {
     el.classList.add('wrong');
     stopTimer();
     running = false;
+    SoundFX.fail(); TG.haptic('error');
     setTimeout(() => endGame('wrong'), 320);
   }
 }
@@ -537,9 +572,9 @@ function endGame(reason) {
   const label = LABELS[lvl];
   const spent = Math.min(elapsed, timeLimit);
   const key   = 'schulte_best_' + lvl;
-  const prev  = localStorage.getItem(key);
-  const isNew = spent > 0 && reason !== 'timeout' && (!prev || spent < parseInt(prev));
-  if (isNew) localStorage.setItem(key, spent);
+  // Rekord bu yerda YOZILMAYDI (bug fix) — faqat daraja tugallanganda yoziladi
+  const isNew = reason === 'finish' && lastRecordNew;
+  if (reason === 'timeout') { SoundFX.fail(); TG.haptic('error'); }
 
   document.getElementById('end-reason').textContent    = reason === 'wrong' ? t.endWrong : reason === 'timeout' ? t.endTimeout : t.endFinish;
   document.getElementById('lbl-reached').textContent   = t.lblReached;

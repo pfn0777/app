@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Math Game</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -231,6 +236,25 @@
     #answers { gap: 10px; }
     .ans-btn { width: clamp(76px, 28vw, 120px); padding: 14px 6px; border-radius: 14px; }
   }
+
+  /* ── Dark mode ── */
+  [data-theme="dark"] body { background: #14141f; }
+  [data-theme="dark"] header { background: #1e1e2e; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+  [data-theme="dark"] .h-logo { color: #eee; }
+  [data-theme="dark"] .h-stat { color: #aaa; }
+  [data-theme="dark"] .lang-btn:not(.active) { background: #2a2a3d; border-color: #3a3a52; color: #bbb; }
+  [data-theme="dark"] .progress-track { background: #2a2a3d; }
+  [data-theme="dark"] #card { background: #1e1e2e; border-color: #3a3a52; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  [data-theme="dark"] .card-num { color: #eee; }
+  [data-theme="dark"] #hint-text { color: #999; }
+  [data-theme="dark"] .ans-btn { background: #1e1e2e; border-color: #3a3a52; }
+  [data-theme="dark"] .ov-card { background: #1e1e2e; }
+  [data-theme="dark"] .ov-card h2 { color: #eee; }
+  [data-theme="dark"] .ov-row { color: #bbb; border-bottom-color: #2a2a3d; }
+  [data-theme="dark"] .ov-row strong { color: #eee; }
+  [data-theme="dark"] .ov-lang-btn:not(.active) { background: #2a2a3d; border-color: #3a3a52; color: #bbb; }
+  [data-theme="dark"] #start-rule { color: #bbb !important; }
+  [data-theme="dark"] #btn-home { background: #2a2a3d; }
 </style>
 </head>
 <body>
@@ -530,6 +554,7 @@ function onAnswer(btn, isCorrect, isTimeout) {
     correctCount++;
     numCount++;
     hScoreEl.textContent = correctCount;
+    TG.haptic('light');
 
     if (btn) btn.classList.add('flash-ok');
     setTimeout(() => {
@@ -564,13 +589,18 @@ function endGame(reason) {
   lblMaxNums.textContent  = t.lblMaxNums;
   lblEndBest.textContent  = t.lblBest;
 
+  let isNewBest = false;
   if (correctCount > best) {
     best = correctCount;
+    isNewBest = true;
     localStorage.setItem('math_best_score', best);
     endRecordMsg.textContent = t.newRecord;
   } else {
     endRecordMsg.textContent = '';
   }
+  ScoreManager.record('math_game', correctCount);
+  if (isNewBest) { SoundFX.success(); TG.haptic('success'); }
+  else           { SoundFX.fail();    TG.haptic('error'); }
   endBestVal.textContent = best;
   hBestEl.textContent    = best;
   endOv.classList.remove('hidden');

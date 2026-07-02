@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>N-Back</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -596,6 +601,8 @@ let gameActive = false;
 let signalTimer = null;
 let waitAnimFrame = null;
 let waitStart = null;
+// BUG FIX: cellActive avval e'lon qilinmagan implicit global edi (strict mode'da xato)
+let cellActive = false;
 
 // ─── DOM ──────────────────────────────────────────────────────────────────────
 function buildGrid() {
@@ -768,14 +775,14 @@ function handlePress(type) {
     if (posPressed) return;
     posPressed = true;
     const correct = sig.pos === prev.pos;
-    if (correct) { correctCount++; flashBtn('btn-pos', true); }
-    else { wrongCount += 0.5; flashBtn('btn-pos', false); }
+    if (correct) { correctCount++; flashBtn('btn-pos', true); TG.haptic('light'); }
+    else { wrongCount += 0.5; flashBtn('btn-pos', false); TG.haptic('error'); }
   } else {
     if (letPressed) return;
     letPressed = true;
     const correct = sig.letter === prev.letter;
-    if (correct) { correctCount++; flashBtn('btn-letter', true); }
-    else { wrongCount += 0.5; flashBtn('btn-letter', false); }
+    if (correct) { correctCount++; flashBtn('btn-letter', true); TG.haptic('light'); }
+    else { wrongCount += 0.5; flashBtn('btn-letter', false); TG.haptic('error'); }
   }
   updateStats();
 }
@@ -832,7 +839,11 @@ function endRound() {
 
   // Update best
   const best = parseInt(localStorage.getItem('nback_best_n') || '0');
-  if (n > best) localStorage.setItem('nback_best_n', n);
+  const isNewBest = n > best;
+  if (isNewBest) localStorage.setItem('nback_best_n', n);
+  ScoreManager.record('nback', n);
+  if (isNewBest) { SoundFX.success(); TG.haptic('success'); }
+  else           { SoundFX.fail();    TG.haptic('error');   }
 
   // Fill result screen
   document.getElementById('res-correct').textContent = `${Math.floor(totalScored)}/${totalPossible}`;
