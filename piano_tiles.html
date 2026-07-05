@@ -37,9 +37,27 @@
     z-index: 1;
   }
 
+  #level {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 20px;
+    letter-spacing: 2px;
+    z-index: 25;
+    pointer-events: none;
+    font-family: Arial, sans-serif;
+  }
+
   #score {
     position: fixed;
-    top: 12px;
+    top: 44px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 48px;
@@ -54,7 +72,6 @@
   .tile {
     position: absolute;
     width: 25%;
-    height: 25vh;
     background: #000000;
     z-index: 2;
     cursor: pointer;
@@ -177,6 +194,7 @@
 
   /* ── Dark mode ── */
   [data-theme="dark"] #game { background: linear-gradient(180deg, #1e3a1e 0%, #2f5233 100%); }
+  [data-theme="dark"] #level { background: rgba(0, 0, 0, 0.55); color: #e8e8f0; }
   [data-theme="dark"] #overlay-box,
   [data-theme="dark"] #intro-card { background: #1e1e2e; }
   [data-theme="dark"] #overlay-box h2 { color: #ff6b6b; }
@@ -206,6 +224,7 @@
   </div>
 </div>
 
+<div id="level">⭐</div>
 <div id="score">0</div>
 
 <div id="game">
@@ -264,6 +283,7 @@
 
   const gameEl   = document.getElementById('game');
   const scoreEl  = document.getElementById('score');
+  const levelEl  = document.getElementById('level');
   const startBtn = document.getElementById('start-btn');
   const overlay  = document.getElementById('overlay');
   const ovScore  = document.getElementById('ov-score');
@@ -271,27 +291,35 @@
   const ovBest   = document.getElementById('ov-best');
   const ovLevel  = document.getElementById('ov-level');
 
+  // ── Difficulty tuning (magic numbers as constants) ─────────────────────────
+  const BASE_MS   = 2800;   // travel time at score 0
+  const STEP_MS   = 45;     // ms faster per point
+  const MIN_MS    = 380;    // floor — never slower than this, but never stops
+  const MIN_TILE  = 0.14;   // tile height as fraction of screen
+  const MAX_TILE  = 0.28;
+  const LEVELS    = ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐', '🔥', '💀', '🚀', '👑'];
+
   let gameStarted = false;
   let score       = 0;
   let speed       = 0;       // px per frame
   let tiles       = [];      // active tile objects
-  let latestTile  = null;    // most recently spawned tile
+  let groupSeq    = 0;       // incrementing group id
+  let activeGroup = null;    // { id, tiles:[], spawned:false }
   let animId      = null;
   let startTime   = 0;
   let best        = parseFloat(localStorage.getItem('pt_best') || '0');
   let maxLabel    = '⭐';
 
   function screenH()  { return window.innerHeight; }
-  function tileH()    { return screenH() * 0.25; }
+  function randTileH() { return screenH() * (MIN_TILE + Math.random() * (MAX_TILE - MIN_TILE)); }
 
-  function getDifficulty(s) {
-    if (s < 5)  return { speedMs: 2800, label: '⭐' };
-    if (s < 10) return { speedMs: 2400, label: '⭐⭐' };
-    if (s < 15) return { speedMs: 2000, label: '⭐⭐⭐' };
-    if (s < 20) return { speedMs: 1600, label: '⭐⭐⭐⭐' };
-    if (s < 30) return { speedMs: 1200, label: '⭐⭐⭐⭐⭐' };
-    if (s < 40) return { speedMs: 900,  label: '🔥' };
-    return             { speedMs: 700,  label: '💀' };
+  function speedMsFor(s) {
+    return Math.max(MIN_MS, BASE_MS - s * STEP_MS);
+  }
+
+  function levelLabel(s) {
+    const idx = Math.min(LEVELS.length - 1, Math.floor(s / 5));
+    return LEVELS[idx];
   }
 
   // Convert ms travel time → px per frame at 60fps
@@ -299,20 +327,58 @@
     return (screenH() * 1.25) / (ms / 1000 * 60);
   }
 
-  // ── Spawn one new tile at a random column ──────────────────────────────────
-  function spawnTile() {
-    const col = Math.floor(Math.random() * 4);
-    const el  = document.createElement('div');
-    el.className    = 'tile';
-    el.style.left   = (col * 25) + '%';
-    const initTop   = -tileH();
-    el.style.top    = initTop + 'px';
-    gameEl.appendChild(el);
+  function pickColumns(n) {
+    const cols = [0, 1, 2, 3];
+    for (let i = cols.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cols[i], cols[j]] = [cols[j], cols[i]];
+    }
+    return cols.slice(0, n);
+  }
 
-    const tile = { el, top: initTop, active: true, spawned: false };
+  function makeTile(col, top, h, group) {
+    const el = document.createElement('div');
+    el.className  = 'tile';
+    el.style.left = (col * 25) + '%';
+    el.style.top  = top + 'px';
+    el.style.height = h + 'px';
+    gameEl.appendChild(el);
+    const tile = { el, top, h, active: true, group };
     tiles.push(tile);
-    latestTile = tile;
+    group.tiles.push(tile);
     return tile;
+  }
+
+  // ── Spawn a structured group of tiles ──────────────────────────────────────
+  function spawnGroup() {
+    const group = { id: ++groupSeq, tiles: [], spawned: false };
+    activeGroup = group;
+
+    // pattern weights shift with score (early game favours single)
+    const r = Math.random();
+    let pattern;
+    if (score < 5)       pattern = 'single';
+    else if (score < 12) pattern = r < 0.7 ? 'single' : 'staircase';
+    else                 pattern = r < 0.5 ? 'single' : 'staircase';
+
+    if (pattern === 'single') {
+      const h = randTileH();
+      makeTile(pickColumns(1)[0], -h, h, group);
+    } else { // staircase — 2..3 tiles offset downward
+      const n = 2 + Math.floor(Math.random() * 2);
+      const cols = pickColumns(n);
+      let top = -randTileH();
+      for (let i = 0; i < n; i++) {
+        const h = randTileH();
+        makeTile(cols[i], top, h, group);
+        top += h * 0.6; // each next tile starts lower → staircase
+      }
+    }
+    return group;
+  }
+
+  function groupLowest(group) {
+    return Math.max(...group.tiles.map(t => t.top + t.h));
   }
 
   // ── Hit a tile (correct click) ─────────────────────────────────────────────
@@ -323,16 +389,17 @@
     tiles = tiles.filter(t => t !== tile);
 
     score++;
-    const diff = getDifficulty(score);
-    speed = speedFromMs(diff.speedMs);
-    if (diff.label.length > maxLabel.length || diff.label === '🔥' || diff.label === '💀') {
-      maxLabel = diff.label;
-    }
-    scoreEl.textContent = score + ' ' + diff.label;
+    speed = speedFromMs(speedMsFor(score));
+    const label = levelLabel(score);
+    if (LEVELS.indexOf(label) > LEVELS.indexOf(maxLabel)) maxLabel = label;
+    scoreEl.textContent = score;
+    levelEl.textContent = label;
 
-    if (tile === latestTile && !tile.spawned) {
-      tile.spawned = true;
-      spawnTile();
+    // whole active group cleared → spawn next
+    if (activeGroup && !activeGroup.spawned &&
+        activeGroup.tiles.every(t => !t.active)) {
+      activeGroup.spawned = true;
+      spawnGroup();
     }
   }
 
@@ -351,9 +418,9 @@
       }
     }
 
-    if (latestTile && !latestTile.spawned && latestTile.top > h * 0.45) {
-      latestTile.spawned = true;
-      spawnTile();
+    if (activeGroup && !activeGroup.spawned && groupLowest(activeGroup) > h * 0.45) {
+      activeGroup.spawned = true;
+      spawnGroup();
     }
 
     animId = requestAnimationFrame(loop);
@@ -396,19 +463,21 @@
     gameStarted = true;
     score       = 0;
     tiles       = [];
-    latestTile  = null;
+    groupSeq    = 0;
+    activeGroup = null;
     startTime   = performance.now();
 
-    scoreEl.textContent = '0 ⭐';
+    scoreEl.textContent = '0';
+    levelEl.textContent = '⭐';
     maxLabel = '⭐';
-    speed = speedFromMs(getDifficulty(0).speedMs);
+    speed = speedFromMs(speedMsFor(0));
     startBtn.style.display = 'none';
 
     // Remove preview tile if present
     const prev = document.getElementById('preview-tile');
     if (prev) prev.remove();
 
-    spawnTile();
+    spawnGroup();
     animId = requestAnimationFrame(loop);
   }
 
@@ -444,11 +513,13 @@
   // ── Preview tile shown before game starts ──────────────────────────────────
   (function showPreview() {
     const col  = Math.floor(Math.random() * 4);
+    const h    = screenH() * 0.25;
     const prev = document.createElement('div');
     prev.className = 'tile';
     prev.id        = 'preview-tile';
     prev.style.left = (col * 25) + '%';
-    prev.style.top  = (screenH() - tileH() * 1.4) + 'px';
+    prev.style.height = h + 'px';
+    prev.style.top  = (screenH() - h * 1.4) + 'px';
     gameEl.appendChild(prev);
   })();
 </script>
