@@ -230,6 +230,19 @@
   #start-round-btn:active { transform: scale(0.97); }
   #start-round-btn.hidden { display: none; }
 
+  /* ── Difficulty selectors ── */
+  .ov-select { display: flex; flex-direction: column; gap: 7px; }
+  .ov-select-label { font-size: 13px; font-weight: 700; color: #666; text-align: left; }
+  .ov-opts { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+  .ov-opt {
+    padding: 7px 14px; border-radius: 20px;
+    border: 2px solid #ddd; background: #f5f5f5;
+    color: #666; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .ov-opt.active { background: #4a90d9; border-color: #4a90d9; color: #fff; font-weight: 800; }
+  .ov-opt:hover:not(.active) { border-color: #aaa; color: #333; }
+
   @media (max-width: 500px) {
     .ov-card { padding: 30px 20px; }
     header { padding: 8px 12px; }
@@ -252,6 +265,8 @@
   [data-theme="dark"] .ov-row { color: #bbb; border-bottom-color: #2a2a3d; }
   [data-theme="dark"] .ov-row strong { color: #eee; }
   [data-theme="dark"] .ov-lang-btn:not(.active) { background: #2a2a3d; border-color: #3a3a52; color: #bbb; }
+  [data-theme="dark"] .ov-select-label { color: #bbb; }
+  [data-theme="dark"] .ov-opt:not(.active) { background: #2a2a3d; border-color: #3a3a52; color: #bbb; }
   [data-theme="dark"] #btn-home { background: #2a2a3d; }
 </style>
 </head>
@@ -287,6 +302,24 @@
     <div class="ov-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="72" height="72"><ellipse cx="50" cy="55" rx="12" ry="18" fill="black"/><circle cx="50" cy="33" r="10" fill="black"/><circle cx="45" cy="30" r="4" fill="white"/><circle cx="55" cy="30" r="4" fill="white"/><circle cx="45" cy="30" r="2" fill="black"/><circle cx="55" cy="30" r="2" fill="black"/><ellipse cx="28" cy="38" rx="18" ry="9" fill="rgba(0,0,0,0.15)" stroke="black" stroke-width="1.5" transform="rotate(-20,28,38)"/><ellipse cx="72" cy="38" rx="18" ry="9" fill="rgba(0,0,0,0.15)" stroke="black" stroke-width="1.5" transform="rotate(20,72,38)"/><ellipse cx="30" cy="52" rx="14" ry="7" fill="rgba(0,0,0,0.1)" stroke="black" stroke-width="1.5" transform="rotate(-10,30,52)"/><ellipse cx="70" cy="52" rx="14" ry="7" fill="rgba(0,0,0,0.1)" stroke="black" stroke-width="1.5" transform="rotate(10,70,52)"/><line x1="44" y1="60" x2="25" y2="72" stroke="black" stroke-width="1.5"/><line x1="50" y1="63" x2="50" y2="78" stroke="black" stroke-width="1.5"/><line x1="56" y1="60" x2="75" y2="72" stroke="black" stroke-width="1.5"/><line x1="42" y1="55" x2="22" y2="60" stroke="black" stroke-width="1.5"/><line x1="58" y1="55" x2="78" y2="60" stroke="black" stroke-width="1.5"/><line x1="45" y1="24" x2="35" y2="14" stroke="black" stroke-width="1.5"/><line x1="55" y1="24" x2="65" y2="14" stroke="black" stroke-width="1.5"/></svg></div>
     <h2>Fly Game</h2>
     <p class="ov-desc" id="start-rule"></p>
+    <div class="ov-select">
+      <div class="ov-select-label" id="lbl-steps"></div>
+      <div class="ov-opts" id="steps-opts">
+        <button class="ov-opt" data-steps="5"></button>
+        <button class="ov-opt" data-steps="15"></button>
+        <button class="ov-opt" data-steps="30"></button>
+      </div>
+    </div>
+    <div class="ov-select">
+      <div class="ov-select-label" id="lbl-speed"></div>
+      <div class="ov-opts" id="speed-opts">
+        <button class="ov-opt" data-speed="1"></button>
+        <button class="ov-opt" data-speed="2"></button>
+        <button class="ov-opt" data-speed="3"></button>
+        <button class="ov-opt" data-speed="4"></button>
+        <button class="ov-opt" data-speed="5"></button>
+      </div>
+    </div>
     <div class="ov-lang-row">
       <button class="ov-lang-btn" data-lang="uz">🇺🇿 UZ</button>
       <button class="ov-lang-btn" data-lang="ru">🇷🇺 RU</button>
@@ -363,7 +396,11 @@ function makeSVGArrow(rot) {
 /* ── Translations ── */
 const TR = {
   uz: {
-    startRule:  'Chivin 5x5 gridning markazida turadi. Strelkalar chivinning yo\'nalishini ko\'rsatadi — diqqat bilan kuz! Barcha strelkalar ko\'rsatilgach, chivin qayerda ekanini bos. Osondan boshlanib qiyinlashib boradi.',
+    startRule:  'Chivin 5x5 gridning markazida turadi. Strelkalar chivinning yo\'nalishini ko\'rsatadi — diqqat bilan kuz! Barcha strelkalar ko\'rsatilgach, chivin qayerda ekanini bos.',
+    lblSteps:   'Strelka soni',
+    lblSpeed:   'Tezlik',
+    stepNames:  { 5: 'Oz', 15: 'O\'rta', 30: 'Ko\'p' },
+    speedNames: { 1: 'Juda sekin', 2: 'Sekin', 3: 'O\'rta', 4: 'Tez', 5: 'Juda tez' },
     playBtn:    'O\'ynash',
     startRound: 'Boshlash',
     phaseShow:  id => `Qadam: ${id}`,
@@ -380,7 +417,11 @@ const TR = {
     homeBtn: 'Bosh sahifa', replayBtn: "Qayta o'ynash", nextBtn: "Keyingi o'yin",
   },
   ru: {
-    startRule:  'Муха находится в центре сетки 5×5. Стрелки показывают направление движения мухи — следи внимательно! После всех стрелок нажми на клетку, где оказалась муха. Начинается легко, становится сложнее.',
+    startRule:  'Муха находится в центре сетки 5×5. Стрелки показывают направление движения мухи — следи внимательно! После всех стрелок нажми на клетку, где оказалась муха.',
+    lblSteps:   'Кол-во стрелок',
+    lblSpeed:   'Скорость',
+    stepNames:  { 5: 'Мало', 15: 'Средне', 30: 'Много' },
+    speedNames: { 1: 'Оч. медленно', 2: 'Медленно', 3: 'Средне', 4: 'Быстро', 5: 'Оч. быстро' },
     playBtn:    'Играть',
     startRound: 'Начать',
     phaseShow:  id => `Шаг: ${id}`,
@@ -397,7 +438,11 @@ const TR = {
     homeBtn: 'Главная', replayBtn: 'Играть снова', nextBtn: 'Следующая игра',
   },
   en: {
-    startRule:  'The fly is in the center of a 5×5 grid. Arrows show the fly\'s direction — watch carefully! After all arrows are shown, tap where the fly ended up. Starts easy and gets harder.',
+    startRule:  'The fly is in the center of a 5×5 grid. Arrows show the fly\'s direction — watch carefully! After all arrows are shown, tap where the fly ended up.',
+    lblSteps:   'Arrows',
+    lblSpeed:   'Speed',
+    stepNames:  { 5: 'Few', 15: 'Medium', 30: 'Many' },
+    speedNames: { 1: 'Very slow', 2: 'Slow', 3: 'Medium', 4: 'Fast', 5: 'Very fast' },
     playBtn:    'Play',
     startRound: 'Start',
     phaseShow:  id => `Step: ${id}`,
@@ -415,8 +460,14 @@ const TR = {
   },
 };
 
+/* ── Difficulty options ── */
+const SPEED_MS = { 1: 1100, 2: 850, 3: 650, 4: 500, 5: 380 }; // level -> arrow show ms
+const ANSWER_S = { 5: 10, 15: 16, 30: 24 };                   // arrow count -> answer time (s)
+
 /* ── State ── */
 let lang          = localStorage.getItem('fly_lang') || 'uz';
+let selSteps      = parseInt(localStorage.getItem('fly_steps') || '5', 10);
+let selSpeed      = parseInt(localStorage.getItem('fly_speed') || '2', 10);
 let best          = parseInt(localStorage.getItem('fly_best') || '0', 10);
 let correctCount  = 0;
 let running       = false;
@@ -461,12 +512,12 @@ const lblEndBest     = document.getElementById('lbl-end-best');
 function T() { return TR[lang]; }
 
 function getDifficulty() {
-  if (correctCount === 0) return { steps: 5,  speed: 1000, answerTime: 10 };
-  if (correctCount === 1) return { steps: 10, speed: 800,  answerTime: 12 };
-  if (correctCount === 2) return { steps: 15, speed: 700,  answerTime: 15 };
-  if (correctCount === 3) return { steps: 20, speed: 600,  answerTime: 18 };
-  if (correctCount === 4) return { steps: 25, speed: 500,  answerTime: 20 };
-  return                         { steps: 30, speed: 400,  answerTime: 22 };
+  // Fixed for the whole game — chosen by the player on the start screen.
+  return {
+    steps: selSteps,
+    speed: SPEED_MS[selSpeed] || 850,
+    answerTime: ANSWER_S[selSteps] || 12,
+  };
 }
 
 function cellSize(cols) {
@@ -500,6 +551,24 @@ function applyLang(l) {
   document.getElementById('btn-home').title   = t.homeBtn;
   document.getElementById('btn-replay').title = t.replayBtn;
   document.getElementById('btn-next').title   = t.nextBtn;
+  applySelectors();
+}
+
+/* ── Difficulty selectors ── */
+function applySelectors() {
+  const t = T();
+  document.getElementById('lbl-steps').textContent = t.lblSteps;
+  document.getElementById('lbl-speed').textContent = t.lblSpeed;
+  document.querySelectorAll('#steps-opts .ov-opt').forEach(b => {
+    const v = parseInt(b.dataset.steps, 10);
+    b.textContent = t.stepNames[v];
+    b.classList.toggle('active', v === selSteps);
+  });
+  document.querySelectorAll('#speed-opts .ov-opt').forEach(b => {
+    const v = parseInt(b.dataset.speed, 10);
+    b.textContent = t.speedNames[v];
+    b.classList.toggle('active', v === selSpeed);
+  });
 }
 
 /* ── Build grid ── */
@@ -751,6 +820,20 @@ startRoundBtn.addEventListener('pointerdown', e => {
 /* ── Events ── */
 document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
   b.addEventListener('click', () => applyLang(b.dataset.lang))
+);
+document.querySelectorAll('#steps-opts .ov-opt').forEach(b =>
+  b.addEventListener('click', () => {
+    selSteps = parseInt(b.dataset.steps, 10);
+    localStorage.setItem('fly_steps', selSteps);
+    applySelectors();
+  })
+);
+document.querySelectorAll('#speed-opts .ov-opt').forEach(b =>
+  b.addEventListener('click', () => {
+    selSpeed = parseInt(b.dataset.speed, 10);
+    localStorage.setItem('fly_speed', selSpeed);
+    applySelectors();
+  })
 );
 playBtn.addEventListener('click', startGame);
 playAgainBtn.addEventListener('click', startGame);

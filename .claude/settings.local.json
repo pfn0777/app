@@ -7,7 +7,22 @@
       "mcp__Claude_in_Chrome__computer",
       "mcp__Claude_in_Chrome__read_console_messages",
       "mcp__Claude_in_Chrome__javascript_tool",
-      "mcp__Claude_in_Chrome__read_page"
+      "mcp__Claude_in_Chrome__read_page",
+      "Bash(claude mcp *)",
+      "Bash(claude plugin *)",
+      "Bash(grep -iA2 \"find\\\\|skill\")",
+      "Bash(rtk find *)",
+      "WebFetch(domain:www.claudepluginhub.com)",
+      "Bash(gh search *)",
+      "Bash(gh api *)",
+      "Bash(rtk curl *)",
+      "Bash(grep -iA3 \"find-skills\")",
+      "Skill(anthropic-skills:pdf)",
+      "Skill(anthropic-skills:pdf:*)",
+      "Bash(python -c \"import reportlab; print\\('reportlab', reportlab.Version\\)\")",
+      "Bash(python build_guide_pdf.py)",
+      "Bash(python -c \"from pypdf import PdfReader; r=PdfReader\\('Claude-Tools-Qollanma.pdf'\\); print\\('Pages:', len\\(r.pages\\)\\); print\\(r.pages[0].extract_text\\(\\)[:120]\\)\")",
+      "Bash(rm build_guide_pdf.py)"
     ]
   }
 }
