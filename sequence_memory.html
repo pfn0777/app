@@ -479,11 +479,11 @@ const T = {
   }
 };
 
-let lang = localStorage.getItem('sequence_lang') || 'uz';
+let lang = localStorage.getItem('brain_lang') || 'uz';
 function t(key) { return T[lang][key] || key; }
 function setLang(l) {
   lang = l;
-  localStorage.setItem('sequence_lang', l);
+  localStorage.setItem('brain_lang', l);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
   applyTranslations();
 }

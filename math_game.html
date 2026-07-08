@@ -378,7 +378,7 @@ const TR = {
 };
 
 /* ── State ───────────────────────────────────────────────────────────────── */
-let lang      = localStorage.getItem('math_lang') || 'uz';
+let lang      = localStorage.getItem('brain_lang') || 'uz';
 let best      = parseInt(localStorage.getItem('math_best_score') || '0', 10);
 let numCount  = 2;   // starts at 2, grows each correct answer
 let correctCount = 0;
@@ -609,7 +609,7 @@ function endGame(reason) {
 /* ── Apply language ──────────────────────────────────────────────────────── */
 function applyLang(l) {
   lang = l;
-  localStorage.setItem('math_lang', lang);
+  localStorage.setItem('brain_lang', lang);
   document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.lang === lang)
   );

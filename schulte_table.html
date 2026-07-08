@@ -397,7 +397,7 @@ function getTimeLimit(size) {
 }
 
 /* ── State ── */
-let lang      = localStorage.getItem('schulte_lang') || 'uz';
+let lang      = localStorage.getItem('brain_lang') || 'uz';
 let level     = 0;
 let next      = 1;
 let elapsed   = 0;
@@ -431,7 +431,7 @@ function getBestRaw(lvl) { return localStorage.getItem('schulte_best_' + lvl); }
 /* ── Language ── */
 function applyLang(l) {
   lang = l;
-  localStorage.setItem('schulte_lang', lang);
+  localStorage.setItem('brain_lang', lang);
   document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.lang === lang)
   );

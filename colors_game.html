@@ -380,7 +380,7 @@ const TR = {
 };
 
 // State
-let lang    = localStorage.getItem('colors_lang') || 'uz';
+let lang    = localStorage.getItem('brain_lang') || 'uz';
 let best    = parseInt(localStorage.getItem('colors_best') || '0', 10);
 let score   = 0;
 let correct = 0;
@@ -427,7 +427,7 @@ function shuffle(a) {
 
 function applyLang(l) {
   lang = l;
-  localStorage.setItem('colors_lang', lang);
+  localStorage.setItem('brain_lang', lang);
   document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   const T2 = T();
   hintEl.textContent    = T2.hint;

@@ -354,7 +354,7 @@ const TR = {
 };
 
 /* ── State ───────────────────────────────────────────────────────────────── */
-let lang         = localStorage.getItem('iq_lang') || 'uz';
+let lang         = localStorage.getItem('brain_lang') || 'uz';
 let best         = parseInt(localStorage.getItem('iq_best') || '0', 10);
 let numCount     = 2;
 let correctCount = 0;
@@ -423,7 +423,7 @@ function shuffle(arr) {
 /* ── Apply language ──────────────────────────────────────────────────────── */
 function applyLang(l) {
   lang = l;
-  localStorage.setItem('iq_lang', lang);
+  localStorage.setItem('brain_lang', lang);
   document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.lang === lang)
   );

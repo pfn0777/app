@@ -468,7 +468,7 @@ const T = {
   }
 };
 
-let lang = localStorage.getItem('reaction_lang') || 'uz';
+let lang = localStorage.getItem('brain_lang') || 'uz';
 function t(key, vars = {}) {
   const keys = key.split('.');
   let val = T[lang];
@@ -479,7 +479,7 @@ function t(key, vars = {}) {
 }
 function setLang(l) {
   lang = l;
-  localStorage.setItem('reaction_lang', l);
+  localStorage.setItem('brain_lang', l);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
   applyTranslations();
 }

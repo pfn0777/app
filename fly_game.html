@@ -465,7 +465,7 @@ const SPEED_MS = { 1: 1100, 2: 850, 3: 650, 4: 500, 5: 380 }; // level -> arrow 
 const ANSWER_S = { 5: 10, 15: 16, 30: 24 };                   // arrow count -> answer time (s)
 
 /* ── State ── */
-let lang          = localStorage.getItem('fly_lang') || 'uz';
+let lang          = localStorage.getItem('brain_lang') || 'uz';
 let selSteps      = parseInt(localStorage.getItem('fly_steps') || '5', 10);
 let selSpeed      = parseInt(localStorage.getItem('fly_speed') || '2', 10);
 let best          = parseInt(localStorage.getItem('fly_best') || '0', 10);
@@ -536,7 +536,7 @@ function clearStepTOs() {
 /* ── Language ── */
 function applyLang(l) {
   lang = l;
-  localStorage.setItem('fly_lang', lang);
+  localStorage.setItem('brain_lang', lang);
   document.querySelectorAll('.lang-btn,.ov-lang-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.lang === lang)
   );
