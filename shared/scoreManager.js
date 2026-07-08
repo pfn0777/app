@@ -16,7 +16,6 @@ const ScoreManager = {
   // ================= O'yinlar reestri =================
   // dir: 'max' — katta yaxshi, 'min' — kichik yaxshi (vaqt/ms)
   GAMES: {
-    piano_tiles:     { file: 'piano_tiles.html',     dir: 'max', legacy: ['pt_best'],          fmt: function (v) { return Number(v).toFixed(2) + ' t/s'; } },
     schulte_table:   { file: 'schulte_table.html',   dir: 'min', legacy: ['schulte_best_0'],   fmt: function (v) { return v + ' s'; } },
     colors_game:     { file: 'colors_game.html',     dir: 'max', legacy: ['colors_best'],      fmt: function (v) { return v + ''; } },
     math_game:       { file: 'math_game.html',       dir: 'max', legacy: ['math_best_score'],  fmt: function (v) { return v + ''; } },
