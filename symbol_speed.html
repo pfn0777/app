@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Symbol Speed</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="shared/telegram.js"></script>
+<script src="shared/theme.js"></script>
+<script src="shared/audio.js"></script>
+<script src="shared/scoreManager.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f0f1a;
+    color: #e0e0ff;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* HEADER */
+  .header {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    background: #2d2d4e;
+    border: none;
+    color: #a0a0cc;
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: #3d3d6e; }
+  .header-title { font-size: 18px; font-weight: 700; color: #c0c0ff; letter-spacing: 0.5px; }
+  .lang-btns { display: flex; gap: 6px; }
+  .lang-btn {
+    background: #2d2d4e;
+    border: 1px solid #3d3d6e;
+    color: #a0a0cc;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+  .lang-btn.active, .lang-btn:hover { background: #4a90e2; border-color: #4a90e2; color: #fff; }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 520px;
+    padding: 0 20px 40px;
+    flex: 1;
+  }
+  .screen.active { display: flex; }
+
+  /* ── INTRO ── */
+  .intro-card {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    padding: 28px 24px;
+    width: 100%;
+    margin-top: 20px;
+    text-align: center;
+  }
+  .intro-icon { font-size: 52px; margin-bottom: 12px; }
+  .intro-title { font-size: 22px; font-weight: 800; color: #c0c0ff; margin-bottom: 14px; }
+  .intro-desc { font-size: 15px; color: #a0a0cc; line-height: 1.6; margin-bottom: 20px; }
+  .start-btn {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    border: none;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 16px 48px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(74,144,226,0.4);
+    letter-spacing: 0.5px;
+  }
+  .start-btn:hover { transform: translateY(-2px); }
+  .start-btn:active { transform: scale(0.97); }
+  .intro-record { margin-top: 16px; font-size: 14px; color: #8888aa; }
+  .intro-record span { color: #4a90e2; font-weight: 700; }
+
+  /* ── GAME ── */
+  .hud {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .hud-score { font-size: 26px; font-weight: 900; color: #e0e0ff; }
+  .hud-time  { font-size: 20px; font-weight: 700; font-family: monospace; color: #c0c0ff; }
+
+  .timer-wrap {
+    width: 100%;
+    height: 8px;
+    background: #2d2d4e;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .timer-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #4cff4c, #ffff4c, #ff4c4c);
+    transform-origin: left center;
+  }
+
+  .target-box {
+    width: 100%;
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    padding: 14px;
+    text-align: center;
+    margin-bottom: 16px;
+    user-select: none;
+  }
+  .target-label { font-size: 12px; color: #8888aa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .target-symbol { font-size: 56px; font-weight: 700; color: #f1c40f; line-height: 1.1; }
+  .target-box.flash-wrong { animation: wrongFlash 0.25s ease; }
+  @keyframes wrongFlash {
+    0% { background: #5c1010; }
+    100% { background: #1a1a2e; }
+  }
+
+  .sym-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    user-select: none;
+  }
+  .sym-cell {
+    aspect-ratio: 1;
+    border-radius: 16px;
+    border: none;
+    background: #2d2d4e;
+    color: #e0e0ff;
+    font-size: 42px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.08s, background 0.15s;
+    touch-action: manipulation;
+  }
+  .sym-cell:active { transform: scale(0.93); }
+  .sym-cell.cell-wrong { background: #5c1010; }
+
+  /* ── FINAL ── */
+  .final-card {
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 18px;
+    padding: 28px 24px;
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .final-title { font-size: 22px; font-weight: 800; color: #c0c0ff; margin-bottom: 18px; }
+  .final-score { font-size: 62px; font-weight: 900; color: #e0e0ff; line-height: 1; margin-bottom: 4px; }
+  .final-score-label { color: #8888aa; font-size: 14px; margin-bottom: 24px; }
+  .final-stats { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; text-align: left; }
+  .final-stat-row { display: flex; justify-content: space-between; font-size: 15px; }
+  .final-stat-row .label { color: #8888aa; }
+  .final-stat-row .value { font-weight: 700; color: #e0e0ff; }
+  .record-badge {
+    background: rgba(74,144,226,0.12);
+    border: 1px solid rgba(74,144,226,0.3);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    color: #8888aa;
+  }
+  .record-badge span { color: #4a90e2; font-weight: 700; font-size: 16px; }
+  .record-badge .new-record { color: #f1c40f; font-weight: 800; font-size: 15px; }
+
+  .end-btns { display: flex; gap: 14px; width: 100%; justify-content: center; }
+  .end-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: #1a1a2e;
+    border: 1px solid #2d2d4e;
+    border-radius: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    color: #c0c0ff;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-decoration: none;
+    flex: 1;
+  }
+  .end-btn .icon { font-size: 26px; }
+  .end-btn:hover { background: #2d2d4e; border-color: #4a90e2; transform: translateY(-2px); }
+
+  /* ── Light theme ── */
+  [data-theme="light"] body { background: #eef1f8; color: #1a1a2e; }
+  [data-theme="light"] .header-title { color: #333; }
+  [data-theme="light"] .back-btn, [data-theme="light"] .lang-btn { background: #dde3f3; border-color: #ccd4ea; color: #556; }
+  [data-theme="light"] .lang-btn.active { background: #4a90e2; border-color: #4a90e2; color: #fff; }
+  [data-theme="light"] .intro-card, [data-theme="light"] .final-card,
+  [data-theme="light"] .target-box, [data-theme="light"] .end-btn { background: #fff; border-color: #dde3f3; }
+  [data-theme="light"] .intro-title, [data-theme="light"] .final-title { color: #333; }
+  [data-theme="light"] .hud-score, [data-theme="light"] .final-score { color: #1a1a2e; }
+  [data-theme="light"] .hud-time { color: #445; }
+  [data-theme="light"] .timer-wrap { background: #dde3f3; }
+  [data-theme="light"] .sym-cell { background: #dde3f3; color: #1a1a2e; }
+  [data-theme="light"] .sym-cell.cell-wrong { background: #f3c2c2; }
+  [data-theme="light"] .target-symbol { color: #d98e00; }
+  [data-theme="light"] .final-stat-row .value { color: #1a1a2e; }
+  [data-theme="light"] .end-btn { color: #445; }
+
+  @media (max-width: 440px) {
+    .target-symbol { font-size: 48px; }
+    .sym-cell { font-size: 36px; border-radius: 14px; }
+    .sym-grid { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="back-btn">← <span data-t="back">Orqaga</span></a>
+  <div class="header-title">🔣 Symbol Speed</div>
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('uz')">UZ</button>
+    <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-card">
+    <div class="intro-icon">🔣</div>
+    <div class="intro-title">Symbol Speed</div>
+    <div class="intro-desc" id="intro-desc"></div>
+    <button class="start-btn" onclick="startGame()" data-t="start">▶ Boshlash</button>
+    <div class="intro-record"><span data-t="record">Rekord</span>: <span id="intro-record-val">—</span></div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <div class="hud">
+    <div class="hud-score" id="hud-score">0</div>
+    <div class="hud-time" id="hud-time">60</div>
+  </div>
+  <div class="timer-wrap"><div class="timer-fill" id="timer-fill"></div></div>
+
+  <div class="target-box" id="target-box">
+    <div class="target-label" data-t="find">Toping</div>
+    <div class="target-symbol" id="target-symbol"></div>
+  </div>
+
+  <div class="sym-grid" id="sym-grid"></div>
+</div>
+
+<!-- FINAL -->
+<div id="screen-final" class="screen">
+  <div class="final-card">
+    <div class="final-title" data-t="results">📊 Natija</div>
+    <div class="final-score" id="final-score">0</div>
+    <div class="final-score-label" data-t="score_label">Ball</div>
+    <div class="final-stats">
+      <div class="final-stat-row">
+        <span class="label">✅ <span data-t="correct">To'g'ri</span></span>
+        <span class="value" id="final-correct">0</span>
+      </div>
+      <div class="final-stat-row">
+        <span class="label">❌ <span data-t="wrong">Xato</span></span>
+        <span class="value" id="final-wrong">0</span>
+      </div>
+      <div class="final-stat-row">
+        <span class="label">🎯 <span data-t="accuracy">Aniqlik</span></span>
+        <span class="value" id="final-acc">—</span>
+      </div>
+    </div>
+    <div class="record-badge" id="record-badge">
+      <span data-t="record">Rekord</span>: <span id="record-val">—</span>
+    </div>
+  </div>
+
+  <div class="end-btns">
+    <a href="index.html" class="end-btn">
+      <span class="icon">🏠</span>
+      <span data-t="menu">Menyu</span>
+    </a>
+    <button class="end-btn" onclick="startGame()">
+      <span class="icon">🔄</span>
+      <span data-t="retry">Qayta</span>
+    </button>
+    <a href="flanker.html" class="end-btn">
+      <span class="icon">⏭️</span>
+      <span data-t="next">Keyingi</span>
+    </a>
+  </div>
+</div>
+
+<script>
+// ── TRANSLATIONS ──────────────────────────────────────────────────────────────
+const T = {
+  uz: {
+    back: 'Orqaga', start: '▶ Boshlash', find: 'Toping',
+    intro_desc: "Tepada ko'rsatilgan belgini pastdagi 9 ta katak orasidan <strong>tez toping</strong> va bosing.<br>Ball oshgani sayin belgilar bir-biriga o'xshab boradi!<br>60 soniyada nechta topa olasiz?",
+    results: '📊 Natija', score_label: 'Ball', correct: "To'g'ri", wrong: 'Xato',
+    accuracy: 'Aniqlik', record: 'Rekord', menu: 'Menyu', retry: 'Qayta',
+    next: 'Keyingi', new_record: '🏆 Yangi rekord!'
+  },
+  ru: {
+    back: 'Назад', start: '▶ Начать', find: 'Найдите',
+    intro_desc: 'Показанный сверху символ <strong>быстро найдите</strong> среди 9 клеток и нажмите.<br>С ростом очков символы становятся всё более похожими!<br>Сколько найдёте за 60 секунд?',
+    results: '📊 Результат', score_label: 'Очки', correct: 'Верно', wrong: 'Ошибки',
+    accuracy: 'Точность', record: 'Рекорд', menu: 'Меню', retry: 'Повтор',
+    next: 'Следующий', new_record: '🏆 Новый рекорд!'
+  },
+  en: {
+    back: 'Back', start: '▶ Start', find: 'Find',
+    intro_desc: '<strong>Quickly find</strong> the symbol shown above among the 9 cells and tap it.<br>As your score grows, symbols look more and more alike!<br>How many can you find in 60 seconds?',
+    results: '📊 Results', score_label: 'Score', correct: 'Correct', wrong: 'Wrong',
+    accuracy: 'Accuracy', record: 'Best', menu: 'Menu', retry: 'Retry',
+    next: 'Next', new_record: '🏆 New Record!'
+  }
+};
+
+let lang = localStorage.getItem('brain_lang') || 'uz';
+function t(key) { return (T[lang] && T[lang][key]) || key; }
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('brain_lang', l);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
+  applyTranslations();
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.getAttribute('data-t')); });
+  document.getElementById('intro-desc').innerHTML = t('intro_desc');
+}
+
+// ── GAME CONSTANTS ────────────────────────────────────────────────────────────
+const ROUND_S       = 60;
+const INPUT_LOCK_MS = 120;
+// score thresholds for difficulty tiers
+const TIER_MEDIUM   = 5;    // some distractors come from the target's look-alike group
+const TIER_HARD     = 12;   // all distractors come from the look-alike group
+const GRID_4_FROM   = 12;   // 4x4 grid
+const GRID_5_FROM   = 25;   // 5x5 grid
+const SHUFFLE_FROM  = 30;   // grid starts reshuffling itself
+const SHUFFLE_MS    = 3000;
+
+function gridSizeFor(s) {
+  if (s >= GRID_5_FROM) return 5;
+  if (s >= GRID_4_FROM) return 4;
+  return 3;
+}
+function cellFontFor(n) {
+  const small = window.innerWidth < 440;
+  return { 3: small ? 36 : 42, 4: small ? 28 : 34, 5: small ? 22 : 26 }[n];
+}
+
+// Look-alike symbol groups (distractors are drawn from the target's group at
+// higher tiers, which makes visual search harder)
+const GROUPS = [
+  ['♣', '♠', '♧', '♤'],
+  ['●', '◎', '○', '◉', '◍'],
+  ['■', '□', '▣', '▢', '◧'],
+  ['▲', '△', '▼', '▽'],
+  ['◆', '◇', '◈'],
+  ['★', '☆', '✦', '✧'],
+  ['✚', '✛', '✜', '✙'],
+  ['E', 'Ǝ', 'Ξ', 'Ə'],
+  ['b', 'd', 'p', 'q'],
+  ['M', 'W', 'N', 'Z'],
+  ['C', 'G', 'O', 'Q'],
+  ['6', '9', '8', '3']
+];
+const ALL_SYMBOLS = GROUPS.flat();
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let score = 0, correct = 0, wrong = 0;
+let target = '';
+let running = false;
+let lockUntil = 0;
+let endAt = 0;
+let tickId = null;
+let shuffleId = null;
+
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const gridEl    = document.getElementById('sym-grid');
+const targetEl  = document.getElementById('target-symbol');
+const targetBox = document.getElementById('target-box');
+const hudScore  = document.getElementById('hud-score');
+const hudTime   = document.getElementById('hud-time');
+const timerFill = document.getElementById('timer-fill');
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── TRIALS ────────────────────────────────────────────────────────────────────
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function pickDistractor(group, hardShare) {
+  // hardShare — probability of picking from the target's look-alike group
+  if (Math.random() < hardShare && group.length > 1) {
+    let s;
+    do { s = rand(group); } while (s === target);
+    return s;
+  }
+  let s;
+  do { s = rand(ALL_SYMBOLS); } while (s === target);
+  return s;
+}
+
+function nextTrial() {
+  clearShuffle();
+  const group = rand(GROUPS);
+  target = rand(group);
+  targetEl.textContent = target;
+
+  const n = gridSizeFor(score);
+  const total = n * n;
+  const hardShare = score >= TIER_HARD ? 1 : score >= TIER_MEDIUM ? 0.5 : 0;
+  const cells = [];
+  for (let i = 0; i < total - 1; i++) cells.push(pickDistractor(group, hardShare));
+  cells.splice(Math.floor(Math.random() * total), 0, target);
+
+  gridEl.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  gridEl.innerHTML = '';
+  cells.forEach(sym => {
+    const btn = document.createElement('button');
+    btn.className = 'sym-cell';
+    btn.style.fontSize = cellFontFor(n) + 'px';
+    btn.textContent = sym;
+    // read the symbol at press time — a shuffle may have moved it
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); answer(btn.textContent, btn); });
+    gridEl.appendChild(btn);
+  });
+  lockUntil = performance.now() + INPUT_LOCK_MS;
+
+  if (score >= SHUFFLE_FROM) {
+    shuffleId = setInterval(shuffleGrid, SHUFFLE_MS);
+  }
+}
+
+// ── GRID SHUFFLE (30+ score) ─────────────────────────────────────────────────
+function clearShuffle() {
+  if (shuffleId) { clearInterval(shuffleId); shuffleId = null; }
+}
+
+function shuffleGrid() {
+  if (!running) { clearShuffle(); return; }
+  const btns = Array.from(gridEl.children);
+  const syms = btns.map(b => b.textContent);
+  for (let i = syms.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [syms[i], syms[j]] = [syms[j], syms[i]];
+  }
+  btns.forEach((b, i) => {
+    b.textContent = syms[i];
+    b.classList.remove('cell-wrong');
+  });
+}
+
+function answer(sym, btn) {
+  if (!running || performance.now() < lockUntil) return;
+  if (sym === target) {
+    score++; correct++;
+    SoundFX.tap(); TG.haptic('light');
+    hudScore.textContent = score;
+    nextTrial(); // wrong answers keep the same trial; only success advances
+  } else {
+    score = Math.max(0, score - 1); wrong++;
+    SoundFX.fail(); TG.haptic('error');
+    hudScore.textContent = score;
+    btn.classList.add('cell-wrong');
+    targetBox.classList.remove('flash-wrong');
+    void targetBox.offsetWidth;
+    targetBox.classList.add('flash-wrong');
+  }
+}
+
+// ── ROUND ─────────────────────────────────────────────────────────────────────
+function startGame() {
+  score = 0; correct = 0; wrong = 0;
+  running = true;
+  hudScore.textContent = '0';
+  showScreen('screen-game');
+  endAt = performance.now() + ROUND_S * 1000;
+  nextTrial();
+  tick();
+}
+
+function tick() {
+  const left = endAt - performance.now();
+  if (left <= 0) { endGame(); return; }
+  hudTime.textContent = Math.ceil(left / 1000);
+  timerFill.style.transform = `scaleX(${left / (ROUND_S * 1000)})`;
+  tickId = requestAnimationFrame(tick);
+}
+
+function endGame() {
+  running = false;
+  clearShuffle();
+  if (tickId) cancelAnimationFrame(tickId);
+  hudTime.textContent = '0';
+  timerFill.style.transform = 'scaleX(0)';
+
+  document.getElementById('final-score').textContent   = score;
+  document.getElementById('final-correct').textContent = correct;
+  document.getElementById('final-wrong').textContent   = wrong;
+  const total = correct + wrong;
+  document.getElementById('final-acc').textContent =
+    total ? Math.round(correct / total * 100) + '%' : '—';
+
+  const res = ScoreManager.record('symbol_speed', score);
+  const recordEl = document.getElementById('record-val');
+  if (res.isNewBest && total > 0) {
+    recordEl.innerHTML = `${res.best} <span class="new-record">${t('new_record')}</span>`;
+    SoundFX.success(); TG.haptic('success');
+  } else {
+    recordEl.textContent = res.best;
+  }
+  showScreen('screen-final');
+  applyTranslations();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+setLang(lang);
+document.getElementById('intro-record-val').textContent = ScoreManager.bestFmt('symbol_speed');
+</script>
+</body>
+</html>

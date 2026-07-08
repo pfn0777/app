@@ -26,7 +26,9 @@ const ScoreManager = {
     sequence_memory: { file: 'sequence_memory.html', dir: 'max', legacy: ['sequence_best'],    fmt: function (v) { return v + ''; } },
     mental_math:     { file: 'mental_math.html',     dir: 'max', legacy: ['mental_best_score'],fmt: function (v) { return v + ''; } },
     brain_game:      { file: 'brain_game.html',      dir: 'max', legacy: ['brain_best'],       fmt: function (v) { return v + ' pts'; } },
-    nback:           { file: 'nback.html',           dir: 'max', legacy: ['nback_best_n'],     fmt: function (v) { return 'N=' + v; } }
+    nback:           { file: 'nback.html',           dir: 'max', legacy: ['nback_best_n'],     fmt: function (v) { return 'N=' + v; } },
+    flanker:         { file: 'flanker.html',         dir: 'min', legacy: [],                   fmt: function (v) { return v + ' ms'; } },
+    symbol_speed:    { file: 'symbol_speed.html',    dir: 'max', legacy: [],                   fmt: function (v) { return v + ''; } }
   },
 
   // ================= Ichki yordamchilar =================
